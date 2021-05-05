@@ -1,9 +1,10 @@
 import { TypeOrmOptionsFactory, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 import { AppConfig } from '../configuration/configuration.service';
+import { User } from '../users/user.entity';
 
 // TODO: Add db entities here
-const entities = [];
+const entities = [User];
 
 @Injectable()
 export class TypeOrmDefaultConfigService implements TypeOrmOptionsFactory {
@@ -12,7 +13,7 @@ export class TypeOrmDefaultConfigService implements TypeOrmOptionsFactory {
   createTypeOrmOptions(): TypeOrmModuleOptions {
     return {
       type: 'postgres',
-      synchronize: false,
+      synchronize: true,
       autoLoadEntities: false,
       logging: false,
       entities,
