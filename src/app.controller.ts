@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Request, Session, UseGuards } from '@nestjs/common';
+import { ApiBody, ApiConsumes, ApiOperation } from '@nestjs/swagger';
 import { AppService } from './app.service';
 import { AuthService } from './modules/auth/auth.service';
 import { JwtAuthGuard } from './modules/auth/jwt-auth.guard';
@@ -16,11 +17,26 @@ export class AppController {
   }
 
   @Get('api/auth/getChallenge')
+  @ApiOperation({ summary: 'Returns a challenge for the user to sign' })
   async getChallenge(@Session() session: Record<string, any>) {
     return this.authService.setChallenge(session);
   }
 
   @UseGuards(SignedChallengeAuthGuard)
+  @ApiOperation({ summary: 'Checks if the signatures mathches the challenge and address, if it does returns a JWT token' })
+  @ApiConsumes('application/json')
+  @ApiBody({
+    schema: {
+      properties: {
+        'address': {
+          type: 'string'
+        },
+        'signature': {
+          type: 'string'
+        }
+      }
+    }
+  })
   @Post('api/auth/login')
   async login(@Request() req) {
     return this.authService.login(req.user);
