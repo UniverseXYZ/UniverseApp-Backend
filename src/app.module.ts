@@ -11,6 +11,7 @@ import { TypeOrmDefaultConfigService } from './modules/database/database.provide
 import { EthersModule } from './modules/ethers/ethers.module';
 import { HealthModule } from './modules/health/health.module';
 import { UsersModule } from './modules/users/users.module';
+import { NftModule } from './modules/nft/nft.module';
 
 @Module({
   imports: [
@@ -28,7 +29,8 @@ import { UsersModule } from './modules/users/users.module';
     HealthModule,
     AuthModule,
     UsersModule,
-    EthersModule
+    EthersModule,
+    NftModule,
   ],
   controllers: [AppController],
   providers: [AppService],
