@@ -20,6 +20,12 @@ export const configValues = {
   },
   auth: {
     jwtSecret: process.env.JWT_SECRET
+  },
+  aws: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    bucketName: process.env.AWS_BUCKET_NAME,
+    pathPrefix: process.env.PATH_PREFIX,
   }
 };
 

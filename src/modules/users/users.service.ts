@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { config } from 'node:process';
 import { Repository } from 'typeorm';
+import { AppConfig } from '../configuration/configuration.service';
+import { S3Service } from '../s3/s3.service';
 import { User } from './user.entity';
 
 
@@ -8,7 +11,10 @@ import { User } from './user.entity';
 export class UsersService {
   constructor(
     @InjectRepository(User)
-    private usersRepository: Repository<User>) {
+    private usersRepository: Repository<User>,
+    private s3Service: S3Service,
+    private readonly config: AppConfig,
+  ) {
   }
 
   async findOne(address: string): Promise<User | undefined> {
@@ -21,5 +27,14 @@ export class UsersService {
     }
 
     return user;
+  }
+
+  async uploadProfileImage(file: Express.Multer.File) {
+    try {
+      await this.s3Service.uploadDocument(`${file.path}`, `${this.config.values.aws.pathPrefix}/profileImage/${file.filename}`)
+    } catch(e) {
+      return false;
+    }
+    return true;
   }
 }
