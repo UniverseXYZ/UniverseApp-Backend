@@ -1,10 +1,11 @@
 import {
   Column,
   CreateDateColumn,
-  Entity,
+  Entity, ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { NftCollection } from './collection.entity';
 
 @Entity()
 export class Nft {
@@ -28,6 +29,12 @@ export class Nft {
 
   @Column({ type: 'real', nullable: true })
   royalties?: number;
+
+  @ManyToOne(
+    () => NftCollection,
+    (nftCollection) => nftCollection.collectibles,
+  )
+  collection: NftCollection;
 
   @CreateDateColumn()
   createdAt: Date;
