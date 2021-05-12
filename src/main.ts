@@ -23,6 +23,8 @@ async function bootstrap() {
     .setDescription('Boilerplate API description')
     .setVersion('1.0')
     .addTag('health')
+    .addTag('nfts')
+    .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('docs', app, document);

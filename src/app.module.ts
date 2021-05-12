@@ -14,6 +14,7 @@ import { HealthModule } from './modules/health/health.module';
 import { NftScraperModule } from './modules/nftScraper/nftScraper.model';
 import { QueueModule } from './modules/queue/queue.model';
 import { UsersModule } from './modules/users/users.module';
+import { NftModule } from './modules/nft/nft.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { UsersModule } from './modules/users/users.module';
     EthersModule,
     QueueModule,
     NftScraperModule
+    NftModule,
   ],
   controllers: [AppController],
   providers: [AppService],
