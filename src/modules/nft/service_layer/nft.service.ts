@@ -70,7 +70,6 @@ export class NftService {
     const collection = this.nftCollectionRepository.create({
       name: params.name,
       tokenName: params.tokenName,
-      userId: params.userId,
       collectibles,
     });
 

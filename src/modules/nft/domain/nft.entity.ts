@@ -15,11 +15,26 @@ export class Nft {
   @Column()
   userId: number;
 
-  @Column()
+  @Column({ nullable: true })
   name: string;
+
+  @Column()
+  tokenId: string;
 
   @Column({ nullable: true })
   description?: string;
+
+  @Column({ nullable: true })
+  image_url?: string;
+
+  @Column({ nullable: true })
+  image_preview_url?: string;
+
+  @Column({ nullable: true })
+  image_thumbnail_url?: string;
+
+  @Column({ nullable: true })
+  image_original_url?: string;
 
   @Column({ type: 'integer' })
   numberOfEditions: number;

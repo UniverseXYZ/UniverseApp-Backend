@@ -35,7 +35,7 @@ import { NftModule } from './modules/nft/nft.module';
     UsersModule,
     EthersModule,
     QueueModule,
-    NftScraperModule
+    NftScraperModule,
     NftModule,
   ],
   controllers: [AppController],
