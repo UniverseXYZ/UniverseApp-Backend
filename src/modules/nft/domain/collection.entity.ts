@@ -7,21 +7,41 @@ import {
 } from 'typeorm';
 import { Nft } from './nft.entity';
 
+export enum CollectionSource {
+  UNIVERSE = "universe",
+  SCRAPER = "scraper"
+}
 @Entity()
 export class NftCollection {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({nullable: true })
+  @Column()
+  userId?: number;
+
+  @Column({
+    type: "enum",
+    enum: CollectionSource,
+    default: CollectionSource.UNIVERSE
+  })
+  source: CollectionSource;
+
+  @Column({ nullable: true })
+  txHash?: string;
+
+  @Column({ default: false })
+  onChain: boolean;
+
+  @Column({ nullable: true })
   address?: string;
 
-  @Column({nullable: true })
+  @Column({ nullable: true })
   name?: string;
 
-  @Column({nullable: true })
+  @Column({ nullable: true })
   symbol?: string;
 
-  @Column({nullable: true })
+  @Column({ nullable: true })
   description?: string;
 
   @Column()

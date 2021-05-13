@@ -3,8 +3,8 @@ import { AppConfig } from '../configuration/configuration.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { QueueService } from '../queue/queue.service';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Nft } from '../nft/domain/nft.entity';
-import { NftCollection } from '../nft/domain/collection.entity';
+import { Nft, NftSource } from '../nft/domain/nft.entity';
+import { CollectionSource, NftCollection } from '../nft/domain/collection.entity';
 
 import { Repository } from 'typeorm';
 import { User } from '../users/user.entity';
@@ -51,6 +51,7 @@ export class NftScraperService {
             nftDB.description = nft.description;
             nftDB.properties = nft.traits;
             nftDB.image_url = nft.image_url;
+            nftDB.source = NftSource.SCRAPER;
             nftDB.image_preview_url = nft.image_preview_url;
             nftDB.image_thumbnail_url = nft.image_thumbnail_url;
             nftDB.image_original_url = nft.image_original_url;
@@ -59,11 +60,13 @@ export class NftScraperService {
             let nftCollection = await this.nftCollectionRepository.findOne({ where: { address: nft.asset_contract.address } });
             if (!nftCollection) {
                 nftCollection = new NftCollection();
+                nftCollection.userId = 0;
                 nftCollection.address = nft.asset_contract.address;
                 nftCollection.name = nft.asset_contract.name;
                 nftCollection.symbol = nft.asset_contract.symbol;
                 nftCollection.description = nft.asset_contract.description;
                 nftCollection.tokenName = nft.asset_contract.name;
+                nftCollection.source = CollectionSource.SCRAPER;
                 await this.nftCollectionRepository.save(nftCollection);
             }
             nftDB.collection = nftCollection;
