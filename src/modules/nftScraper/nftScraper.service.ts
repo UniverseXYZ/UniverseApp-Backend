@@ -65,7 +65,6 @@ export class NftScraperService {
                 nftCollection.name = nft.asset_contract.name;
                 nftCollection.symbol = nft.asset_contract.symbol;
                 nftCollection.description = nft.asset_contract.description;
-                nftCollection.tokenName = nft.asset_contract.name;
                 nftCollection.source = CollectionSource.SCRAPER;
                 await this.nftCollectionRepository.save(nftCollection);
             }

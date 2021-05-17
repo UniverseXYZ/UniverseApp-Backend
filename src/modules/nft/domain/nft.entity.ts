@@ -43,19 +43,27 @@ export class Nft {
   description?: string;
 
   @Column({ nullable: true })
-  image_url?: string;
+  artwork_type?: string;
 
+  //artwork original s3
   @Column({ nullable: true })
-  image_preview_url?: string;
+  url?: string;
 
+  //artwork original optimized s3, less bytes per pixel/frame
   @Column({ nullable: true })
-  image_thumbnail_url?: string;
+  optimized_url?: string;
 
+  //either resized image, or in case of videos a snapshot of a frame
   @Column({ nullable: true })
-  image_original_url?: string;
+  thumbnail_url?: string;
 
-  @Column({ type: 'integer' })
-  numberOfEditions: number;
+  //arweave content
+  @Column({ nullable: true })
+  original_url?: string;
+
+  //arweave json metadata uri
+  @Column({ nullable: true })
+  token_uri: string;
 
   @Column({ type: 'jsonb', nullable: true })
   properties?: any;
@@ -68,6 +76,9 @@ export class Nft {
     (nftCollection) => nftCollection.collectibles,
   )
   collection: NftCollection;
+
+  @Column({ default: true })
+  refreshed: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

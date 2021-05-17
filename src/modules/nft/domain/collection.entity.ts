@@ -35,17 +35,14 @@ export class NftCollection {
   @Column({ nullable: true })
   address?: string;
 
-  @Column({ nullable: true })
-  name?: string;
+  @Column()
+  name: string;
 
   @Column({ nullable: true })
   symbol?: string;
 
   @Column({ nullable: true })
   description?: string;
-
-  @Column()
-  tokenName: string;
 
   @OneToMany(() => Nft, (nft) => nft.collection, {
     cascade: true,
