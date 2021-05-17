@@ -22,7 +22,7 @@ type SaveCollectibleParams = {
 
 type SaveCollectionParams = {
   name: string;
-  tokenName: string;
+  symbol: string;
   userId: number;
   collectibles: SaveCollectibleParams[];
 };
@@ -32,7 +32,7 @@ export class NftService {
   constructor(
     @InjectRepository(Nft) private nftRepository: Repository<Nft>,
     @InjectRepository(NftCollection)
-      private nftCollectionRepository: Repository<NftCollection>,
+    private nftCollectionRepository: Repository<NftCollection>,
     private connection: Connection,
   ) {}
 
@@ -43,7 +43,6 @@ export class NftService {
       id,
       name,
       description,
-      numberOfEditions,
       properties,
       royalties,
       createdAt,
@@ -53,7 +52,6 @@ export class NftService {
       id,
       name,
       description,
-      numberOfEditions,
       properties,
       royalties,
       createdAt,
@@ -69,7 +67,7 @@ export class NftService {
     );
     const collection = this.nftCollectionRepository.create({
       name: params.name,
-      tokenName: params.tokenName,
+      symbol: params.symbol,
       userId: params.userId,
       collectibles,
     });
@@ -79,16 +77,15 @@ export class NftService {
     return {
       id: dbCollection.id,
       name: dbCollection.name,
-      tokenName: dbCollection.tokenName,
+      symbol: dbCollection.symbol,
       collectibles: dbCollection.collectibles.map((collectible) => ({
         id: collectible.id,
         name: collectible.name,
         description: collectible.description,
-        numberOfEditions: collectible.numberOfEditions,
         properties: collectible.properties,
         createdAt: collectible.createdAt,
       })),
       createdAt: dbCollection.createdAt,
-    }
+    };
   }
 }
