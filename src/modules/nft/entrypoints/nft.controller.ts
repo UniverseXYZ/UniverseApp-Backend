@@ -34,7 +34,7 @@ export class NftController {
   async saveCollection(@Request() req, @Body() body: SaveCollectionBody) {
     return this.nftService.saveCollectionForLater({
       name: body.name,
-      tokenName: body.tokenName,
+      symbol: body.symbol,
       userId: req.user.sub,
       collectibles: body.collectibles.map((collectible) => ({
         name: collectible.name,

@@ -79,7 +79,7 @@ export class SaveCollectionBody {
     description: 'The name of the collection',
     required: true,
   })
-  tokenName: string;
+  symbol: string;
 
   @IsArray()
   @ValidateNested({ each: true })

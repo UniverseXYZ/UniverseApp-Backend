@@ -50,12 +50,11 @@ export class NftScraperService {
             nftDB.name = nft.name;
             nftDB.description = nft.description;
             nftDB.properties = nft.traits;
-            nftDB.image_url = nft.image_url;
             nftDB.source = NftSource.SCRAPER;
-            nftDB.image_preview_url = nft.image_preview_url;
-            nftDB.image_thumbnail_url = nft.image_thumbnail_url;
-            nftDB.image_original_url = nft.image_original_url;
-            nftDB.numberOfEditions = 1;
+            nftDB.url = nft.image_url;
+            nftDB.optimized_url = nft.image_preview_url;
+            nftDB.thumbnail_url = nft.image_thumbnail_url;
+            nftDB.original_url = nft.image_original_url;
 
             let nftCollection = await this.nftCollectionRepository.findOne({ where: { address: nft.asset_contract.address } });
             if (!nftCollection) {
