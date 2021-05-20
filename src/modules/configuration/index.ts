@@ -26,7 +26,10 @@ export const configValues = {
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     bucketName: process.env.AWS_BUCKET_NAME,
     pathPrefix: process.env.PATH_PREFIX,
-  }
+  },
+  frontend: {
+    domain: process.env.FRONTEND_DOMAIN,
+  },
 };
 
 export default registerAs('config', () => {

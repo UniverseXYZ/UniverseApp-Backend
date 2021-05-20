@@ -15,7 +15,8 @@ export class AuthService {
 
   async validateUser(address: string, message:string, signature: string): Promise<any> {
     const signerAddress = await this.ethersService.verifySignature(message, signature);
-    if (address !== signerAddress) return false;
+
+    if (address.toLowerCase() !== signerAddress.toLowerCase()) return false;
     return await this.usersService.findOne(address);
   }
 
