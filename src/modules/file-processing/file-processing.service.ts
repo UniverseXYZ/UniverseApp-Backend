@@ -22,24 +22,24 @@ export class FileProcessingService {
     return optimisedPath;
   }
 
-  private optimiseImage(sourcePath: string, destinationPath: string) {
-    return new Promise(async (resolve, reject) => {
+  private async optimiseImage(sourcePath: string, destinationPath: string) {
+    try {
       const promisifiedExec = promisify(exec);
       const command = `ffmpeg -i ${sourcePath} -q:v 16 -y ${destinationPath}`;
       const { stderr, stdout } = await promisifiedExec(command);
-
-      resolve(true);
-    });
+    } catch (error) {
+      throw new Error('Failed to process image file');
+    }
   }
 
-  private optimiseVideo(sourcePath: string, destinationPath: string) {
-      return new Promise(async (resolve, reject) => {
-        const promisifiedExec = promisify(exec);
-        const command = `ffmpeg -i ${sourcePath} -preset superfast -crf 28 -y ${destinationPath}`;
-        const { stderr, stdout } = await promisifiedExec(command);
-
-        resolve(true);
-      });
+  private async optimiseVideo(sourcePath: string, destinationPath: string) {
+    try {
+      const promisifiedExec = promisify(exec);
+      const command = `ffmpeg -i ${sourcePath} -preset superfast -crf 28 -y ${destinationPath}`;
+      const { stderr, stdout } = await promisifiedExec(command);
+    } catch (error) {
+      throw new Error('Failed to process image file');
+    }
   }
 
   private async generateNewPath(oldPath: string) {

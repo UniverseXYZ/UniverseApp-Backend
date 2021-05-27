@@ -15,6 +15,9 @@ FROM node:13.14-stretch AS production
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 
+RUN apt update
+RUN apt install ffmpeg -y
+
 WORKDIR /usr/src/app
 COPY package*.json ./
 
