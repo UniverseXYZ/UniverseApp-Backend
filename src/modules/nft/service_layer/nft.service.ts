@@ -99,9 +99,7 @@ export class NftService {
       throw new NftNotFoundException();
     }
     const optimisedPath = await this.fileProcessingService.optimiseFile(file.path, file.mimetype);
-    // TODO: optimize file
     // TODO: upload file
     // TODO: delete files
-    return {}
   }
 }
