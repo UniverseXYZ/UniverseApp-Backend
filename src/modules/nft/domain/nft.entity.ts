@@ -36,7 +36,7 @@ export class Nft {
   @Column({ nullable: true })
   name: string;
 
-  @Column()
+  @Column({ nullable: true })
   tokenId: string;
 
   @Column({ nullable: true })

@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Nft } from '../domain/nft.entity';
 import { Connection, Repository } from 'typeorm';
 import { NftCollection } from '../domain/collection.entity';
+import { NftNotFoundException } from './exceptions/NftNotFoundException';
+import { FileProcessingService } from '../../file-processing/file-processing.service';
 
 type SaveNftParams = {
   userId: number;
@@ -33,6 +35,7 @@ export class NftService {
     @InjectRepository(Nft) private nftRepository: Repository<Nft>,
     @InjectRepository(NftCollection)
     private nftCollectionRepository: Repository<NftCollection>,
+    private fileProcessingService: FileProcessingService,
     private connection: Connection,
   ) {}
 
@@ -87,5 +90,18 @@ export class NftService {
       })),
       createdAt: dbCollection.createdAt,
     };
+  }
+
+  public async uploadMediaFile(id: number, file: Express.Multer.File) {
+    const nft = await this.nftRepository.findOne({ where: { id } });
+
+    if (!nft) {
+      throw new NftNotFoundException();
+    }
+    const optimisedPath = await this.fileProcessingService.optimiseFile(file.path, file.mimetype);
+    // TODO: optimize file
+    // TODO: upload file
+    // TODO: delete files
+    return {}
   }
 }

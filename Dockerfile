@@ -1,5 +1,8 @@
 FROM node:13.14-stretch AS development
 
+RUN apt update
+RUN apt install ffmpeg -y
+
 WORKDIR /usr/src/app
 COPY package*.json ./
 

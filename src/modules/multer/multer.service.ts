@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import * as crypto from "crypto";
-import { MulterModuleOptions, MulterOptionsFactory } from '@nestjs/platform-express';
+import * as crypto from 'crypto';
+import {
+  MulterModuleOptions,
+  MulterOptionsFactory,
+} from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import * as path from "path";
-​
-​
+import * as path from 'path';
+
 @Injectable()
 export class MulterConfigService implements MulterOptionsFactory {
   constructor() {}
-​
+
   createMulterOptions(): MulterModuleOptions {
     return {
       limits: {
@@ -24,14 +26,14 @@ export class MulterConfigService implements MulterOptionsFactory {
       }),
     };
   }
-​
+
   async generateRandomHash(length = 24): Promise<string> {
     return new Promise((resolve, reject) => {
       crypto.randomBytes(length, (err, buf) => {
         if (err) {
           reject(err);
         } else {
-          resolve(buf.toString('hex'))
+          resolve(buf.toString('hex'));
         }
       });
     });

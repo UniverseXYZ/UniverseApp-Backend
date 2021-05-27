@@ -1,7 +1,7 @@
 import {
   ArrayMinSize,
   IsArray,
-  IsNumber,
+  IsNumber, IsNumberString,
   IsObject,
   IsOptional,
   IsString,
@@ -87,4 +87,9 @@ export class SaveCollectionBody {
   @Type(() => SaveNftBody)
   @ApiProperty({ type: () => [SaveNftBody] })
   collectibles: SaveNftBody[];
+}
+
+export class UploadNftMediaFileParams {
+  @IsNumberString()
+  id: number;
 }

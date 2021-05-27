@@ -1,16 +1,16 @@
-import { Body, Controller, Post, UseGuards, Request } from '@nestjs/common';
-import { SaveCollectionBody, SaveNftBody } from './dto';
+import { Body, Controller, Post, UseGuards, Request, UseInterceptors, UploadedFile, Param } from '@nestjs/common';
+import { SaveCollectionBody, SaveNftBody, UploadNftMediaFileParams } from './dto';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { NftService } from '../service_layer/nft.service';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { multerOptions } from './multipart';
 
 @Controller('api')
 export class NftController {
-  constructor(
-    private nftService: NftService,
-  ) {
-  }
-  @Post('/single-nfts/save')
+  constructor(private nftService: NftService) {}
+
+  @Post('/nfts')
   @UseGuards(JwtAuthGuard)
   @ApiTags('nfts')
   @ApiBearerAuth()
@@ -26,7 +26,7 @@ export class NftController {
     });
   }
 
-  @Post('/collections/save')
+  @Post('/collections')
   @UseGuards(JwtAuthGuard)
   @ApiTags('nfts')
   @ApiBearerAuth()
@@ -43,5 +43,21 @@ export class NftController {
         properties: collectible.properties,
       })),
     });
+  }
+
+  @Post('/nfts/:id/file')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('file', multerOptions()))
+  @ApiTags('nfts')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Upload image for nft' })
+  @ApiConsumes('multipart/form-data')
+  @ApiParam({ name: 'id', description: 'The id of the nft', required: true, example: 1 })
+  async uploadNftMediaFile(
+    @Request() req,
+    @Param() params: UploadNftMediaFileParams,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return await this.nftService.uploadMediaFile(params.id, file);
   }
 }
