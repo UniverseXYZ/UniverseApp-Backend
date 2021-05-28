@@ -1,0 +1,38 @@
+import {
+    Column,
+    CreateDateColumn,
+    Entity, OneToMany,
+    PrimaryGeneratedColumn,
+    Table,
+    UpdateDateColumn,
+  } from 'typeorm';
+
+  @Entity('asdasd')
+  export class CreateNftEvent {
+    @PrimaryGeneratedColumn()
+    id: number;
+
+    @Column()
+    tx_hash: string;
+
+    @Column()
+    tx_index: number;
+
+    @Column()
+    log_index: number;
+
+    @Column()
+    token_id: number;
+
+    @Column()
+    token_uri: string;
+
+    @Column()
+    block_timestamp: string;
+
+    @Column()
+    included_in_block: string;
+
+    @Column()
+    created_at: Date;
+  }
