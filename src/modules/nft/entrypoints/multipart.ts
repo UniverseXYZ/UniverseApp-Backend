@@ -21,18 +21,23 @@ export const multerOptions: () => MulterOptions = () => {
         }
       },
     }),
-    fileFilter: (req: any, file: Express.Multer.File, callback: (error: (Error | null), acceptFile: boolean) => void) => {
+    fileFilter: (req: any, file: Express.Multer.File, callback: (error: Error | null, acceptFile: boolean) => void) => {
       const isValid = isMimeTypeValid(file.mimetype);
       if (isValid) {
         callback(null, true);
       } else {
         callback(
-          new HttpException({
-          error: 'Invalid file type',
-          message: 'File type is not valid. Supported file types: jpeg, png, gif, webp, mp4',
-        }, HttpStatus.BAD_REQUEST), false)
+          new HttpException(
+            {
+              error: 'InvalidFileType',
+              message: 'File type is not valid. Supported file types: jpeg, png, gif, webp, mp4',
+            },
+            HttpStatus.BAD_REQUEST,
+          ),
+          false,
+        );
       }
-    }
+    },
   };
 };
 
@@ -50,5 +55,5 @@ const generateRandomHash = async (length = 24) => {
 
 const isMimeTypeValid = (mimeType: string) => {
   const validMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4'];
-  return validMimeTypes.includes(mimeType)
-}
+  return validMimeTypes.includes(mimeType);
+};

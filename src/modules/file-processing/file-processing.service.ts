@@ -3,30 +3,79 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
 import crypto from 'crypto';
+import sharp from 'sharp';
+import { ProcessedFile } from './model/ProcessedFile';
+import { FileSystemService } from '../file-system/file-system.service';
 
 @Injectable()
 export class FileProcessingService {
-  public async optimiseFile(path: string, mimeType: string) {
-    const optimisedPath = path;
+  constructor(private fileSystemService: FileSystemService) {}
 
-    if (['image/jpeg', 'image/png'].includes(mimeType)) {
-      const newPath = await this.generateNewPath(path);
-      await this.optimiseImage(path, newPath);
-      return newPath;
-    } else if (['video/mp4'].includes(mimeType)) {
-      const newPath = await this.generateNewPath(path);
-      await this.optimiseVideo(path, newPath);
-      return newPath;
+  public async downsizeFile(sourcePath: string, mimeType: string) {
+    const file = ProcessedFile.create(
+      sourcePath,
+      path.basename(sourcePath, path.extname(sourcePath)),
+      path.extname(sourcePath),
+    );
+
+    const isImage = ['image/jpeg', 'image/png', 'image/webp'].includes(mimeType);
+
+    if (!isImage) {
+      return file;
     }
 
-    return optimisedPath;
+    const image = sharp(file.path);
+    const metadata = await image.metadata();
+    const fileSize = await this.fileSystemService.fileSize(file.path);
+
+    if (metadata.height > 400 && fileSize > 400 * 1024) {
+      const newFile = await this.fileWithNewPath(file);
+      await image
+        .resize({ height: 400 })
+        .jpeg({ progressive: true, force: false, quality: 90 })
+        .png({ progressive: true, force: false, quality: 90 })
+        .toFile(newFile.path);
+      return newFile;
+    }
+
+    return file;
   }
 
-  private async optimiseImage(sourcePath: string, destinationPath: string) {
+  public async optimiseFile(sourcePath: string, mimeType: string) {
+    const file = ProcessedFile.create(
+      sourcePath,
+      path.basename(sourcePath, path.extname(sourcePath)),
+      path.extname(sourcePath),
+    );
+
+    if (['image/jpeg', 'image/png'].includes(mimeType)) {
+      const fileSize = await this.fileSystemService.fileSize(file.path);
+
+      if (fileSize > 400 * 1024) {
+        const newFile = await this.fileWithNewPath(file);
+        await this.optimiseImage(file.path, newFile.path, mimeType);
+        return newFile;
+      }
+
+      return file;
+    } else if (['video/mp4'].includes(mimeType)) {
+      const newFile = await this.fileWithNewPath(file);
+      await this.optimiseVideo(file.path, newFile.path);
+      return newFile;
+    }
+
+    return file;
+  }
+
+  private async optimiseImage(sourcePath: string, destinationPath: string, mimeType: string) {
     try {
-      const promisifiedExec = promisify(exec);
-      const command = `ffmpeg -i ${sourcePath} -q:v 16 -y ${destinationPath}`;
-      const { stderr, stdout } = await promisifiedExec(command);
+      if (mimeType === 'image/jpeg') {
+        const promisifiedExec = promisify(exec);
+        const command = `ffmpeg -i ${sourcePath} -q:v 16 -y ${destinationPath}`;
+        const { stderr, stdout } = await promisifiedExec(command);
+      } else if (mimeType === 'image/png') {
+        await sharp(sourcePath).png({ progressive: true, force: false, quality: 85 }).toFile(destinationPath);
+      }
     } catch (error) {
       throw new Error('Failed to process image file');
     }
@@ -42,12 +91,11 @@ export class FileProcessingService {
     }
   }
 
-  private async generateNewPath(oldPath: string) {
-    const extension = path.extname(oldPath);
-    const filename = path.basename(oldPath, extension);
-    const newFileName = await this.generateRandomHash();
+  private async fileWithNewPath(file: ProcessedFile): Promise<ProcessedFile> {
+    const filename = await this.generateRandomHash();
+    const path = file.path.replace(file.filename, filename);
 
-    return oldPath.replace(filename, newFileName);
+    return ProcessedFile.create(path, filename, file.extension);
   }
 
   private generateRandomHash = (length = 24): Promise<string> => {
