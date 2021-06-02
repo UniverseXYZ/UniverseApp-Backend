@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { config } from 'node:process';
 import { Repository } from 'typeorm';
 import { AppConfig } from '../configuration/configuration.service';
-import { S3Service } from '../s3/s3.service';
+import { S3Service } from '../file-storage/s3.service';
 import { UserInfoDto } from './user.dto';
 import { User } from './user.entity';
 

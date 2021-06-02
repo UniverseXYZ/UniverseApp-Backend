@@ -5,9 +5,10 @@ import { Connection, Repository } from 'typeorm';
 import { NftCollection } from '../domain/collection.entity';
 import { NftNotFoundException } from './exceptions/NftNotFoundException';
 import { FileProcessingService } from '../../file-processing/file-processing.service';
-import { S3Service } from '../../s3/s3.service';
+import { S3Service } from '../../file-storage/s3.service';
 import { AppConfig } from '../../configuration/configuration.service';
 import { FileSystemService } from '../../file-system/file-system.service';
+import { ArweaveService } from '../../file-storage/arweave.service';
 
 type SaveNftParams = {
   userId: number;
@@ -40,32 +41,38 @@ export class NftService {
     private nftCollectionRepository: Repository<NftCollection>,
     private fileProcessingService: FileProcessingService,
     private s3Service: S3Service,
+    private arweaveService: ArweaveService,
     private config: AppConfig,
     private fileSystemService: FileSystemService,
   ) {}
 
   public async saveForLater(params: SaveNftParams) {
-    const nft = this.nftRepository.create(params);
-    const savedNft = await this.nftRepository.save(nft);
-    const { id, name, description, properties, royalties, createdAt } = savedNft;
+    const nfts = [];
+    const idxs = [...Array(params.numberOfEditions).keys()];
 
-    return {
-      id,
-      name,
-      description,
-      properties,
-      royalties,
-      createdAt,
-    };
+    for (const idx of idxs) {
+      const nft = this.nftRepository.create(params);
+      nfts.push(await this.nftRepository.save(nft));
+    }
+
+    return nfts.map((nft) => {
+      const { id, name, description, properties, royalties, createdAt } = nft;
+
+      return {
+        id,
+        name,
+        description,
+        properties,
+        royalties,
+        createdAt,
+      };
+    });
   }
 
   public async saveCollectionForLater(params: SaveCollectionParams) {
-    const collectibles = params.collectibles.map((collectible) =>
-      this.nftRepository.create({
-        ...collectible,
-        userId: params.userId,
-      }),
-    );
+    const collectibles = params.collectibles.reduce((acc, collectible) => {
+      return [...acc, ...this.createCollectible(collectible)];
+    }, []);
     const collection = this.nftCollectionRepository.create({
       name: params.name,
       symbol: params.symbol,
@@ -88,6 +95,17 @@ export class NftService {
       })),
       createdAt: dbCollection.createdAt,
     };
+  }
+
+  private createCollectible(collectible: SaveCollectibleParams) {
+    const nfts = [];
+    const idxs = [...Array(collectible.numberOfEditions).keys()];
+
+    for (const idx of idxs) {
+      nfts.push(this.nftRepository.create(collectible));
+    }
+
+    return nfts;
   }
 
   public async uploadMediaFile(id: number, file: Express.Multer.File) {
@@ -116,7 +134,7 @@ export class NftService {
         [file.path, ...uniqueFiles.map((file) => file.path)].map((path) => this.fileSystemService.removeFile(path)),
       );
 
-      nft.original_url = file.filename;
+      nft.url = file.filename;
       nft.optimized_url = optimisedFile.fullFilename();
       nft.thumbnail_url = downsizedFile.fullFilename();
 
@@ -125,5 +143,28 @@ export class NftService {
       throw error;
       this.fileSystemService.removeFile(file.path);
     }
+  }
+
+  public async getTokenURI(id: number) {
+    const nft = await this.nftRepository.findOne({ where: { id } });
+
+    if (!nft) {
+      throw new NftNotFoundException();
+    }
+
+    const tokenUri = await this.arweaveService.store({
+      name: nft.name,
+      description: nft.description,
+      image_url: nft.url,
+      image_preview_url: nft.optimized_url,
+      image_thumbnail_url: nft.thumbnail_url,
+      image_original_url: nft.original_url,
+      traits: nft.properties,
+    });
+
+    nft.token_uri = tokenUri;
+    await this.nftRepository.save(nft);
+
+    return nft.token_uri;
   }
 }

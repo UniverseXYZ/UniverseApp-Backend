@@ -1,8 +1,8 @@
 import {
   ArrayMinSize,
   IsArray,
-  IsNumber, IsNumberString,
-  IsObject,
+  IsNumber,
+  IsNumberString,
   IsOptional,
   IsString,
   Length,
@@ -41,10 +41,10 @@ export class SaveNftBody {
   })
   numberOfEditions: number;
 
-  @IsObject()
+  @IsArray()
   @IsOptional()
   @ApiProperty({
-    example: { attribute1: 'value' },
+    example: [{ attribute1: 'value' }, { attribute2: 'value' }],
     description: 'Additional NFT attributes',
     required: false,
   })
@@ -90,6 +90,11 @@ export class SaveCollectionBody {
 }
 
 export class UploadNftMediaFileParams {
+  @IsNumberString()
+  id: number;
+}
+
+export class GetNftTokenURIParams {
   @IsNumberString()
   id: number;
 }

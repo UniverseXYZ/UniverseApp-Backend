@@ -35,6 +35,7 @@
     "@nestjs/swagger": "^4.8.0",
     "@nestjs/testing": "^7.6.15",
     "@nestjs/typeorm": "^7.1.5",
+    "arweave-store": "^1.0.0",
     "aws-sdk": "^2.902.0",
     "better-queue": "^3.8.10",
     "class-transformer": "^0.4.0",

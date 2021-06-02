@@ -1,5 +1,5 @@
-import { Body, Controller, Post, UseGuards, Request, UseInterceptors, UploadedFile, Param } from '@nestjs/common';
-import { SaveCollectionBody, SaveNftBody, UploadNftMediaFileParams } from './dto';
+import { Body, Controller, Post, UseGuards, Request, UseInterceptors, UploadedFile, Param, Get } from '@nestjs/common';
+import { GetNftTokenURIParams, SaveCollectionBody, SaveNftBody, UploadNftMediaFileParams } from './dto';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { NftService } from '../service_layer/nft.service';
 import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
@@ -59,5 +59,17 @@ export class NftController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     return await this.nftService.uploadMediaFile(params.id, file);
+  }
+
+  @Get('nfts/:id/token-uri')
+  @UseGuards(JwtAuthGuard)
+  @ApiTags('nfts')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Generate the token URI for an NFT' })
+  @ApiParam({ name: 'id', description: 'The id of the nft', required: true, example: 1 })
+  async getTokenURI(@Param() params: GetNftTokenURIParams) {
+    return {
+      tokenUri: await this.nftService.getTokenURI(params.id),
+    };
   }
 }

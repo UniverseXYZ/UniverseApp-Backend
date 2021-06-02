@@ -5,7 +5,7 @@ import { Nft } from './domain/nft.entity';
 import { NftController } from './entrypoints/nft.controller';
 import { NftCollection } from './domain/collection.entity';
 import { FileProcessingModule } from '../file-processing/file-processing.module';
-import { S3Module } from '../s3/s3.module';
+import { FileStorageModule } from '../file-storage/file-storage.module';
 import { AppConfigModule } from '../configuration/configuration.module';
 import { FileSystemModule } from '../file-system/file-system.module';
 
@@ -14,7 +14,7 @@ import { FileSystemModule } from '../file-system/file-system.module';
   imports: [
     TypeOrmModule.forFeature([Nft, NftCollection]),
     FileProcessingModule,
-    S3Module,
+    FileStorageModule,
     AppConfigModule,
     FileSystemModule,
   ],
