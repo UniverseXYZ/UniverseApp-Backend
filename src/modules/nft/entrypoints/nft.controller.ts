@@ -45,7 +45,7 @@ export class NftController {
     });
   }
 
-  @Post('/nfts/:id/file')
+  @Post('/saved-nfts/:id/file')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('file', multerOptions()))
   @ApiTags('nfts')

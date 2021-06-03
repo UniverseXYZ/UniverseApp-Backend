@@ -9,6 +9,7 @@ import { S3Service } from '../../file-storage/s3.service';
 import { AppConfig } from '../../configuration/configuration.service';
 import { FileSystemService } from '../../file-system/file-system.service';
 import { ArweaveService } from '../../file-storage/arweave.service';
+import { SavedNft } from '../domain/saved-nft.entity';
 
 type SaveNftParams = {
   userId: number;
@@ -39,6 +40,8 @@ export class NftService {
     @InjectRepository(Nft) private nftRepository: Repository<Nft>,
     @InjectRepository(NftCollection)
     private nftCollectionRepository: Repository<NftCollection>,
+    @InjectRepository(SavedNft)
+    private savedNftRepository: Repository<SavedNft>,
     private fileProcessingService: FileProcessingService,
     private s3Service: S3Service,
     private arweaveService: ArweaveService,
@@ -47,26 +50,27 @@ export class NftService {
   ) {}
 
   public async saveForLater(params: SaveNftParams) {
-    const nfts = [];
-    const idxs = [...Array(params.numberOfEditions).keys()];
-
-    for (const idx of idxs) {
-      const nft = this.nftRepository.create(params);
-      nfts.push(await this.nftRepository.save(nft));
-    }
-
-    return nfts.map((nft) => {
-      const { id, name, description, properties, royalties, createdAt } = nft;
-
-      return {
-        id,
-        name,
-        description,
-        properties,
-        royalties,
-        createdAt,
-      };
+    const savedNft = this.savedNftRepository.create({
+      name: params.name,
+      description: params.description,
+      numberOfEditions: params.numberOfEditions,
+      properties: params.properties,
+      royalties: params.royalties,
+      userId: params.userId,
     });
+    const dbSavedNft = await this.savedNftRepository.save(savedNft);
+
+    return {
+      savedNft: {
+        id: dbSavedNft.id,
+        name: dbSavedNft.name,
+        description: dbSavedNft.description,
+        properties: dbSavedNft.properties,
+        royalties: dbSavedNft.royalties,
+        numberOfEditions: dbSavedNft.numberOfEditions,
+        createdAt: dbSavedNft.createdAt,
+      },
+    };
   }
 
   public async saveCollectionForLater(params: SaveCollectionParams) {
@@ -110,7 +114,7 @@ export class NftService {
 
   public async uploadMediaFile(id: number, file: Express.Multer.File) {
     try {
-      const nft = await this.nftRepository.findOne({ where: { id } });
+      const nft = await this.savedNftRepository.findOne({ where: { id } });
 
       if (!nft) {
         throw new NftNotFoundException();
@@ -121,13 +125,8 @@ export class NftService {
       const uniqueFiles = [optimisedFile, downsizedFile].filter((fileItem) => fileItem.path !== file.path);
 
       await Promise.all([
-        this.s3Service.uploadDocument(file.path, `${this.config.values.aws.pathPrefix}/nfts/${file.filename}`),
-        ...uniqueFiles.map((fileItem) =>
-          this.s3Service.uploadDocument(
-            fileItem.path,
-            `${this.config.values.aws.pathPrefix}/nfts/${fileItem.fullFilename()}`,
-          ),
-        ),
+        this.s3Service.uploadDocument(file.path, `${file.filename}`),
+        ...uniqueFiles.map((fileItem) => this.s3Service.uploadDocument(fileItem.path, `${fileItem.fullFilename()}`)),
       ]);
 
       await Promise.all(
@@ -137,8 +136,25 @@ export class NftService {
       nft.url = file.filename;
       nft.optimized_url = optimisedFile.fullFilename();
       nft.thumbnail_url = downsizedFile.fullFilename();
+      nft.artwork_type = file.mimetype.split('/')[1];
 
-      await this.nftRepository.save(nft);
+      const dbSavedNft = await this.savedNftRepository.save(nft);
+
+      return {
+        savedNft: {
+          id: dbSavedNft.id,
+          name: dbSavedNft.name,
+          description: dbSavedNft.description,
+          properties: dbSavedNft.properties,
+          royalties: dbSavedNft.royalties,
+          numberOfEditions: dbSavedNft.numberOfEditions,
+          url: dbSavedNft.url,
+          optimized_url: dbSavedNft.optimized_url,
+          thumbnail_url: dbSavedNft.thumbnail_url,
+          artwork_type: dbSavedNft.artwork_type,
+          createdAt: dbSavedNft.createdAt,
+        },
+      };
     } catch (error) {
       throw error;
       this.fileSystemService.removeFile(file.path);

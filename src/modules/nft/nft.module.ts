@@ -8,11 +8,12 @@ import { FileProcessingModule } from '../file-processing/file-processing.module'
 import { FileStorageModule } from '../file-storage/file-storage.module';
 import { AppConfigModule } from '../configuration/configuration.module';
 import { FileSystemModule } from '../file-system/file-system.module';
+import { SavedNft } from './domain/saved-nft.entity';
 
 @Module({
   providers: [NftService],
   imports: [
-    TypeOrmModule.forFeature([Nft, NftCollection]),
+    TypeOrmModule.forFeature([Nft, NftCollection, SavedNft]),
     FileProcessingModule,
     FileStorageModule,
     AppConfigModule,
