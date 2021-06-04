@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import * as helmet from 'helmet';
+import helmet from 'helmet';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
 
@@ -7,7 +7,7 @@ import { AppModule } from './app.module';
 import { AppConfig } from 'src/modules/configuration/configuration.service';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
-import * as session from 'express-session';
+import session from 'express-session';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);

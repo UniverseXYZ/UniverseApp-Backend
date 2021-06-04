@@ -1,46 +1,21 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity, ManyToOne,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
-import { NftCollection } from './collection.entity';
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
-
-export enum NftSource {
-  UNIVERSE = "universe",
-  SCRAPER = "scraper"
-}
 @Entity()
-export class Nft {
+export class SavedNft {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
   userId: number;
 
-  @Column({
-    type: "enum",
-    enum: NftSource,
-    default: NftSource.UNIVERSE
-  })
-  source: NftSource;
-
-  @Column({ nullable: true })
-  txHash: string;
-
-  @Column({ default: false })
-  onChain: boolean;
-
   @Column({ nullable: true })
   name: string;
 
   @Column({ nullable: true })
-  tokenId: string;
-
-  @Column({ nullable: true })
   description?: string;
+
+  @Column()
+  numberOfEditions: number;
 
   @Column({ nullable: true })
   artwork_type?: string;
@@ -61,24 +36,14 @@ export class Nft {
   @Column({ nullable: true })
   original_url?: string;
 
-  //arweave json metadata uri
-  @Column({ nullable: true })
-  token_uri: string;
-
   @Column({ type: 'jsonb', nullable: true })
   properties?: any;
 
   @Column({ type: 'real', nullable: true })
   royalties?: number;
 
-  @ManyToOne(
-    () => NftCollection,
-    (nftCollection) => nftCollection.collectibles,
-  )
-  collection: NftCollection;
-
-  @Column({ default: true })
-  refreshed: boolean;
+  @Column({ type: 'integer', nullable: true })
+  collectionId: number;
 
   @CreateDateColumn()
   createdAt: Date;

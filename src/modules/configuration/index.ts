@@ -30,8 +30,11 @@ export const configValues = {
   frontend: {
     domain: process.env.FRONTEND_DOMAIN,
   },
+  arweave: {
+    wallet: process.env.AIRWEAVE_WALLET,
+  },
 };
 
 export default registerAs('config', () => {
-  return configValues
+  return configValues;
 });

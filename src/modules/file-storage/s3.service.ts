@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as S3Client from 'aws-sdk/clients/s3';
+import S3Client from 'aws-sdk/clients/s3';
 import { AppConfig } from '../configuration/configuration.service';
-import * as fs from 'fs';
-​
+import fs from 'fs';
+
 @Injectable()
 export class S3Service {
   constructor(

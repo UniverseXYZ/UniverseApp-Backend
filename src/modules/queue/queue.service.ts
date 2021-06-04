@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as S3Client from 'aws-sdk/clients/s3';
 import { AppConfig } from '../configuration/configuration.service';
-import * as Queue from 'better-queue';
+import Queue from 'better-queue';
 
 @Injectable()
 export class QueueService {

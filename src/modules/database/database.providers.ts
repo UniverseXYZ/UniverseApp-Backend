@@ -4,9 +4,10 @@ import { AppConfig } from '../configuration/configuration.service';
 import { User } from '../users/user.entity';
 import { Nft } from '../nft/domain/nft.entity';
 import { NftCollection } from '../nft/domain/collection.entity';
+import { SavedNft } from '../nft/domain/saved-nft.entity';
 
 // TODO: Add db entities here
-const entities = [User, Nft, NftCollection];
+const entities = [User, Nft, NftCollection, SavedNft];
 
 @Injectable()
 export class TypeOrmDefaultConfigService implements TypeOrmOptionsFactory {
