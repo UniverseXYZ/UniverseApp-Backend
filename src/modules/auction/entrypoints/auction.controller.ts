@@ -1,5 +1,5 @@
 import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
-import { CreateRewardTierBody } from './dto';
+import { CreateAuctionBody, CreateRewardTierBody } from './dto';
 import { AuctionService } from '../service-layer/auction.service';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 
@@ -20,5 +20,20 @@ export class AuctionController {
       createRewardTierBody.nftsPerWinner,
       createRewardTierBody.nftIds,
     );
+  }
+
+  @Post('create-auction')
+  @UseGuards(JwtAuthGuard)
+  async createAuction(
+    @Req() req,
+    @Body() createAuctionBody: CreateAuctionBody,
+  ) {
+    return await this.auctionService.createAuction(
+      req.user.sub,
+      createAuctionBody.name,
+      createAuctionBody.startDate,
+      createAuctionBody.endDate,
+      createAuctionBody.bidCurrency,
+      createAuctionBody.startingBid);
   }
 }

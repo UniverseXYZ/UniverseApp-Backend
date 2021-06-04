@@ -1,11 +1,13 @@
 import {
   Column,
   CreateDateColumn,
+  Entity,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
-export class RewardTier {
+@Entity()
+export class Auction {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -15,29 +17,32 @@ export class RewardTier {
   @Column()
   name: string;
 
-  @Column({ type: 'integer' })
-  numberOfWinners: number;
+  @Column()
+  startingBid: number;
 
-  @Column({ type: 'integer' })
-  nftsPerWinner: number;
+  @Column({ default: 'ETH' })
+  bidCurrency: string;
 
   @Column()
-  minimumBid: number;
+  startDate: Date;
 
   @Column()
-  auctionId: number;
+  endDate: Date;
 
   @Column()
-  tierPosition: number;
+  headline: string;
 
   @Column()
-  customDescription: string;
+  link: string;
 
   @Column()
-  tierImage: string;
+  promoImage: string;
 
   @Column()
-  tierColor: string;
+  backgroundImage: string;
+
+  @Column({ default: false })
+  backgroundBlur: boolean;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -45,7 +50,3 @@ export class RewardTier {
   @UpdateDateColumn()
   updatedAt: Date;
 }
-
-/*
- * up to 20 winners and up to 5 nfts per winner, so max 100 NFTs
- */

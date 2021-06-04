@@ -1,4 +1,4 @@
-import { IsInt, IsNumber, IsString, Max } from 'class-validator';
+import { IsDateString, IsInt, IsNumber, IsString, Max } from 'class-validator';
 
 export class CreateRewardTierBody {
   @IsString()
@@ -14,4 +14,21 @@ export class CreateRewardTierBody {
 
   @IsInt({ each: true })
   nftIds: number[];
+}
+
+export class CreateAuctionBody {
+  @IsString()
+  name: string;
+
+  @IsDateString()
+  startDate: Date;
+
+  @IsDateString()
+  endDate: Date;
+
+  @IsString()
+  bidCurrency: string;
+
+  @IsNumber()
+  startingBid: number;
 }

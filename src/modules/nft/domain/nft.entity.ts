@@ -1,16 +1,16 @@
 import {
   Column,
   CreateDateColumn,
-  Entity, ManyToOne,
+  Entity,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { NftCollection } from './collection.entity';
 
-
 export enum NftSource {
-  UNIVERSE = "universe",
-  SCRAPER = "scraper"
+  UNIVERSE = 'universe',
+  SCRAPER = 'scraper',
 }
 @Entity()
 export class Nft {
@@ -21,9 +21,9 @@ export class Nft {
   userId: number;
 
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: NftSource,
-    default: NftSource.UNIVERSE
+    default: NftSource.UNIVERSE,
   })
   source: NftSource;
 
@@ -74,10 +74,7 @@ export class Nft {
   @Column({ type: 'real', nullable: true })
   royalties?: number;
 
-  @ManyToOne(
-    () => NftCollection,
-    (nftCollection) => nftCollection.collectibles,
-  )
+  @ManyToOne(() => NftCollection, (nftCollection) => nftCollection.collectibles)
   collection: NftCollection;
 
   @Column({ default: true })

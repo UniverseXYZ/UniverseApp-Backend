@@ -8,8 +8,13 @@ import { User } from '../users/user.entity';
 import { NftScraperService } from './nftScraper.service';
 
 @Module({
-    imports: [AppConfigModule, QueueModule, HttpModule, TypeOrmModule.forFeature([Nft, NftCollection, User]),],
-    providers: [NftScraperService],
-    exports: [NftScraperService],
+  imports: [
+    AppConfigModule,
+    QueueModule,
+    HttpModule,
+    TypeOrmModule.forFeature([Nft, NftCollection, User]),
+  ],
+  providers: [NftScraperService],
+  exports: [NftScraperService],
 })
-export class NftScraperModule { }
+export class NftScraperModule {}
