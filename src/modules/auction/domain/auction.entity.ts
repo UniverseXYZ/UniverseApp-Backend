@@ -17,6 +17,12 @@ export class Auction {
   @Column()
   name: string;
 
+  @Column({ default: false })
+  onChain: boolean;
+
+  @Column()
+  onChainId: number;
+
   @Column()
   startingBid: number;
 
