@@ -1,5 +1,5 @@
 import { Body, Controller, Param, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
-import { CreateAuctionBody, CreateRewardTierBody, UpdateRewardTierBody, UpdateRewardTierExtraBody } from './dto';
+import { AuctionBody, CreateAuctionBody, CreateRewardTierBody, UpdateAuctionBody, UpdateAuctionExtraBody, UpdateRewardTierBody, UpdateRewardTierExtraBody } from './dto';
 import { AuctionService } from '../service-layer/auction.service';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -40,9 +40,9 @@ export class AuctionController {
     );
   }
 
-  @Put('reward-tiers-extra')
+  @Put('reward-tiers-extra-data')
   @UseGuards(JwtAuthGuard)
-  async updateRewardTierExtra(
+  async updateRewardTierExtraData(
     @Req() req,
     @Body() updateRewardTierExtraBody: UpdateRewardTierExtraBody,
   ) {
@@ -57,7 +57,7 @@ export class AuctionController {
   @Post('/reward-tiers-image')
   @UseInterceptors(FileInterceptor('file'))
   @UseGuards(JwtAuthGuard)
-  async uploadProfileImage(
+  async uploadRewardsTierImage(
     @UploadedFile() file: Express.Multer.File,
     @Req() req,
     @Param() tierId: number,
@@ -66,7 +66,7 @@ export class AuctionController {
     return ret;
   }
 
-  @Post('create-auction')
+  @Post('auction')
   @UseGuards(JwtAuthGuard)
   async createAuction(
     @Req() req,
@@ -79,5 +79,59 @@ export class AuctionController {
       createAuctionBody.endDate,
       createAuctionBody.bidCurrency,
       createAuctionBody.startingBid);
+  }
+
+  @Put('auction')
+  @UseGuards(JwtAuthGuard)
+  async updateAuction(
+    @Req() req,
+    @Body() updateAuctionBody: UpdateAuctionBody,
+  ) {
+    return await this.auctionService.updateAuction(
+      req.user.sub,
+      updateAuctionBody.auctionId,
+      updateAuctionBody.name,
+      updateAuctionBody.startDate,
+      updateAuctionBody.endDate,
+      updateAuctionBody.bidCurrency,
+      updateAuctionBody.startingBid);
+  }
+
+  @Put('auction-extra-data')
+  @UseGuards(JwtAuthGuard)
+  async updateAuctionExtraData(
+    @Req() req,
+    @Body() updateAuctionExtraBody: UpdateAuctionExtraBody,
+  ) {
+    return await this.auctionService.updateAuctionExtraData(
+      req.user.sub,
+      updateAuctionExtraBody.auctionId,
+      updateAuctionExtraBody.headline,
+      updateAuctionExtraBody.link,
+      updateAuctionExtraBody.backgroundBlur);
+  }
+
+  @Post('/auction-promo-image')
+  @UseInterceptors(FileInterceptor('file'))
+  @UseGuards(JwtAuthGuard)
+  async uploadAuctionPromoImage(
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req,
+    @Param() auctionId: number,
+  ) {
+    const ret = await this.auctionService.updateAuctionPromoImage(req.user, auctionId, file );
+    return ret;
+  }
+
+  @Post('/auction-background-image')
+  @UseInterceptors(FileInterceptor('file'))
+  @UseGuards(JwtAuthGuard)
+  async uploadAuctionBackgroundImage(
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req,
+    @Param() auctionId: number,
+  ) {
+    const ret = await this.auctionService.updateAuctionBackgroundImage(req.user, auctionId, file );
+    return ret;
   }
 }

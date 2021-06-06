@@ -35,7 +35,7 @@ export class UpdateRewardTierExtraBody {
   @IsString()
   tierColor: string;
 }
-export class CreateAuctionBody {
+export class AuctionBody {
   @IsString()
   name: string;
 
@@ -50,4 +50,25 @@ export class CreateAuctionBody {
 
   @IsNumber()
   startingBid: number;
+}
+
+export class CreateAuctionBody extends AuctionBody {}
+
+export class UpdateAuctionBody extends AuctionBody {
+  @IsNumber()
+  auctionId: number;
+}
+
+export class UpdateAuctionExtraBody {
+  @IsNumber()
+  auctionId: number;
+
+  @IsString()
+  headline: string;
+
+  @IsString()
+  link: string;
+
+  @IsString()
+  backgroundBlur: boolean;
 }
