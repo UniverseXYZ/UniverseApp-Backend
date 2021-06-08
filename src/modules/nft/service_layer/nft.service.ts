@@ -165,25 +165,52 @@ export class NftService {
   }
 
   public async getTokenURI(id: number) {
-    const nft = await this.nftRepository.findOne({ where: { id } });
+    const savedNft = await this.savedNftRepository.findOne({ where: { id } });
 
-    if (!nft) {
+    if (!savedNft) {
       throw new NftNotFoundException();
     }
 
-    const tokenUri = await this.arweaveService.store({
-      name: nft.name,
-      description: nft.description,
-      image_url: nft.url,
-      image_preview_url: nft.optimized_url,
-      image_thumbnail_url: nft.thumbnail_url,
-      image_original_url: nft.original_url,
-      traits: nft.properties,
+    // await this.savedNftRepository.delete({ id: savedNft.id });
+    const idxs = [...Array(savedNft.numberOfEditions).keys()];
+    console.log(savedNft.properties);
+    return await Promise.all(
+      idxs.map(async (_) => {
+        const tokenUri = await this.generateTokenUriForSavedNftEdition(savedNft);
+        const nft = await this.createNftFromSavedNft(savedNft, tokenUri);
+        return nft.token_uri;
+      }),
+    );
+  }
+
+  private async createNftFromSavedNft(savedNft: SavedNft, tokenUri: any) {
+    const nft = await this.nftRepository.create({
+      name: savedNft.name,
+      description: savedNft.description,
+      token_uri: tokenUri,
+      properties: savedNft.properties,
+      royalties: savedNft.royalties,
+      url: savedNft.url,
+      optimized_url: savedNft.optimized_url,
+      thumbnail_url: savedNft.thumbnail_url,
+      original_url: savedNft.original_url,
+      artwork_type: savedNft.artwork_type,
+      userId: savedNft.userId,
+      editionUUID: savedNft.editionUUID,
     });
+    return await this.nftRepository.save(nft);
+  }
 
-    nft.token_uri = tokenUri;
-    await this.nftRepository.save(nft);
-
-    return nft.token_uri;
+  private async generateTokenUriForSavedNftEdition(savedNft: SavedNft) {
+    const tokenUri = await this.arweaveService.store({
+      name: savedNft.name,
+      description: savedNft.description,
+      image_url: savedNft.url,
+      image_preview_url: savedNft.optimized_url,
+      image_thumbnail_url: savedNft.thumbnail_url,
+      image_original_url: savedNft.original_url,
+      traits: savedNft.properties,
+    });
+    return tokenUri;
   }
 }
