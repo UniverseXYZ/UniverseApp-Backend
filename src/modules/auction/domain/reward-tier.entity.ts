@@ -1,10 +1,13 @@
+import { Exclude } from 'class-transformer';
 import {
   Column,
   CreateDateColumn,
+  Entity,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
+@Entity()
 export class RewardTier {
   @PrimaryGeneratedColumn()
   id: number;
@@ -30,19 +33,21 @@ export class RewardTier {
   @Column()
   tierPosition: number;
 
-  @Column()
+  @Column({nullable:true})
   customDescription: string;
 
-  @Column()
+  @Column({nullable:true})
   tierImage: string;
 
-  @Column()
+  @Column({nullable:true})
   tierColor: string;
 
   @CreateDateColumn()
+  @Exclude()
   createdAt: Date;
 
   @UpdateDateColumn()
+  @Exclude()
   updatedAt: Date;
 }
 

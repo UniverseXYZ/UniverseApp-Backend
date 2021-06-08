@@ -1,13 +1,14 @@
-import { Body, Controller, Param, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
-import { AuctionBody, CreateAuctionBody, CreateRewardTierBody, UpdateAuctionBody, UpdateAuctionExtraBody, UpdateRewardTierBody, UpdateRewardTierExtraBody } from './dto';
+import { Body, Controller, Get, Param, Patch, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { AuctionBody, CreateAuctionBody, CreateRewardTierBody, UpdateAuctionBody, UpdateAuctionExtraBody, UpdateAuctionExtraBodyParams, UpdateRewardTierBody, UpdateRewardTierExtraBody } from './dto';
 import { AuctionService } from '../service-layer/auction.service';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('api')
 export class AuctionController {
-  constructor(private auctionService: AuctionService) {}
+  constructor(private auctionService: AuctionService) { }
 
+  //needs to check that there are enough nfts, and that the nfts are not already set as rewards in other tiers
   @Post('reward-tiers')
   @UseGuards(JwtAuthGuard)
   async createRewardTier(
@@ -17,13 +18,18 @@ export class AuctionController {
     return await this.auctionService.createRewardTier(
       req.user.sub,
       createRewardTierBody.auctionId,
-      createRewardTierBody.name,
-      createRewardTierBody.numberOfWinners,
-      createRewardTierBody.nftsPerWinner,
-      createRewardTierBody.nftIds,
+      {
+        name: createRewardTierBody.name,
+        numberOfWinners: createRewardTierBody.numberOfWinners,
+        nftsPerWinner: createRewardTierBody.nftsPerWinner,
+        nftIds: createRewardTierBody.nftIds,
+        minimumBid: createRewardTierBody.minimumBid,
+        tierPosition: createRewardTierBody.tierPosition
+      }
     );
   }
 
+  //check that no nft is deposited yet
   @Put('reward-tiers')
   @UseGuards(JwtAuthGuard)
   async updateRewardTier(
@@ -60,13 +66,12 @@ export class AuctionController {
   async uploadRewardsTierImage(
     @UploadedFile() file: Express.Multer.File,
     @Req() req,
-    @Param() tierId: number,
   ) {
-    const ret = await this.auctionService.updateRewardTierImage(req.user, tierId, file );
+    const ret = await this.auctionService.updateRewardTierImage(req.user, req.body.tierId, file);
     return ret;
   }
 
-  @Post('auction')
+  @Post('/auction')
   @UseGuards(JwtAuthGuard)
   async createAuction(
     @Req() req,
@@ -81,7 +86,7 @@ export class AuctionController {
       createAuctionBody.startingBid);
   }
 
-  @Put('auction')
+  @Patch('auction')
   @UseGuards(JwtAuthGuard)
   async updateAuction(
     @Req() req,
@@ -90,14 +95,16 @@ export class AuctionController {
     return await this.auctionService.updateAuction(
       req.user.sub,
       updateAuctionBody.auctionId,
-      updateAuctionBody.name,
-      updateAuctionBody.startDate,
-      updateAuctionBody.endDate,
-      updateAuctionBody.bidCurrency,
-      updateAuctionBody.startingBid);
+      {
+        name: updateAuctionBody.name,
+        startDate: updateAuctionBody.startDate,
+        endDate: updateAuctionBody.endDate,
+        bidCurrency: updateAuctionBody.bidCurrency,
+        startingBid: updateAuctionBody.startingBid
+      });
   }
 
-  @Put('auction-extra-data')
+  @Patch('auction-extra-data')
   @UseGuards(JwtAuthGuard)
   async updateAuctionExtraData(
     @Req() req,
@@ -106,9 +113,11 @@ export class AuctionController {
     return await this.auctionService.updateAuctionExtraData(
       req.user.sub,
       updateAuctionExtraBody.auctionId,
-      updateAuctionExtraBody.headline,
-      updateAuctionExtraBody.link,
-      updateAuctionExtraBody.backgroundBlur);
+      {
+        headline: updateAuctionExtraBody.headline,
+        link: updateAuctionExtraBody.link,
+        backgroundBlur: updateAuctionExtraBody.backgroundBlur,
+      });
   }
 
   @Post('/auction-promo-image')
@@ -117,9 +126,8 @@ export class AuctionController {
   async uploadAuctionPromoImage(
     @UploadedFile() file: Express.Multer.File,
     @Req() req,
-    @Param() auctionId: number,
   ) {
-    const ret = await this.auctionService.updateAuctionPromoImage(req.user, auctionId, file );
+    const ret = await this.auctionService.updateAuctionPromoImage(req.user, req.body.auctionId, file);
     return ret;
   }
 
@@ -129,9 +137,29 @@ export class AuctionController {
   async uploadAuctionBackgroundImage(
     @UploadedFile() file: Express.Multer.File,
     @Req() req,
-    @Param() auctionId: number,
   ) {
-    const ret = await this.auctionService.updateAuctionBackgroundImage(req.user, auctionId, file );
+    console.log(req);
+    const ret = await this.auctionService.updateAuctionBackgroundImage(req.user, req.body.auctionId, file);
     return ret;
+  }
+
+  @Get('auctions')
+  @UseGuards(JwtAuthGuard)
+  async listAuctions(
+    @Req() req,
+  ) {
+    return await this.auctionService.listAuctions(
+      req.user.sub,
+    );
+  }
+
+  @Get('auctions/{:status}')
+  @UseGuards(JwtAuthGuard)
+  async listAuctionsFiltered(
+    @Req() req,
+  ) {
+    return await this.auctionService.listAuctions(
+      req.user.sub,
+    );
   }
 }

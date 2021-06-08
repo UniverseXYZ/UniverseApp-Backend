@@ -15,6 +15,7 @@ import { QueueModule } from './modules/queue/queue.model';
 import { UsersModule } from './modules/users/users.module';
 import { NftModule } from './modules/nft/nft.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { AuctionModule } from './modules/auction/auction.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { AuthModule } from './modules/auth/auth.module';
     NftScraperModule,
     NftModule,
     AuthModule,
+    AuctionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

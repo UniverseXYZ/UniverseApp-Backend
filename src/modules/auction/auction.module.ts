@@ -12,10 +12,20 @@ import { AuctionController } from './entrypoints/auction.controller';
 import { AuctionService } from './service-layer/auction.service';
 
 @Module({
-  imports: [AppConfigModule, FileStorageModule, MulterModule.registerAsync({
-    useClass: MulterConfigService,
-  }), TypeOrmModule.forFeature([User, Auction, RewardTier, RewardTierNft])],
+  imports: [
+    AppConfigModule,
+    FileStorageModule,
+    MulterModule.registerAsync({
+      useClass: MulterConfigService,
+    }),
+    TypeOrmModule.forFeature([
+      User,
+      Auction,
+      RewardTier,
+      RewardTierNft
+    ])],
   controllers: [AuctionController],
+  exports: [AuctionService],
   providers: [AuctionService],
 })
 export class AuctionModule {}

@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import {
   Column,
   CreateDateColumn,
@@ -20,8 +21,11 @@ export class Auction {
   @Column({ default: false })
   onChain: boolean;
 
-  @Column()
+  @Column({nullable: true})
   onChainId: number;
+
+  @Column({nullable: true})
+  txHash: string;
 
   @Column()
   startingBid: number;
@@ -35,24 +39,26 @@ export class Auction {
   @Column()
   endDate: Date;
 
-  @Column()
+  @Column({nullable: true})
   headline: string;
 
-  @Column()
+  @Column({nullable: true})
   link: string;
 
-  @Column()
+  @Column({nullable: true})
   promoImage: string;
 
-  @Column()
+  @Column({nullable: true})
   backgroundImage: string;
 
   @Column({ default: false })
   backgroundBlur: boolean;
 
+  @Exclude()
   @CreateDateColumn()
   createdAt: Date;
 
+  @Exclude()
   @UpdateDateColumn()
   updatedAt: Date;
 }
