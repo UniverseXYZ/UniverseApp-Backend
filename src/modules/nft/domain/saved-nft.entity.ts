@@ -8,6 +8,9 @@ export class SavedNft {
   @Column()
   userId: number;
 
+  @Column()
+  editionUUID: string;
+
   @Column({ nullable: true })
   name: string;
 

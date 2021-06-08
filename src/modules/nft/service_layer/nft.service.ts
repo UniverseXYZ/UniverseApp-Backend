@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Nft } from '../domain/nft.entity';
 import { Connection, Repository } from 'typeorm';
+import { customAlphabet } from 'nanoid';
+import { Nft } from '../domain/nft.entity';
 import { NftCollection } from '../domain/collection.entity';
 import { NftNotFoundException } from './exceptions/NftNotFoundException';
 import { FileProcessingService } from '../../file-processing/file-processing.service';
@@ -50,6 +51,7 @@ export class NftService {
   ) {}
 
   public async saveForLater(params: SaveNftParams) {
+    const uuid = customAlphabet('1234567890abcdef', 10)();
     const savedNft = this.savedNftRepository.create({
       name: params.name,
       description: params.description,
@@ -57,6 +59,7 @@ export class NftService {
       properties: params.properties,
       royalties: params.royalties,
       userId: params.userId,
+      editionUUID: uuid,
     });
     const dbSavedNft = await this.savedNftRepository.save(savedNft);
 
@@ -156,8 +159,8 @@ export class NftService {
         },
       };
     } catch (error) {
+      this.fileSystemService.removeFile(file.path).finally(() => {});
       throw error;
-      this.fileSystemService.removeFile(file.path);
     }
   }
 
