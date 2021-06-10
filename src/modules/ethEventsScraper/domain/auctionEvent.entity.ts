@@ -10,7 +10,7 @@ import {
 
 //Todo: check entity name and structure
 @Entity('asdasd')
-export class CreateCollectionEvent {
+export class CreateNftEvent {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -24,13 +24,7 @@ export class CreateCollectionEvent {
   log_index: number;
 
   @Column()
-  token_name: string;
-
-  @Column()
-  token_symbol: string;
-
-  @Column()
-  contract_address: string;
+  data: {}
 
   @Column()
   block_timestamp: string;

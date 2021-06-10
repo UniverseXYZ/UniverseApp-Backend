@@ -36,18 +36,23 @@ export class UpdateRewardTierBody{
   tierId: number;
 
   @IsString()
+  @IsOptional()
   name: string;
 
   @IsNumber()
+  @IsOptional()
   numberOfWinners: number;
 
   @IsNumber()
+  @IsOptional()
   minimumBid: number;
 
   @IsNumber()
+  @IsOptional()
   nftsPerWinner: number;
 
   @IsNumber({},{each: true})
+  @IsOptional()
   nftIds: number[];
 }
 
@@ -106,6 +111,10 @@ export class UpdateAuctionBody {
   @IsNumber()
   @IsOptional()
   startingBid: number;
+
+  @IsString()
+  @IsOptional()
+  txHash: string;
 }
 
 export class UpdateAuctionExtraBodyParams {

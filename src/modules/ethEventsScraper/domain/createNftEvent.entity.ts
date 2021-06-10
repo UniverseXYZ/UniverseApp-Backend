@@ -8,6 +8,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
+//Todo: check entity name and structure
 @Entity('asdasd')
 export class CreateNftEvent {
   @PrimaryGeneratedColumn()

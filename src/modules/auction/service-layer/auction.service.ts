@@ -6,6 +6,7 @@ import { Auction } from '../domain/auction.entity';
 import { S3Service } from '../../file-storage/s3.service';
 import { AppConfig } from 'src/modules/configuration/configuration.service';
 import { InjectRepository } from '@nestjs/typeorm';
+import { AuctionStatus } from '../domain/types'
 import { UpdateAuctionBodyParams, UpdateAuctionExtraBodyParams } from '../entrypoints/dto'
 @Injectable()
 export class AuctionService {
@@ -32,7 +33,7 @@ export class AuctionService {
       tierPosition: number;
     }
   ) {
-    const tier = await this.rewardTierRepository.findOne({where: {userId, auctionId, tierPosition: params.tierPosition}});
+    const tier = await this.rewardTierRepository.findOne({ where: { userId, auctionId, tierPosition: params.tierPosition } });
     if (tier) return tier;
 
     return await getManager().transaction(
@@ -70,10 +71,12 @@ export class AuctionService {
   async updateRewardTier(
     userId: number,
     tierId: number,
-    name: string,
-    numberOfWinners: number,
-    nftsPerWinner: number,
-    nftIds: number[],
+    params: {
+      name: string,
+      numberOfWinners: number,
+      nftsPerWinner: number,
+      nftIds: number[],
+    }
   ) {
     return await getManager().transaction(
       'SERIALIZABLE',
@@ -86,25 +89,36 @@ export class AuctionService {
           //throw error
         }
 
-        tier.name = name;
-        tier.numberOfWinners = numberOfWinners;
-        tier.nftsPerWinner = nftsPerWinner;
+        tier.name = params.name ? params.name : tier.name;
+        tier.numberOfWinners = params.numberOfWinners ? params.numberOfWinners : tier.numberOfWinners;
+        tier.nftsPerWinner = params.nftsPerWinner ? params.nftsPerWinner : tier.nftsPerWinner;
+
         await transactionalEntityManager.save(tier);
 
-        await transactionalEntityManager.createQueryBuilder().delete().from(RewardTierNft).where('rewardTierId = :tierId', { tierId: tier.id }).execute();
+        if (params.nftIds) {
+          const createdNfts = await this.rewardTierNftRepository.find({ where: { rewardTierId: tierId } });
+          const createdNftIds = [];
+          for (const nft of createdNfts) {
+            createdNftIds.push(nft.nftId);
+          }
 
-        const rewardTierNfts = nftIds.map((nftId) =>
-          this.rewardTierNftRepository.create({
-            rewardTierId: tier.id,
-            nftId: nftId,
-          }),
-        );
+          const idsToDelete = createdNftIds.filter(x => !params.nftIds.includes(x));
+          const idsToCreate = params.nftIds.filter(x => !createdNftIds.includes(x));
+          await transactionalEntityManager.createQueryBuilder().delete().from(RewardTierNft).where('nftId IN (:...idsToDelete)', { idsToDelete }).execute();
 
-        await Promise.all(
-          rewardTierNfts.map((rewardTierNft) =>
-            this.rewardTierNftRepository.save(rewardTierNft),
-          ),
-        );
+          const rewardTierNfts = idsToCreate.map((nftId) =>
+            this.rewardTierNftRepository.create({
+              rewardTierId: tier.id,
+              nftId: nftId,
+            }),
+          );
+
+          await Promise.all(
+            rewardTierNfts.map((rewardTierNft) =>
+              this.rewardTierNftRepository.save(rewardTierNft),
+            ),
+          );
+        }
 
         return tier;
       },
@@ -124,11 +138,11 @@ export class AuctionService {
     return tier
   }
 
-  async updateRewardTierExtraData(userId: number, tierId: number, customDescription: string, tierColor: string) {
+  async updateRewardTierExtraData(userId: number, tierId: number, params: { customDescription: string, tierColor: string }) {
     const tier = await this.validateTierPermissions(userId, tierId);
 
-    tier.customDescription = customDescription;
-    tier.tierColor = tierColor;
+    tier.customDescription = params.customDescription ? params.customDescription : tier.customDescription;
+    tier.tierColor = params.tierColor ? params.tierColor : tier.tierColor;
     await this.rewardTierRepository.save(tier);
     return tier;
   }
@@ -178,6 +192,7 @@ export class AuctionService {
     endDate: Date;
     bidCurrency: string;
     startingBid: number;
+    txHash: string
   }) {
     console.log(userId, auctionId, params)
     const auction = await this.validateAuctionPermissions(userId, auctionId);
@@ -187,6 +202,7 @@ export class AuctionService {
     auction.endDate = params.endDate ? params.endDate : auction.endDate;
     auction.bidCurrency = params.bidCurrency ? params.bidCurrency : auction.bidCurrency;
     auction.startingBid = params.startingBid ? params.startingBid : auction.startingBid;
+    auction.txHash = params.txHash ? params.txHash : auction.txHash;
 
     return await this.auctionRepository.save(auction);
   }
@@ -226,9 +242,111 @@ export class AuctionService {
     return await this.auctionRepository.save(auction);
   }
 
-  async listAuctions(userId: number) {
-    const auctions = await this.auctionRepository.find({ where: { userId } });
+  async getAuction(id: number) {
+    return this.auctionRepository.findOne({ where: { id: id } });
+  }
 
-    return auctions;
+  async listAuctionsByUser(userId: number, page: number = 1, limit: number = 10) {
+    const auctionsQuery = this.auctionRepository.createQueryBuilder().where('userId = :userId', { userId });
+    const countQuery = auctionsQuery.clone();
+
+    const auctionCount = await countQuery
+      .select("count(*) as auction_count")
+      .getRawOne();
+
+    this.setPagination(auctionsQuery, page, limit);
+    const auctions = await auctionsQuery.getMany();
+
+    return {
+      count: auctionCount['auctionCount'],
+      data: auctions
+    };
+  }
+
+  async listAuctionsByUserAndStatus(userId: number, status: string, page: number = 1, limit: number = 10) {
+    const auctionsQuery = this.auctionRepository.createQueryBuilder();
+
+    if (status == AuctionStatus.draft) {
+      auctionsQuery.where('userId = :userId and now() < startDate', { userId });
+    } else
+      if (status == AuctionStatus.active) {
+        auctionsQuery.where('userId = :userId and startDate < now() and now() < endDate', { userId });
+      } else
+        if (status == AuctionStatus.closed) {
+          auctionsQuery.where('userId = :userId and endDate < now()', { userId });
+        } else {
+          return {
+            count: 0,
+            data: []
+          };
+        }
+
+    const countQuery = auctionsQuery.clone();
+    const auctionCount = await countQuery
+      .select("count(*) as auction_count")
+      .getRawOne();
+
+    this.setPagination(auctionsQuery, page, limit);
+    const auctions = await auctionsQuery.getMany();
+
+    return {
+      count: auctionCount['auctionCount'],
+      data: auctions
+    };
+  }
+
+  async listAuctions(page: number = 1, limit: number = 10) {
+    const auctionsQuery = this.auctionRepository.createQueryBuilder();
+    const countQuery = auctionsQuery.clone();
+
+    const auctionCount = await countQuery
+      .select("count(*) as auction_count")
+      .getRawOne();
+
+    this.setPagination(auctionsQuery, page, limit);
+    const auctions = await auctionsQuery.getMany();
+
+    return {
+      count: auctionCount['auctionCount'],
+      data: auctions
+    };
+  }
+
+  async listAuctionsByStatus(status: string, page: number = 1, limit: number = 10) {
+    const auctionsQuery = this.auctionRepository.createQueryBuilder();
+
+    if (status == AuctionStatus.draft) {
+      auctionsQuery.where('now() < startDate');
+    } else
+      if (status == AuctionStatus.active) {
+        auctionsQuery.where('startDate < now() and now() < endDate');
+      } else
+        if (status == AuctionStatus.closed) {
+          auctionsQuery.where('endDate < now()');
+        } else {
+          return {
+            count: 0,
+            data: []
+          };
+        }
+
+    const countQuery = auctionsQuery.clone();
+    const auctionCount = await countQuery
+      .select("count(*) as auction_count")
+      .getRawOne();
+
+    this.setPagination(auctionsQuery, page, limit);
+    const auctions = await auctionsQuery.getMany();
+
+    return {
+      count: auctionCount['auctionCount'],
+      data: auctions
+    };
+  }
+
+  private setPagination(query, page: number, limit: number) {
+    if (limit === 0 || page === 0) return;
+
+    query.limit(limit).offset((page - 1) * limit);
   }
 }
