@@ -49,6 +49,8 @@ export class RewardTier {
   @UpdateDateColumn()
   @Exclude()
   updatedAt: Date;
+
+  nfts: any[];
 }
 
 /*

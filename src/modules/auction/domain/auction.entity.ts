@@ -61,4 +61,6 @@ export class Auction {
   @Exclude()
   @UpdateDateColumn()
   updatedAt: Date;
+
+  rewardTiers: any[]
 }

@@ -107,7 +107,7 @@ export class EthEventsScraperService {
 
   //We might need to rethink how things are stored in the database, don't know if the jsonb encoded data is ok
   //We might need to add a txHash to the nft table, and look for a specific transaction,
-  //  the fe might be tricked by interacting directly with the contract
+  //  downside is that the fe might be tricked by interacting directly with the contract
   //Todo: search for nfts associated with auctions not started and with a valid id (on chain)
   //build an id list, and search through the event list for events linked to these
   async syncDepositNftAuctionEvents() {

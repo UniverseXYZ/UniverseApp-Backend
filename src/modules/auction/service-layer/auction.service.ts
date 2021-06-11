@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { getManager, Repository } from 'typeorm';
+import { getManager, In, Repository } from 'typeorm';
 import { RewardTier } from '../domain/reward-tier.entity';
 import { RewardTierNft } from '../domain/reward-tier-nft.entity';
 import { Auction } from '../domain/auction.entity';
@@ -8,6 +8,7 @@ import { AppConfig } from 'src/modules/configuration/configuration.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuctionStatus } from '../domain/types'
 import { UpdateAuctionBodyParams, UpdateAuctionExtraBodyParams } from '../entrypoints/dto'
+import { Nft } from 'src/modules/nft/domain/nft.entity';
 @Injectable()
 export class AuctionService {
   constructor(
@@ -17,6 +18,8 @@ export class AuctionService {
     private rewardTierNftRepository: Repository<RewardTierNft>,
     @InjectRepository(Auction)
     private auctionRepository: Repository<Auction>,
+    @InjectRepository(Nft)
+    private nftRepository: Repository<Nft>,
     private s3Service: S3Service,
     private readonly config: AppConfig,
   ) { }
@@ -243,7 +246,24 @@ export class AuctionService {
   }
 
   async getAuction(id: number) {
-    return this.auctionRepository.findOne({ where: { id: id } });
+    const auction = await this.auctionRepository.findOne({ where: { id: id } });
+    if (!auction) return;
+
+    const rewardTiers = await this.rewardTierRepository.find({where: {auctionId: auction.id}, order: {tierPosition: 'ASC'}});
+
+    for (const rewardTier of rewardTiers) {
+      const nftsInTier = await this.rewardTierNftRepository.find({where: {rewardTierId: rewardTier.id}});
+      const nftIdsInTier = [];
+      for (const nftInTier of nftsInTier) {
+        nftIdsInTier.push(nftInTier.nftId);
+      }
+      const nftsInfo = await this.nftRepository.find({where : {tokenId: In(nftIdsInTier)}});
+
+      //Todo: group nfts from the same edition?
+      rewardTier.nfts = nftsInfo
+      auction.rewardTiers.push(rewardTier);
+    }
+
   }
 
   async listAuctionsByUser(userId: number, page: number = 1, limit: number = 10) {

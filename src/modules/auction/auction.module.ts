@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppConfigModule } from '../configuration/configuration.module';
 import { FileStorageModule } from '../file-storage/file-storage.module';
 import { MulterConfigService } from '../multer/multer.service';
+import { Nft } from '../nft/domain/nft.entity';
 import { User } from '../users/user.entity';
 import { Auction } from './domain/auction.entity';
 import { RewardTierNft } from './domain/reward-tier-nft.entity';
@@ -22,7 +23,8 @@ import { AuctionService } from './service-layer/auction.service';
       User,
       Auction,
       RewardTier,
-      RewardTierNft
+      RewardTierNft,
+      Nft
     ])],
   controllers: [AuctionController],
   exports: [AuctionService],
