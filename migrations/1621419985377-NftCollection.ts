@@ -5,8 +5,6 @@ export class NftCollection1621419985378 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`create type nft_collection_source_enum as enum ('universe', 'scraper');`);
-    await queryRunner.query(`alter type nft_collection_source_enum owner to postgresusername;`);
-
     await queryRunner.query(`CREATE TABLE "nft_collection" (
       "id" SERIAL NOT NULL,
       "userId" integer NOT NULL,
