@@ -9,7 +9,7 @@ import { AppConfigModule } from '../configuration/configuration.module';
 
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
-import {configValues} from '../configuration';
+import { configValues } from '../configuration';
 
 @Module({
   imports: [
@@ -19,7 +19,7 @@ import {configValues} from '../configuration';
     AppConfigModule,
     JwtModule.register({
       secret: configValues.auth.jwtSecret,
-      signOptions: { expiresIn: '3600s' },
+      signOptions: { expiresIn: '360d' },
     }),
   ],
   providers: [AuthService, JwtStrategy, SignedChallengeStrategy],
