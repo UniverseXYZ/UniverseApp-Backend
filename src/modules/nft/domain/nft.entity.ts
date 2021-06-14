@@ -30,6 +30,9 @@ export class Nft {
   @Column({ nullable: true })
   txHash: string;
 
+  @Column({ nullable: true })
+  editionUUID: string;
+
   @Column({ default: false })
   onChain: boolean;
 
