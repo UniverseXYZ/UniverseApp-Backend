@@ -1,4 +1,15 @@
-import { Body, Controller, Post, UseGuards, Request, UseInterceptors, UploadedFile, Param, Get } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  UseGuards,
+  Request,
+  UseInterceptors,
+  UploadedFile,
+  Param,
+  Get,
+  Req, ClassSerializerInterceptor,
+} from '@nestjs/common';
 import { GetNftTokenURIParams, SaveCollectionBody, SaveNftBody, UploadNftMediaFileParams } from './dto';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { NftService } from '../service_layer/nft.service';
@@ -10,7 +21,7 @@ import { multerOptions } from './multipart';
 export class NftController {
   constructor(private nftService: NftService) {}
 
-  @Post('/nfts')
+  @Post('/saved-nfts')
   @UseGuards(JwtAuthGuard)
   @ApiTags('nfts')
   @ApiBearerAuth()
@@ -48,6 +59,7 @@ export class NftController {
   @Post('/saved-nfts/:id/file')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('file', multerOptions()))
+  @UseInterceptors(ClassSerializerInterceptor)
   @ApiTags('nfts')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Upload image for nft' })
@@ -61,7 +73,7 @@ export class NftController {
     return await this.nftService.uploadMediaFile(params.id, file);
   }
 
-  @Get('nfts/:id/token-uri')
+  @Get('saved-nfts/:id/token-uri')
   @UseGuards(JwtAuthGuard)
   @ApiTags('nfts')
   @ApiBearerAuth()
@@ -69,5 +81,15 @@ export class NftController {
   @ApiParam({ name: 'id', description: 'The id of the nft', required: true, example: 1 })
   async getTokenURI(@Param() params: GetNftTokenURIParams) {
     return await this.nftService.getTokenURI(params.id);
+  }
+
+  @Get('saved-nfts')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  @ApiTags('nfts')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get the saved NFTs of an user' })
+  async getSavedNfts(@Req() req) {
+    return await this.nftService.getSavedNfts(req.user.sub);
   }
 }

@@ -141,25 +141,9 @@ export class NftService {
       nft.thumbnail_url = downsizedFile.fullFilename();
       nft.artwork_type = file.mimetype.split('/')[1];
 
-      const dbSavedNft = await this.savedNftRepository.save(nft);
-
-      return {
-        savedNft: {
-          id: dbSavedNft.id,
-          name: dbSavedNft.name,
-          description: dbSavedNft.description,
-          properties: dbSavedNft.properties,
-          royalties: dbSavedNft.royalties,
-          numberOfEditions: dbSavedNft.numberOfEditions,
-          url: dbSavedNft.url,
-          optimized_url: dbSavedNft.optimized_url,
-          thumbnail_url: dbSavedNft.thumbnail_url,
-          artwork_type: dbSavedNft.artwork_type,
-          createdAt: dbSavedNft.createdAt,
-        },
-      };
+      return await this.savedNftRepository.save(nft);
     } catch (error) {
-      this.fileSystemService.removeFile(file.path).finally(() => {});
+      this.fileSystemService.removeFile(file.path).catch(() => {});
       throw error;
     }
   }
@@ -171,16 +155,25 @@ export class NftService {
       throw new NftNotFoundException();
     }
 
-    // await this.savedNftRepository.delete({ id: savedNft.id });
+    await this.savedNftRepository.delete({ id: savedNft.id });
     const idxs = [...Array(savedNft.numberOfEditions).keys()];
-    console.log(savedNft.properties);
     return await Promise.all(
-      idxs.map(async (_) => {
+      idxs.map(async () => {
         const tokenUri = await this.generateTokenUriForSavedNftEdition(savedNft);
         const nft = await this.createNftFromSavedNft(savedNft, tokenUri);
         return nft.token_uri;
       }),
     );
+  }
+
+  public async getSavedNfts(userId: number) {
+    const savedNfts = await this.savedNftRepository.find({
+      where: {
+        userId,
+      },
+    });
+
+    return savedNfts;
   }
 
   private async createNftFromSavedNft(savedNft: SavedNft, tokenUri: any) {
@@ -198,17 +191,17 @@ export class NftService {
       userId: savedNft.userId,
       editionUUID: savedNft.editionUUID,
     });
-    return await this.nftRepository.save(nft);
+    return this.nftRepository.save(nft);
   }
 
   private async generateTokenUriForSavedNftEdition(savedNft: SavedNft) {
     const tokenUri = await this.arweaveService.store({
       name: savedNft.name,
       description: savedNft.description,
-      image_url: savedNft.url,
-      image_preview_url: savedNft.optimized_url,
-      image_thumbnail_url: savedNft.thumbnail_url,
-      image_original_url: savedNft.original_url,
+      image_url: this.s3Service.getUrl(savedNft.url),
+      image_preview_url: this.s3Service.getUrl(savedNft.optimized_url),
+      image_thumbnail_url: this.s3Service.getUrl(savedNft.thumbnail_url),
+      image_original_url: this.s3Service.getUrl(savedNft.original_url),
       traits: savedNft.properties,
     });
     return tokenUri;

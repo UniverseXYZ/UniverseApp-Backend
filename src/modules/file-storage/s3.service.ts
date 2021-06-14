@@ -14,7 +14,11 @@ export class S3Service {
   }
   private client: S3Client;
 
-  uploadDocument(sourcePath: string, bucketPath: string) {
+  public getUrl(key: string) {
+    return `${this.config.values.aws.s3BaseUrl}/${key}`;
+  }
+
+  public uploadDocument(sourcePath: string, bucketPath: string) {
     return new Promise<UploadResult>((resolve, reject) => {
       const stream = fs.createReadStream(sourcePath);
       this.client.upload(
