@@ -6,6 +6,7 @@ import { AppConfig } from '../configuration/configuration.service';
 import { S3Service } from '../file-storage/s3.service';
 import { UserInfoDto } from './user.dto';
 import { User } from './user.entity';
+import { UserNotFoundException } from './service-layer/exceptions/UserNotFoundException';
 
 @Injectable()
 export class UsersService {
@@ -102,5 +103,15 @@ export class UsersService {
 
   async getProfileInfo(address: string) {
     return await this.usersRepository.findOne({ where: { address: address, isActive: true } });
+  }
+
+  async getById(id: number, validate = true) {
+    const user = await this.usersRepository.findOne({ where: { id, isActive: true } });
+
+    if (!user && validate) {
+      throw new UserNotFoundException();
+    }
+
+    return user;
   }
 }

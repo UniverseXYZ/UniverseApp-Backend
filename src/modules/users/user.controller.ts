@@ -1,4 +1,15 @@
-import { Body, ClassSerializerInterceptor, Controller, Get, Param, Post, Request, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  ClassSerializerInterceptor,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Request,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -7,9 +18,7 @@ import { ApiOperation } from '@nestjs/swagger';
 
 @Controller('api/user')
 export class UserController {
-  constructor(
-    private usersService: UsersService,
-  ) { }
+  constructor(private usersService: UsersService) {}
 
   @Post('/upload-profile-image')
   @UseInterceptors(FileInterceptor('file'))
@@ -37,7 +46,7 @@ export class UserController {
   @Get('/get-profile-info/:address')
   @UseInterceptors(ClassSerializerInterceptor)
   @ApiOperation({ summary: 'Get profile info for address' })
-  async getProfileInfo(@Param('address') address: string){
+  async getProfileInfo(@Param('address') address: string) {
     const info = await this.usersService.getProfileInfo(address);
     return info;
   }

@@ -1,18 +1,20 @@
-import { Exclude } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+import { configValues } from '../configuration';
 
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
-  @Exclude()
   id: number;
 
   @Column()
   address: string;
 
+  @Exclude()
   @Column({ default: '' })
   profileImageName: string;
 
+  @Exclude()
   @Column({ default: '' })
   logoImageName: string;
 
@@ -37,4 +39,14 @@ export class User {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @Expose()
+  get profileImageUrl(): string {
+    return this.profileImageName ? `${configValues.aws.s3BaseUrl}/${this.profileImageName}` : null;
+  }
+
+  @Expose()
+  get logoImageUrl(): string {
+    return this.logoImageName ? `${configValues.aws.s3BaseUrl}/${this.logoImageName}` : null;
+  }
 }

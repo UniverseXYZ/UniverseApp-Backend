@@ -7,54 +7,19 @@ import { SignedChallengeAuthGuard } from './modules/auth/signed-challenge-auth.g
 import { EthersService } from './modules/ethers/ethers.service';
 import { NftScraperService } from './modules/nftScraper/nftScraper.service';
 
-
 @Controller()
 export class AppController {
-    constructor(private readonly appService: AppService, private authService: AuthService, private ethersService: EthersService, private nftScraperService: NftScraperService) {}
-
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
-  }
-
-  @Get('api/auth/getChallenge')
-  @ApiOperation({ summary: 'Returns a challenge for the user to sign' })
-  async getChallenge(@Session() session: Record<string, any>) {
-    return this.authService.setChallenge(session);
-  }
-
-  @UseGuards(SignedChallengeAuthGuard)
-  @ApiOperation({ summary: 'Checks if the signatures mathches the challenge and address, if it does returns a JWT token' })
-  @ApiConsumes('application/json')
-  @ApiBody({
-    schema: {
-      properties: {
-        'address': {
-          type: 'string'
-        },
-        'signature': {
-          type: 'string'
-        }
-      }
-    }
-  })
-  @Post('api/auth/login')
-  async login(@Request() req) {
-    return this.authService.login(req.user);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('api/auth/me')
-  async me(@Request() req) {
-    return this.authService.login(req.user);
-  }
-
+  constructor(
+    private readonly appService: AppService,
+    private ethersService: EthersService,
+    private nftScraperService: NftScraperService,
+  ) {}
 
   //-------------------------------------------------
   //only for dev remove in prod
 
   @Get('util/triggerNftScraper')
-  async triggerNftScraper(){
+  async triggerNftScraper() {
     this.nftScraperService.getNftsForUsers();
   }
 
@@ -66,5 +31,4 @@ export class AppController {
 
   //only for dev remove in prod
   //-------------------------------------------------
-
 }

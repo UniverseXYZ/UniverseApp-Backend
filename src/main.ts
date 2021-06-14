@@ -20,9 +20,10 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
 
   const options = new DocumentBuilder()
-    .setTitle('Boilerplate API')
-    .setDescription('Boilerplate API description')
+    .setTitle('Universe XYZ API')
+    .setDescription('Universe XYZ API Documentation')
     .setVersion('1.0')
+    .addTag('auth')
     .addTag('health')
     .addTag('nfts')
     .addBearerAuth()
