@@ -5,7 +5,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthModule } from './modules/auth/auth.module';
 import configuration from './modules/configuration';
 import { DatabaseModule } from './modules/database/database.module';
 import { TypeOrmDefaultConfigService } from './modules/database/database.providers';
@@ -15,6 +14,7 @@ import { NftScraperModule } from './modules/nftScraper/nftScraper.model';
 import { QueueModule } from './modules/queue/queue.model';
 import { UsersModule } from './modules/users/users.module';
 import { NftModule } from './modules/nft/nft.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -31,12 +31,12 @@ import { NftModule } from './modules/nft/nft.module';
       useExisting: TypeOrmDefaultConfigService,
     }),
     HealthModule,
-    AuthModule,
     UsersModule,
     EthersModule,
     QueueModule,
     NftScraperModule,
     NftModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

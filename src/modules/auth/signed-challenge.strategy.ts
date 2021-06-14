@@ -14,8 +14,8 @@ export class SignedChallengeStrategy extends PassportStrategy(Strategy, 'challen
     if (!message) return false;
 
     try {
-      const user = await this.authService.validateUser(req.body.address, message, req.body.signature)
-      return user;
+      const user = await this.authService.validateUser(req.body.address, message, req.body.signature);
+      return { sub: user.id };
     } catch (e) {
       return false;
     }

@@ -10,6 +10,7 @@ import { AppConfigModule } from '../configuration/configuration.module';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { configValues } from '../configuration';
+import { AuthController } from './auth.controller';
 
 @Module({
   imports: [
@@ -24,5 +25,6 @@ import { configValues } from '../configuration';
   ],
   providers: [AuthService, JwtStrategy, SignedChallengeStrategy],
   exports: [AuthService],
+  controllers: [AuthController],
 })
 export class AuthModule {}
