@@ -25,7 +25,7 @@ export const configValues = {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     bucketName: process.env.AWS_BUCKET_NAME,
-    pathPrefix: process.env.PATH_PREFIX,
+    s3BaseUrl: process.env.AWS_S3_BASE_URL,
   },
   frontend: {
     domain: process.env.FRONTEND_DOMAIN,
