@@ -1,11 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { ValidationPipe } from '@nestjs/common';
 
 import { AppModule } from './app.module';
 import { AppConfig } from 'src/modules/configuration/configuration.service';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationPipe } from './modules/validation.pipe';
 
 import session from 'express-session';
 
