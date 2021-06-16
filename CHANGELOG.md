@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.0.0...v1.1.0) (2021-06-16)
+
+
+### Features
+
+* add PATCH saved NFT ([cc93ea2](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/cc93ea253594ec4fa2cf73e1dca83f3dfc0d05a4))
+
 # 1.0.0 (2021-06-15)
 
 
