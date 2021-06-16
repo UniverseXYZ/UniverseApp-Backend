@@ -11,6 +11,7 @@ import { AppConfig } from '../../configuration/configuration.service';
 import { FileSystemService } from '../../file-system/file-system.service';
 import { ArweaveService } from '../../file-storage/arweave.service';
 import { SavedNft } from '../domain/saved-nft.entity';
+import { filter } from 'rxjs/operators';
 
 type SaveNftParams = {
   userId: number;
@@ -19,6 +20,14 @@ type SaveNftParams = {
   numberOfEditions: number;
   properties?: any;
   royalties: number;
+};
+
+type EditSavedNftParams = {
+  name?: string;
+  description?: string;
+  numberOfEditions?: number;
+  properties?: any;
+  royalties?: number;
 };
 
 type SaveCollectibleParams = {
@@ -176,6 +185,26 @@ export class NftService {
     return savedNfts;
   }
 
+  public async editSavedNft(id: number, userId: number, params: EditSavedNftParams) {
+    const savedNft = await this.savedNftRepository.findOne({ where: { id, userId } });
+
+    if (!savedNft) throw new NftNotFoundException();
+    const filteredParams = this.filterObjectAttributes(params, [
+      'name',
+      'description',
+      'numberOfEditions',
+      'properties',
+      'royalties',
+    ]);
+
+    for (const param in filteredParams) {
+      savedNft[param] = filteredParams[param];
+    }
+
+    const updatedEntity = await this.savedNftRepository.save(savedNft);
+    return updatedEntity;
+  }
+
   private async createNftFromSavedNft(savedNft: SavedNft, tokenUri: any) {
     const nft = await this.nftRepository.create({
       name: savedNft.name,
@@ -205,5 +234,16 @@ export class NftService {
       traits: savedNft.properties,
     });
     return tokenUri;
+  }
+
+  private filterObjectAttributes(object: any, keys: string[]) {
+    return keys.reduce((acc, key) => {
+      return object.hasOwnProperty(key)
+        ? {
+            ...acc,
+            [key]: object[key],
+          }
+        : acc;
+    }, {});
   }
 }
