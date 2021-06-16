@@ -8,14 +8,23 @@ import {
   UploadedFile,
   Param,
   Get,
-  Req, ClassSerializerInterceptor,
+  Req,
+  ClassSerializerInterceptor,
+  Patch,
 } from '@nestjs/common';
-import { GetNftTokenURIParams, SaveCollectionBody, SaveNftBody, UploadNftMediaFileParams } from './dto';
+import {
+  EditSavedNftBody,
+  GetNftTokenURIParams, PatchSavedNftParams,
+  SaveCollectionBody,
+  SaveNftBody,
+  UploadNftMediaFileParams,
+} from './dto';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { NftService } from '../service_layer/nft.service';
 import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { multerOptions } from './multipart';
+import { classToPlain } from 'class-transformer';
 
 @Controller('api')
 export class NftController {
@@ -35,6 +44,17 @@ export class NftController {
       royalties: body.royalties,
       userId: req.user.sub,
     });
+  }
+
+  @Patch('/saved-nfts/:id')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  @ApiTags('nfts')
+  @ApiParam({ name: 'id', description: 'The id of the modified saved NFT', example: 1, required: true })
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Save NFT for later minting' })
+  async editSavedNft(@Request() req, @Param() params: PatchSavedNftParams, @Body() body: EditSavedNftBody) {
+    return await this.nftService.editSavedNft(params.id, req.user.sub, classToPlain(body) as any);
   }
 
   @Post('/collections')

@@ -94,7 +94,63 @@ export class UploadNftMediaFileParams {
   id: number;
 }
 
+export class PatchSavedNftParams {
+  @IsNumberString()
+  id: number;
+}
+
 export class GetNftTokenURIParams {
   @IsNumberString()
   id: number;
+}
+
+export class EditSavedNftBody {
+  @IsString()
+  @IsOptional()
+  @Length(1, 32)
+  @ApiProperty({
+    example: 'Single NFT name',
+    description: 'The name of the NFT',
+    required: false,
+  })
+  name: string;
+
+  @IsString()
+  @IsOptional()
+  @Length(1, 1024)
+  @ApiProperty({
+    example: 'Single NFT description',
+    description: 'The description of the NFT',
+    required: false,
+  })
+  description?: string;
+
+  @IsNumber()
+  @IsOptional()
+  @ApiProperty({
+    example: 1,
+    description: 'The number of NFT editions',
+    required: false,
+  })
+  numberOfEditions: number;
+
+  @IsArray()
+  @IsOptional()
+  @ApiProperty({
+    example: [{ attribute1: 'value' }, { attribute2: 'value' }],
+    description: 'Additional NFT attributes',
+    required: false,
+  })
+  properties?: any;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  @Max(100)
+  @ApiProperty({
+    example: 10,
+    description: 'The royalties percentage',
+    required: false,
+  })
+  royalties?: number;
 }
