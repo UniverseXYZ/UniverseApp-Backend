@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.1.0...v1.1.1) (2021-06-23)
+
+
+### Bug Fixes
+
+* user profile image url ([cc27fd7](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/cc27fd709e92ad2f73de79609d3199e0f049c2fb))
+
 # [1.1.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.0.0...v1.1.0) (2021-06-16)
 
 
