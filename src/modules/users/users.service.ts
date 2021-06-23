@@ -63,7 +63,7 @@ export class UsersService {
       await this.usersRepository.save(userDb);
 
       return {
-        profileImageUrl: `${this.config.values.aws.s3BaseUrl}${userDb.profileImageName}`,
+        profileImageUrl: `${this.config.values.aws.s3BaseUrl}/${userDb.profileImageName}`,
       };
     } catch (e) {
       throw new HttpException(
@@ -88,7 +88,7 @@ export class UsersService {
       await this.usersRepository.save(userDb);
 
       return {
-        logoImageUrl: `${this.config.values.aws.s3BaseUrl}${userDb.logoImageName}`,
+        logoImageUrl: `${this.config.values.aws.s3BaseUrl}/${userDb.logoImageName}`,
       };
     } catch (e) {
       throw new HttpException(
