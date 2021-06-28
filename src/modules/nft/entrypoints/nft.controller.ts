@@ -97,10 +97,21 @@ export class NftController {
   @UseGuards(JwtAuthGuard)
   @ApiTags('nfts')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Generate the token URI for an NFT' })
+  @ApiOperation({ summary: 'Generate the token URI for Saved NFT' })
   @ApiParam({ name: 'id', description: 'The id of the nft', required: true, example: 1 })
   async getTokenURI(@Param() params: GetNftTokenURIParams) {
     return await this.nftService.getTokenURI(params.id);
+  }
+
+  @Post('nfts/token-uri')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('file', multerOptions()))
+  @ApiTags('nfts')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Generate the token URI for an NFT' })
+  @ApiConsumes('form/multi-part')
+  async getNftTokenURI(@Request() req: Request, @UploadedFile() file: Express.Multer.File) {
+    return await this.nftService.getNftTokenURI(req.body, file);
   }
 
   @Get('saved-nfts')

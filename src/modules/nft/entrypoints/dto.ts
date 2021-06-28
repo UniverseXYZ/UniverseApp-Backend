@@ -11,7 +11,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 
 export class SaveNftBody {
   @IsString()
@@ -152,5 +152,57 @@ export class EditSavedNftBody {
     description: 'The royalties percentage',
     required: false,
   })
+  royalties?: number;
+}
+
+export class GetNftTokenUriBody {
+  @IsString()
+  @Length(1, 32)
+  @ApiProperty({
+    example: 'Single NFT name',
+    description: 'The name of the NFT',
+    required: true,
+  })
+  name: string;
+
+  @IsString()
+  @IsOptional()
+  @Length(1, 1024)
+  @ApiProperty({
+    example: 'Single NFT description',
+    description: 'The description of the NFT',
+    required: false,
+  })
+  description?: string;
+
+  @IsNumber()
+  @ApiProperty({
+    example: 1,
+    description: 'The number of NFT editions',
+    required: true,
+  })
+  @Transform(({ value }) => value && parseInt(value))
+  numberOfEditions: number;
+
+  @IsArray()
+  @IsOptional()
+  @ApiProperty({
+    example: [{ attribute1: 'value' }, { attribute2: 'value' }],
+    description: 'Additional NFT attributes',
+    required: false,
+  })
+  @Transform(({ value }) => value && JSON.parse(value))
+  properties?: any;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  @Max(100)
+  @ApiProperty({
+    example: 10,
+    description: 'The royalties percentage',
+    required: false,
+  })
+  @Transform(({ value }) => value && parseInt(value))
   royalties?: number;
 }

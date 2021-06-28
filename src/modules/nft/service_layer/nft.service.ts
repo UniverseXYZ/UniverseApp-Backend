@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Connection, Repository } from 'typeorm';
 import { customAlphabet } from 'nanoid';
@@ -12,6 +12,11 @@ import { FileSystemService } from '../../file-system/file-system.service';
 import { ArweaveService } from '../../file-storage/arweave.service';
 import { SavedNft } from '../domain/saved-nft.entity';
 import { filter } from 'rxjs/operators';
+import { Multer } from 'multer';
+import { plainToClass } from 'class-transformer';
+import { GetNftTokenUriBody } from '../entrypoints/dto';
+import { validateOrReject } from 'class-validator';
+import { ProcessedFile } from '../../file-processing/model/ProcessedFile';
 
 type SaveNftParams = {
   userId: number;
@@ -46,6 +51,8 @@ type SaveCollectionParams = {
 
 @Injectable()
 export class NftService {
+  private logger = new Logger(NftService.name);
+
   constructor(
     @InjectRepository(Nft) private nftRepository: Repository<Nft>,
     @InjectRepository(NftCollection)
@@ -132,18 +139,7 @@ export class NftService {
         throw new NftNotFoundException();
       }
 
-      const optimisedFile = await this.fileProcessingService.optimiseFile(file.path, file.mimetype);
-      const downsizedFile = await this.fileProcessingService.downsizeFile(file.path, file.mimetype);
-      const uniqueFiles = [optimisedFile, downsizedFile].filter((fileItem) => fileItem.path !== file.path);
-
-      await Promise.all([
-        this.s3Service.uploadDocument(file.path, `${file.filename}`),
-        ...uniqueFiles.map((fileItem) => this.s3Service.uploadDocument(fileItem.path, `${fileItem.fullFilename()}`)),
-      ]);
-
-      await Promise.all(
-        [file.path, ...uniqueFiles.map((file) => file.path)].map((path) => this.fileSystemService.removeFile(path)),
-      );
+      const { optimisedFile, downsizedFile } = await this.processUploadedFile(file);
 
       nft.url = file.filename;
       nft.optimized_url = optimisedFile.fullFilename();
@@ -155,6 +151,23 @@ export class NftService {
       this.fileSystemService.removeFile(file.path).catch(() => {});
       throw error;
     }
+  }
+
+  private async processUploadedFile(file: Express.Multer.File) {
+    const optimisedFile = await this.fileProcessingService.optimiseFile(file.path, file.mimetype);
+    const downsizedFile = await this.fileProcessingService.downsizeFile(file.path, file.mimetype);
+    const uniqueFiles = [optimisedFile, downsizedFile].filter((fileItem) => fileItem.path !== file.path);
+
+    await Promise.all([
+      this.s3Service.uploadDocument(file.path, `${file.filename}`),
+      ...uniqueFiles.map((fileItem) => this.s3Service.uploadDocument(fileItem.path, `${fileItem.fullFilename()}`)),
+    ]);
+
+    await Promise.all(
+      [file.path, ...uniqueFiles.map((file) => file.path)].map((path) => this.fileSystemService.removeFile(path)),
+    );
+
+    return { optimisedFile, downsizedFile };
   }
 
   public async getTokenURI(id: number) {
@@ -173,6 +186,55 @@ export class NftService {
         return nft.token_uri;
       }),
     );
+  }
+
+  public async getNftTokenURI(body, file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException({
+        error: 'NoFileAttached',
+        message: 'Please attach a file',
+      });
+    }
+    const bodyClass = plainToClass(GetNftTokenUriBody, { ...body });
+    await this.validateGetNftTokenUriBody(bodyClass);
+
+    const { optimisedFile, downsizedFile } = await this.processUploadedFile(file);
+    const idxs = [...Array(bodyClass.numberOfEditions).keys()];
+
+    return await Promise.all(
+      idxs.map(() => this.generateTokenUriForNftBody(bodyClass, file, optimisedFile, downsizedFile)),
+    );
+  }
+
+  private async generateTokenUriForNftBody(
+    bodyClass: GetNftTokenUriBody,
+    file: Express.Multer.File,
+    optimisedFile: ProcessedFile,
+    downsizedFile: ProcessedFile,
+  ) {
+    return this.arweaveService.store({
+      name: bodyClass.name,
+      description: bodyClass.description,
+      image_url: this.s3Service.getUrl(file.filename),
+      image_preview_url: this.s3Service.getUrl(optimisedFile.fullFilename()),
+      image_thumbnail_url: this.s3Service.getUrl(downsizedFile.fullFilename()),
+      image_original_url: this.s3Service.getUrl(file.filename),
+      traits: bodyClass.properties,
+    });
+  }
+
+  private async validateGetNftTokenUriBody(bodyClass: GetNftTokenUriBody) {
+    try {
+      await validateOrReject(bodyClass, { validationError: { target: false } });
+    } catch (errors) {
+      const error = new BadRequestException({
+        error: 'ValidationFailed',
+        message: 'Validation failed',
+        errors,
+      });
+      this.logger.error(error);
+      throw error;
+    }
   }
 
   public async getSavedNfts(userId: number) {
