@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.1.1...v1.2.0) (2021-06-28)
+
+
+### Features
+
+* generate token uri for unsaved nft ([29bcf40](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/29bcf40c2c7f6b00406a85633d4be05bce3236b2))
+
 ## [1.1.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.1.0...v1.1.1) (2021-06-23)
 
 
