@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.2.0...v1.3.0) (2021-06-30)
+
+
+### Features
+
+* add minted nfts events ([5287982](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/52879828fd50c961f5f8a77fb958ac4a8829aec6))
+
 # [1.2.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.1.1...v1.2.0) (2021-06-28)
 
 
