@@ -1,16 +1,7 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  Table,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
-//Todo: check entity name and structure
-@Entity('asdasd')
-export class CreateNftEvent {
+@Entity('minted_nfts')
+export class MintedNftEvent {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -34,6 +25,12 @@ export class CreateNftEvent {
 
   @Column()
   included_in_block: string;
+
+  @Column()
+  processed: boolean;
+
+  @Column({ type: 'text' })
+  receiver: string;
 
   @Column()
   created_at: Date;

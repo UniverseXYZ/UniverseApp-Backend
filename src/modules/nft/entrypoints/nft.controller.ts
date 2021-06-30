@@ -13,7 +13,7 @@ import {
   Patch,
 } from '@nestjs/common';
 import {
-  EditSavedNftBody,
+  EditSavedNftBody, GetMyNftsResponse,
   GetNftTokenURIParams, PatchSavedNftParams,
   SaveCollectionBody,
   SaveNftBody,
@@ -21,7 +21,7 @@ import {
 } from './dto';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { NftService } from '../service_layer/nft.service';
-import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { multerOptions } from './multipart';
 import { classToPlain } from 'class-transformer';
@@ -35,7 +35,7 @@ export class NftController {
   @ApiTags('nfts')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Save NFT for later minting' })
-  async saveSingleNft(@Request() req, @Body() body: SaveNftBody) {
+  async saveSingleNft(@Req() req, @Body() body: SaveNftBody) {
     return this.nftService.saveForLater({
       name: body.name,
       description: body.description,
@@ -53,28 +53,28 @@ export class NftController {
   @ApiParam({ name: 'id', description: 'The id of the modified saved NFT', example: 1, required: true })
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Save NFT for later minting' })
-  async editSavedNft(@Request() req, @Param() params: PatchSavedNftParams, @Body() body: EditSavedNftBody) {
+  async editSavedNft(@Req() req, @Param() params: PatchSavedNftParams, @Body() body: EditSavedNftBody) {
     return await this.nftService.editSavedNft(params.id, req.user.sub, classToPlain(body) as any);
   }
 
-  @Post('/collections')
-  @UseGuards(JwtAuthGuard)
-  @ApiTags('nfts')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Save Collection for later minting' })
-  async saveCollection(@Request() req, @Body() body: SaveCollectionBody) {
-    return this.nftService.saveCollectionForLater({
-      name: body.name,
-      symbol: body.symbol,
-      userId: req.user.sub,
-      collectibles: body.collectibles.map((collectible) => ({
-        name: collectible.name,
-        description: collectible.description,
-        numberOfEditions: collectible.numberOfEditions,
-        properties: collectible.properties,
-      })),
-    });
-  }
+  // @Post('/collections')
+  // @UseGuards(JwtAuthGuard)
+  // @ApiTags('nfts')
+  // @ApiBearerAuth()
+  // @ApiOperation({ summary: 'Save Collection for later minting' })
+  // async saveCollection(@Req() req, @Body() body: SaveCollectionBody) {
+  //   return this.nftService.saveCollectionForLater({
+  //     name: body.name,
+  //     symbol: body.symbol,
+  //     userId: req.user.sub,
+  //     collectibles: body.collectibles.map((collectible) => ({
+  //       name: collectible.name,
+  //       description: collectible.description,
+  //       numberOfEditions: collectible.numberOfEditions,
+  //       properties: collectible.properties,
+  //     })),
+  //   });
+  // }
 
   @Post('/saved-nfts/:id/file')
   @UseGuards(JwtAuthGuard)
@@ -86,7 +86,7 @@ export class NftController {
   @ApiConsumes('multipart/form-data')
   @ApiParam({ name: 'id', description: 'The id of the nft', required: true, example: 1 })
   async uploadNftMediaFile(
-    @Request() req,
+    @Req() req,
     @Param() params: UploadNftMediaFileParams,
     @UploadedFile() file: Express.Multer.File,
   ) {
@@ -110,7 +110,7 @@ export class NftController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Generate the token URI for an NFT' })
   @ApiConsumes('form/multi-part')
-  async getNftTokenURI(@Request() req: Request, @UploadedFile() file: Express.Multer.File) {
+  async getNftTokenURI(@Req() req: Request, @UploadedFile() file: Express.Multer.File) {
     return await this.nftService.getNftTokenURI(req.body, file);
   }
 
@@ -122,5 +122,16 @@ export class NftController {
   @ApiOperation({ summary: 'Get the saved NFTs of an user' })
   async getSavedNfts(@Req() req) {
     return await this.nftService.getSavedNfts(req.user.sub);
+  }
+
+  @Get('nfts/my-nfts')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  @ApiTags('nfts')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get my nfts' })
+  @ApiResponse({ type: GetMyNftsResponse, status: 200, isArray: true })
+  async getMyNfts(@Req() req) {
+    return await this.nftService.getMyNfts(req.user.sub);
   }
 }

@@ -11,11 +11,12 @@ import { TypeOrmDefaultConfigService } from './modules/database/database.provide
 import { EthersModule } from './modules/ethers/ethers.module';
 import { HealthModule } from './modules/health/health.module';
 import { NftScraperModule } from './modules/nftScraper/nftScraper.model';
-import { QueueModule } from './modules/queue/queue.model';
+import { QueueModel } from './modules/queue/queue.model';
 import { UsersModule } from './modules/users/users.module';
 import { NftModule } from './modules/nft/nft.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AuctionModule } from './modules/auction/auction.module';
+import { EthEventsScraperModule } from './modules/ethEventsScraper/ethEventsScraper.model';
 
 @Module({
   imports: [
@@ -34,11 +35,12 @@ import { AuctionModule } from './modules/auction/auction.module';
     HealthModule,
     UsersModule,
     EthersModule,
-    QueueModule,
+    QueueModel,
     NftScraperModule,
     NftModule,
     AuthModule,
     AuctionModule,
+    EthEventsScraperModule,
   ],
   controllers: [AppController],
   providers: [AppService],

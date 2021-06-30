@@ -8,9 +8,11 @@ import { SavedNft } from '../nft/domain/saved-nft.entity';
 import { RewardTier } from '../auction/domain/reward-tier.entity';
 import { RewardTierNft } from '../auction/domain/reward-tier-nft.entity';
 import { Auction } from '../auction/domain/auction.entity';
+import { MintedNftEvent } from '../ethEventsScraper/domain/mintNftEvent.entity';
+import { CreateCollectionEvent } from '../ethEventsScraper/domain/createCollectionEvent.entity';
 
 // TODO: Add db entities here
-const entities = [User, Nft, NftCollection, SavedNft, RewardTier, RewardTierNft, Auction];
+const entities = [User, Nft, NftCollection, SavedNft, RewardTier, RewardTierNft, Auction, MintedNftEvent, CreateCollectionEvent];
 
 @Injectable()
 export class TypeOrmDefaultConfigService implements TypeOrmOptionsFactory {

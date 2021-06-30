@@ -45,11 +45,6 @@ export class NftCollection {
   @Column({ nullable: true })
   description?: string;
 
-  @OneToMany(() => Nft, (nft) => nft.collection, {
-    cascade: true,
-  })
-  collectibles: Nft[];
-
   @CreateDateColumn()
   createdAt: Date;
 

@@ -76,7 +76,7 @@ export class NftScraperService {
         nftCollection.source = CollectionSource.SCRAPER;
         await this.nftCollectionRepository.save(nftCollection);
       }
-      nftDB.collection = nftCollection;
+      nftDB.collectionId = nftCollection.id;
       nftDB.royalties = 0;
 
       await this.nftRepository.save(nftDB);
