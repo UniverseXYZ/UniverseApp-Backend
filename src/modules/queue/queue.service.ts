@@ -5,23 +5,19 @@ import Queue from 'better-queue';
 
 @Injectable()
 export class QueueService {
-    private queues = {};
+  private queues = {};
 
-    constructor(
-        private readonly config: AppConfig,
-    ) {
+  constructor(private readonly config: AppConfig) {}
 
+  public initQueue(queueName: string, callback: any, concurrent: number = 1) {
+    if (!this.queues[queueName]) {
+      this.queues[queueName] = new Queue(callback, { concurrent });
     }
+  }
 
-    public initQueue(queueName: string, callback: any, concurrent: number = 1) {
-        if (!this.queues[queueName]) {
-            this.queues[queueName] = new Queue(callback, {concurrent});
-        }
+  public pushToQueue(queueName: string, data: any) {
+    if (this.queues[queueName]) {
+      this.queues[queueName].push(data);
     }
-
-    public pushToQueue(queueName: string, data: any){
-        if (this.queues[queueName]){
-            this.queues[queueName].push(data)
-        }
-    }
+  }
 }

@@ -15,7 +15,7 @@ export class S3Service {
   private client: S3Client;
 
   public getUrl(key: string) {
-    return `${this.config.values.aws.s3BaseUrl}/${key}`;
+    return key && `${this.config.values.aws.s3BaseUrl}/${key}`;
   }
 
   public uploadDocument(sourcePath: string, bucketPath: string) {

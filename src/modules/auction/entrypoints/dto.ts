@@ -1,17 +1,141 @@
-import { IsInt, IsNumber, IsString, Max } from 'class-validator';
+import { IsArray, IsBoolean, isBoolean, IsDateString, IsInt, IsNumber, IsNumberString, IsObject, IsOptional, isString, IsString, Max, ValidateNested } from 'class-validator';
+import { isOptionalChain } from 'typescript';
 
-export class CreateRewardTierBody {
+class RewardTierBodyParams {
+  name: string;
+  numberOfWinners: number;
+  minimumBid: number;
+  nftsPerWinner: number;
+  nftIds: number[];
+}
+export class CreateRewardTierBody{
+  @IsNumber()
+  auctionId: number;
+
   @IsString()
   name: string;
 
   @IsNumber()
-  @Max(20)
   numberOfWinners: number;
 
   @IsNumber()
-  @Max(5)
+  tierPosition: number;
+
+  @IsNumber()
+  minimumBid: number;
+
+  @IsNumber()
   nftsPerWinner: number;
 
-  @IsInt({ each: true })
+  @IsNumber({},{each: true})
   nftIds: number[];
+}
+
+export class UpdateRewardTierBody{
+  @IsNumber()
+  tierId: number;
+
+  @IsString()
+  @IsOptional()
+  name: string;
+
+  @IsNumber()
+  @IsOptional()
+  numberOfWinners: number;
+
+  @IsNumber()
+  @IsOptional()
+  minimumBid: number;
+
+  @IsNumber()
+  @IsOptional()
+  nftsPerWinner: number;
+
+  @IsNumber({},{each: true})
+  @IsOptional()
+  nftIds: number[];
+}
+
+export class UpdateRewardTierExtraBody {
+  @IsNumber()
+  tierId: number;
+
+  @IsString()
+  customDescription: string;
+
+  @IsString()
+  tierColor: string;
+}
+export class AuctionBody {
+  @IsString()
+  name: string;
+
+  @IsDateString()
+  startDate: Date;
+
+  @IsDateString()
+  endDate: Date;
+
+  @IsString()
+  bidCurrency: string;
+
+  @IsNumber()
+  startingBid: number;
+}
+
+export class CreateAuctionBody extends AuctionBody { }
+
+export class UpdateAuctionBodyParams {
+
+}
+export class UpdateAuctionBody {
+  @IsNumber()
+  auctionId: number;
+
+  @IsString()
+  @IsOptional()
+  name: string;
+
+  @IsDateString()
+  @IsOptional()
+  startDate: Date;
+
+  @IsDateString()
+  @IsOptional()
+  endDate: Date;
+
+  @IsString()
+  @IsOptional()
+  bidCurrency: string;
+
+  @IsNumber()
+  @IsOptional()
+  startingBid: number;
+
+  @IsString()
+  @IsOptional()
+  txHash: string;
+}
+
+export class UpdateAuctionExtraBodyParams {
+  headline: string;
+  link: string;
+  backgroundBlur: boolean;
+}
+
+export class UpdateAuctionExtraBody {
+  @IsNumber()
+  auctionId: number;
+
+  @IsString()
+  @IsOptional()
+  headline: string;
+
+  @IsString()
+  @IsOptional()
+  link: string;
+
+  @IsBoolean()
+  @IsOptional()
+  backgroundBlur: boolean;
 }

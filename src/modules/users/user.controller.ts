@@ -23,7 +23,10 @@ export class UserController {
   @Post('/upload-profile-image')
   @UseInterceptors(FileInterceptor('file'))
   @UseGuards(JwtAuthGuard)
-  async uploadProfileImage(@UploadedFile() file: Express.Multer.File, @Request() req) {
+  async uploadProfileImage(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req,
+  ) {
     const ret = await this.usersService.uploadProfileImage(file, req.user);
     return ret;
   }
@@ -31,7 +34,10 @@ export class UserController {
   @Post('/upload-logo-image')
   @UseInterceptors(FileInterceptor('file'))
   @UseGuards(JwtAuthGuard)
-  async uploadLogoImage(@UploadedFile() file: Express.Multer.File, @Request() req) {
+  async uploadLogoImage(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req,
+  ) {
     const ret = await this.usersService.uploadLogoImage(file, req.user);
     return ret;
   }

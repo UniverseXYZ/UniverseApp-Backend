@@ -1,52 +1,55 @@
 import {
   Column,
   CreateDateColumn,
-  Entity, ManyToOne,
+  Entity,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { NftCollection } from './collection.entity';
-
+import { Exclude } from 'class-transformer';
 
 export enum NftSource {
-  UNIVERSE = "universe",
-  SCRAPER = "scraper"
+  UNIVERSE = 'universe',
+  SCRAPER = 'scraper',
 }
 @Entity()
 export class Nft {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Exclude()
   @Column()
   userId: number;
 
+  @Column()
+  collectionId: number;
+
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: NftSource,
-    default: NftSource.UNIVERSE
+    default: NftSource.UNIVERSE,
   })
   source: NftSource;
 
   @Column({ nullable: true })
   txHash: string;
 
+  @Exclude()
   @Column({ nullable: true })
   editionUUID: string;
-
-  @Column({ default: false })
-  onChain: boolean;
 
   @Column({ nullable: true })
   name: string;
 
   @Column({ nullable: true })
-  tokenId: string;
-
-  @Column({ nullable: true })
   description?: string;
 
   @Column({ nullable: true })
-  artwork_type?: string;
+  tokenId: number;
+
+  @Column({ nullable: true })
+  artworkType?: string;
 
   //artwork original s3
   @Column({ nullable: true })
@@ -66,7 +69,7 @@ export class Nft {
 
   //arweave json metadata uri
   @Column({ nullable: true })
-  token_uri: string;
+  tokenUri: string;
 
   @Column({ type: 'jsonb', nullable: true })
   properties?: any;
@@ -74,12 +77,7 @@ export class Nft {
   @Column({ type: 'real', nullable: true })
   royalties?: number;
 
-  @ManyToOne(
-    () => NftCollection,
-    (nftCollection) => nftCollection.collectibles,
-  )
-  collection: NftCollection;
-
+  @Exclude()
   @Column({ default: true })
   refreshed: boolean;
 

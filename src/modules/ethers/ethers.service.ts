@@ -7,14 +7,20 @@ export class EthersService {
   public provider;
   public wallet;
   constructor(private config: AppConfig) {
-    this.provider = ethers.getDefaultProvider(this.config.values.ethereum.ethereumNetwork, {
-      infura: {
-        projectId: this.config.values.ethereum.infuraProjectId,
-        projectSecret: this.config.values.ethereum.infuraProjectSecret,
+    this.provider = ethers.getDefaultProvider(
+      this.config.values.ethereum.ethereumNetwork,
+      {
+        infura: {
+          projectId: this.config.values.ethereum.infuraProjectId,
+          projectSecret: this.config.values.ethereum.infuraProjectSecret,
+        },
       },
-    });
+    );
 
-    this.wallet = new ethers.Wallet(this.config.values.ethereum.beWalletPK, this.provider);
+    this.wallet = new ethers.Wallet(
+      this.config.values.ethereum.beWalletPK,
+      this.provider,
+    );
   }
 
   async verifySignature(message: string, signature: string) {
