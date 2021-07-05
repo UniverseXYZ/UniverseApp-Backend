@@ -68,7 +68,6 @@ export class NftScraperService {
       });
       if (!nftCollection) {
         nftCollection = new NftCollection();
-        nftCollection.userId = 0;
         nftCollection.address = nft.asset_contract.address;
         nftCollection.name = nft.asset_contract.name;
         nftCollection.symbol = nft.asset_contract.symbol;

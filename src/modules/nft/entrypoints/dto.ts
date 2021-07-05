@@ -267,3 +267,63 @@ export class GetMyNftsResponse {
   @ApiProperty({ type: Date })
   updatedAt: Date;
 }
+
+export class CreateCollectionBody {
+  @IsString()
+  @Length(1, 32)
+  @ApiProperty({
+    example: 'Name',
+    description: 'The name of the collection',
+    required: true,
+  })
+  name: string;
+
+  @IsString()
+  @Length(1, 10)
+  @ApiProperty({
+    example: 'SYM',
+    description: 'The symbol of the collection',
+    required: true,
+  })
+  symbol: string;
+
+  @IsString()
+  @IsOptional()
+  @Length(1, 1024)
+  @ApiProperty({
+    example: 'Collection description',
+    description: 'The description of the collection',
+    required: false,
+  })
+  description?: string;
+
+  @IsString()
+  @ApiProperty({
+    example: 'shortUrl',
+    description: 'The short url to access the collection',
+    required: true,
+  })
+  shortUrl: string;
+}
+
+export class EditMintingCollectionParams {
+  @IsString()
+  @ApiProperty({
+    example: '1',
+    description: 'The id of the minting collection',
+    required: true,
+  })
+  id: number;
+}
+
+export class EditMintingCollectionBody {
+  @IsString()
+  @IsOptional()
+  @Length(1, 1024)
+  @ApiProperty({
+    example: '0x0000000000000000000000002',
+    description: 'The transaction hash of the minting collection',
+    required: false,
+  })
+  txHash?: string;
+}
