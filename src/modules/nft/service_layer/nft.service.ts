@@ -14,9 +14,13 @@ import { SavedNft } from '../domain/saved-nft.entity';
 import { filter } from 'rxjs/operators';
 import { Multer } from 'multer';
 import { plainToClass } from 'class-transformer';
-import { GetNftTokenUriBody } from '../entrypoints/dto';
+import { CreateCollectionBody, GetNftTokenUriBody } from '../entrypoints/dto';
 import { validateOrReject } from 'class-validator';
 import { ProcessedFile } from '../../file-processing/model/ProcessedFile';
+import { UploadResult } from '../../file-storage/model/UploadResult';
+import { MintingCollection } from '../domain/minting-collection.entity';
+import { MintingCollectionNotFoundException } from './exceptions/MintingCollectionNotFoundException';
+import { MintingCollectionBadOwnerException } from './exceptions/MintingCollectionBadOwnerException';
 
 type SaveNftParams = {
   userId: number;
@@ -50,6 +54,10 @@ type SaveCollectionParams = {
   collectibles: SaveCollectibleParams[];
 };
 
+type EditMintingCollectionParams = {
+  txHash?: string;
+};
+
 @Injectable()
 export class NftService {
   private logger = new Logger(NftService.name);
@@ -60,6 +68,8 @@ export class NftService {
     private nftCollectionRepository: Repository<NftCollection>,
     @InjectRepository(SavedNft)
     private savedNftRepository: Repository<SavedNft>,
+    @InjectRepository(MintingCollection)
+    private mintingCollectionRepository: Repository<MintingCollection>,
     private fileProcessingService: FileProcessingService,
     private s3Service: S3Service,
     private arweaveService: ArweaveService,
@@ -192,7 +202,7 @@ export class NftService {
       });
     }
     const bodyClass = plainToClass(GetNftTokenUriBody, { ...body });
-    await this.validateGetNftTokenUriBody(bodyClass);
+    await this.validateReqBody(bodyClass);
 
     const { optimisedFile, downsizedFile } = await this.processUploadedFile(file);
     const idxs = [...Array(bodyClass.numberOfEditions).keys()];
@@ -200,6 +210,48 @@ export class NftService {
     return await Promise.all(
       idxs.map(() => this.generateTokenUriForNftBody(bodyClass, file, optimisedFile, downsizedFile)),
     );
+  }
+
+  public async createCollection(userId: number, body: any, file: Express.Multer.File) {
+    const bodyClass = plainToClass(CreateCollectionBody, { ...body });
+    await this.validateReqBody(bodyClass);
+
+    let s3Result: UploadResult;
+    if (file) {
+      s3Result = await this.s3Service.uploadDocument(file.path, file.filename);
+    }
+
+    let mintingCollection = this.mintingCollectionRepository.create({
+      userId,
+      name: bodyClass.name,
+      description: bodyClass.description,
+      symbol: bodyClass.symbol,
+      coverUrl: s3Result.url,
+      shortUrl: bodyClass.shortUrl,
+    });
+    mintingCollection = await this.mintingCollectionRepository.save(mintingCollection);
+
+    return {
+      id: mintingCollection.id,
+    };
+  }
+
+  public async editMintingCollection(userId: number, id: number, params: EditMintingCollectionParams) {
+    const mintingCollection = await this.mintingCollectionRepository.findOne({ where: { id } });
+
+    if (!mintingCollection) {
+      throw new MintingCollectionNotFoundException();
+    }
+
+    if (mintingCollection.userId !== userId) {
+      throw new MintingCollectionBadOwnerException();
+    }
+
+    const filteredAttributes = this.filterObjectAttributes(params, ['txHash']);
+    for (const attribute in filteredAttributes) {
+      mintingCollection[attribute] = filteredAttributes[attribute];
+    }
+    await this.mintingCollectionRepository.save(mintingCollection);
   }
 
   private async generateTokenUriForNftBody(
@@ -220,9 +272,9 @@ export class NftService {
     });
   }
 
-  private async validateGetNftTokenUriBody(bodyClass: GetNftTokenUriBody) {
+  private async validateReqBody(body) {
     try {
-      await validateOrReject(bodyClass, { validationError: { target: false } });
+      await validateOrReject(body, { validationError: { target: false } });
     } catch (errors) {
       const error = new BadRequestException({
         error: 'ValidationFailed',

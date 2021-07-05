@@ -1,16 +1,7 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  Table,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
-//Todo: check entity name and structure
-@Entity('asdasd')
-export class CreateCollectionEvent {
+@Entity('universe')
+export class DeployCollectionEvent {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -37,6 +28,12 @@ export class CreateCollectionEvent {
 
   @Column()
   included_in_block: string;
+
+  @Column()
+  processed: boolean;
+
+  @Column()
+  owner: string;
 
   @Column()
   created_at: Date;

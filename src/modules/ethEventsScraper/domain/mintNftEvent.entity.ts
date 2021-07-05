@@ -21,16 +21,19 @@ export class MintedNftEvent {
   token_uri: string;
 
   @Column()
-  block_timestamp: string;
-
-  @Column()
-  included_in_block: string;
-
-  @Column()
   processed: boolean;
 
   @Column({ type: 'text' })
   receiver: string;
+
+  @Column()
+  contract_address: string;
+
+  @Column()
+  block_timestamp: string;
+
+  @Column()
+  included_in_block: string;
 
   @Column()
   created_at: Date;

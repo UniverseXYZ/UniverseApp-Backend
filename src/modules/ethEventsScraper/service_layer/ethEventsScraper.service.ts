@@ -6,13 +6,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Nft, NftSource } from '../../nft/domain/nft.entity';
 import { CollectionSource, NftCollection } from '../../nft/domain/collection.entity';
 
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { User } from '../../users/user.entity';
-import { CreateCollectionEvent } from '../domain/createCollectionEvent.entity';
+import { DeployCollectionEvent } from '../domain/deploy-collection-event.entity';
 import { MintedNftEvent } from '../domain/mintNftEvent.entity';
 import { customAlphabet } from 'nanoid';
-import axios from 'axios';
 import { SavedNft } from '../../nft/domain/saved-nft.entity';
+import { MintingCollection } from '../../nft/domain/minting-collection.entity';
 
 @Injectable()
 export class EthEventsScraperService {
@@ -30,47 +30,49 @@ export class EthEventsScraperService {
     private userRepository: Repository<User>,
     @InjectRepository(NftCollection)
     private nftCollectionRepository: Repository<NftCollection>,
-    @InjectRepository(CreateCollectionEvent)
-    private createCollectionEventRepository: Repository<CreateCollectionEvent>,
+    @InjectRepository(DeployCollectionEvent)
+    private deployCollectionEventRepository: Repository<DeployCollectionEvent>,
+    @InjectRepository(MintingCollection)
+    private mintingCollectionRepository: Repository<MintingCollection>,
     @InjectRepository(MintedNftEvent)
     private createNftEventRepository: Repository<MintedNftEvent>,
   ) {}
 
-  //    @Cron(CronExpression.EVERY_DAY_AT_10PM)
-  async syncCreateCollectionEvents() {
-    const pendingNftCollections = await this.nftCollectionRepository.find({
-      where: { onChain: false },
-    });
-    const nftCollectionsToCheck = {};
-    const txHashesToCheck = [];
+  @Cron(CronExpression.EVERY_30_SECONDS)
+  public async syncCollectionAndNftEvents() {
+    if (this.processing) return;
+    this.processing = true;
+    await this.syncDeployCollectionEvents();
+    await this.syncMintNftEvents();
+    this.processing = false;
+  }
 
-    for (const pendingNftCollection of pendingNftCollections) {
-      nftCollectionsToCheck[pendingNftCollection.txHash] = pendingNftCollection;
-      txHashesToCheck.push(pendingNftCollection.txHash);
-    }
+  private async syncDeployCollectionEvents() {
+    const events = await this.deployCollectionEventRepository.find({ where: { processed: false } });
 
-    const createCollectionEvents = await this.createCollectionEventRepository.find({
-      where: {
-        tx_hash: In(txHashesToCheck),
-      },
-    });
+    for (const event of events) {
+      const mintingCollection = await this.mintingCollectionRepository.findOne({ where: { txHash: event.tx_hash } });
 
-    for (const createCollectionEvent of createCollectionEvents) {
-      if (nftCollectionsToCheck[createCollectionEvent.tx_hash]) {
-        const nftCollectionToUpdate: NftCollection = nftCollectionsToCheck[createCollectionEvent.tx_hash];
-        nftCollectionToUpdate.address = createCollectionEvent.contract_address;
-        nftCollectionToUpdate.onChain = true;
+      const collection = this.nftCollectionRepository.create();
+      collection.txHash = event.tx_hash;
+      collection.address = event.contract_address;
+      collection.name = event.token_name;
+      collection.symbol = event.token_symbol;
 
-        await this.nftCollectionRepository.save(nftCollectionToUpdate);
+      if (mintingCollection) {
+        collection.shortUrl = mintingCollection.shortUrl;
+        collection.coverUrl = mintingCollection.coverUrl;
+        collection.description = mintingCollection.description;
+        await this.mintingCollectionRepository.delete({ txHash: event.tx_hash });
       }
+
+      event.processed = true;
+      await this.deployCollectionEventRepository.save(event);
+      await this.nftCollectionRepository.save(collection);
     }
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
-  async syncCreateNftEvents() {
-    if (this.processing) return;
-    this.processing = true;
-
+  private async syncMintNftEvents() {
     const events = await this.createNftEventRepository.find({ where: { processed: false } });
     const txHashAndEventsMap = events.reduce((acc, event) => {
       const prevEventsForTxHash = acc[event.tx_hash] || [];
@@ -90,11 +92,12 @@ export class EthEventsScraperService {
         const response = await this.httpService.get(event.token_uri).toPromise();
         const artworkType = (response.data.image_url as string).split(/[.]+/);
         const user = await this.userRepository.findOne({ where: { address: event.receiver } });
+        const collection = await this.nftCollectionRepository.findOne({ where: { address: event.contract_address } });
 
-        if (user) {
+        if (user && collection) {
           const nft = this.nftRepository.create();
           nft.userId = user.id;
-          nft.collectionId = null;
+          nft.collectionId = collection.id;
           nft.txHash = txHash;
           nft.editionUUID = editionUUID;
           nft.name = response.data.name as string;
@@ -108,15 +111,15 @@ export class EthEventsScraperService {
           nft.tokenUri = event.token_uri;
           nft.properties = response.data.traits;
           nft.royalties = response.data.royalties;
-          await this.nftRepository.save(nft);
+
           event.processed = true;
           await this.createNftEventRepository.save(event);
+
+          await this.nftRepository.save(nft);
         }
       }
       await this.savedNftRepository.softDelete({ txHash });
     }
-
-    this.processing = false;
   }
 
   //Todo: search for auctions with txHash and onChain flag false

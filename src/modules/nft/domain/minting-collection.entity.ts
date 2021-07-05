@@ -1,32 +1,18 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
-export enum CollectionSource {
-  UNIVERSE = 'universe',
-  SCRAPER = 'scraper',
-}
 @Entity()
-export class NftCollection {
+export class MintingCollection {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({
-    type: 'enum',
-    enum: CollectionSource,
-    default: CollectionSource.UNIVERSE,
-  })
-  source: CollectionSource;
-
-  @Column({ nullable: true })
-  txHash?: string;
-
-  @Column({ nullable: true })
-  address?: string;
+  @Column()
+  userId: number;
 
   @Column()
   name: string;
 
-  @Column({ nullable: true })
-  symbol?: string;
+  @Column()
+  symbol: string;
 
   @Column({ nullable: true })
   description?: string;
@@ -36,6 +22,9 @@ export class NftCollection {
 
   @Column({ nullable: true })
   coverUrl?: string;
+
+  @Column({ nullable: true })
+  txHash?: string;
 
   @CreateDateColumn()
   createdAt: Date;
