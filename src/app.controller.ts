@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Request, Session, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Request, Session, UseGuards } from '@nestjs/common';
 import { ApiBody, ApiConsumes, ApiOperation } from '@nestjs/swagger';
 import { AppService } from './app.service';
 import { AuthService } from './modules/auth/auth.service';
@@ -24,8 +24,8 @@ export class AppController {
   }
 
   @Get('api/auth/devSignChallenge')
-  async devSignChallenge(@Session() session: Record<string, any>) {
-    const sig = await this.ethersService.signMessage(session.challenge);
+  async devSignChallenge(@Body() body) {
+    const sig = await this.ethersService.signMessage(body.challenge);
     return sig;
   }
 

@@ -17,8 +17,9 @@ export class UsersService {
     private readonly config: AppConfig,
   ) {}
 
-  async findOne(address: string): Promise<User | undefined> {
+  async findOne(address: string) {
     let user = await this.usersRepository.findOne({ where: { address } });
+
     if (!user) {
       user = new User();
       user.address = address;
