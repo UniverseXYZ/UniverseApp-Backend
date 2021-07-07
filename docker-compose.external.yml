@@ -1,0 +1,43 @@
+version: '3.7'
+
+services:
+  backend:
+    container_name: universe-backend
+    build:
+      context: .
+      target: development
+    volumes:
+      - .:/usr/src/app
+      - backend-node-modules:/usr/src/app/node_modules
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+      - 9229:9229
+    command: ./docker/dev.command.sh
+    env_file:
+      - .env
+    networks:
+      - universe
+    depends_on:
+      - postgres-universe-external
+  postgres-universe-external:
+    container_name: postgres-universe-external
+    image: postgres:12.2
+    networks:
+      - universe
+    environment:
+      TZ: GMT
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE_NAME}
+      PG_DATA: /var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+networks:
+  universe:
+    external: true
+    name: universe-network
+volumes:
+  backend-node-modules:
+  pgdata:

@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { Exclude, Expose, Transform } from 'class-transformer';
 import { configValues } from '../../configuration';
 
@@ -13,11 +13,13 @@ export class SavedNft {
   @Column()
   userId: number;
 
-  @Exclude()
-  @Column()
-  editionUUID: string;
-
   @Column({ nullable: true })
+  txHash: string;
+
+  @Column({ type: 'jsonb', default: [] })
+  tokenUris: string[];
+
+  @Column()
   name: string;
 
   @Column({ nullable: true })
@@ -26,9 +28,8 @@ export class SavedNft {
   @Column()
   numberOfEditions: number;
 
-  @Expose({ name: 'artworkType' })
   @Column({ nullable: true })
-  artwork_type?: string;
+  artworkType?: string;
 
   //artwork original s3
   @Transform(transformFn)
@@ -59,12 +60,12 @@ export class SavedNft {
   @Column({ type: 'real', nullable: true })
   royalties?: number;
 
-  @Column({ type: 'integer', nullable: true })
-  collectionId: number;
-
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @DeleteDateColumn()
+  deletedAt: Date;
 }

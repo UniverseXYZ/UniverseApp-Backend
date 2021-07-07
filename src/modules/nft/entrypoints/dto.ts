@@ -11,7 +11,8 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
+import { NftSource } from '../domain/nft.entity';
 
 export class SaveNftBody {
   @IsString()
@@ -153,6 +154,16 @@ export class EditSavedNftBody {
     required: false,
   })
   royalties?: number;
+
+  @IsString()
+  @IsOptional()
+  @Length(1, 100)
+  @ApiProperty({
+    example: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    description: 'The transaction hash associated with the minting of the Saved NFT',
+    required: false,
+  })
+  txHash: string;
 }
 
 export class GetNftTokenUriBody {
@@ -205,4 +216,114 @@ export class GetNftTokenUriBody {
   })
   @Transform(({ value }) => value && parseInt(value))
   royalties?: number;
+}
+
+export class GetMyNftsResponse {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty({ enum: NftSource, examples: [NftSource.UNIVERSE, NftSource.SCRAPER] })
+  source: string;
+
+  @ApiProperty({ example: '0x0000000000000000000000000000000000000000000000000000000000000000' })
+  txHash: string;
+
+  @ApiProperty()
+  name: string;
+
+  @ApiProperty()
+  description: string;
+
+  @ApiProperty()
+  tokenId: string;
+
+  @ApiProperty({ examples: ['jpeg', 'png', 'gif', 'webp', 'mp4'], example: 'jpeg' })
+  artworkType: string;
+
+  @ApiProperty()
+  url: string;
+
+  @ApiProperty()
+  optimized_url: string;
+
+  @ApiProperty()
+  thumbnail_url: string;
+
+  @ApiProperty()
+  original_url: string;
+
+  @ApiProperty()
+  tokenUri: string;
+
+  @ApiProperty({ type: JSON })
+  properties: any;
+
+  @ApiProperty({ example: 10 })
+  royalties: number;
+
+  @ApiProperty()
+  createdAt: Date;
+
+  @ApiProperty({ type: Date })
+  updatedAt: Date;
+}
+
+export class CreateCollectionBody {
+  @IsString()
+  @Length(1, 32)
+  @ApiProperty({
+    example: 'Name',
+    description: 'The name of the collection',
+    required: true,
+  })
+  name: string;
+
+  @IsString()
+  @Length(1, 10)
+  @ApiProperty({
+    example: 'SYM',
+    description: 'The symbol of the collection',
+    required: true,
+  })
+  symbol: string;
+
+  @IsString()
+  @IsOptional()
+  @Length(1, 1024)
+  @ApiProperty({
+    example: 'Collection description',
+    description: 'The description of the collection',
+    required: false,
+  })
+  description?: string;
+
+  @IsString()
+  @ApiProperty({
+    example: 'shortUrl',
+    description: 'The short url to access the collection',
+    required: true,
+  })
+  shortUrl: string;
+}
+
+export class EditMintingCollectionParams {
+  @IsString()
+  @ApiProperty({
+    example: '1',
+    description: 'The id of the minting collection',
+    required: true,
+  })
+  id: number;
+}
+
+export class EditMintingCollectionBody {
+  @IsString()
+  @IsOptional()
+  @Length(1, 1024)
+  @ApiProperty({
+    example: '0x0000000000000000000000002',
+    description: 'The transaction hash of the minting collection',
+    required: false,
+  })
+  txHash?: string;
 }
