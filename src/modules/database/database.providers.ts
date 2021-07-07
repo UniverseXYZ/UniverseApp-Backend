@@ -11,6 +11,7 @@ import { Auction } from '../auction/domain/auction.entity';
 import { MintedNftEvent } from '../ethEventsScraper/domain/mintNftEvent.entity';
 import { DeployCollectionEvent } from '../ethEventsScraper/domain/deploy-collection-event.entity';
 import { MintingCollection } from '../nft/domain/minting-collection.entity';
+import { LoginChallenge } from '../auth/model/login-challenge.entity';
 
 // TODO: Add db entities here
 const entities = [
@@ -24,6 +25,7 @@ const entities = [
   MintedNftEvent,
   DeployCollectionEvent,
   MintingCollection,
+  LoginChallenge,
 ];
 
 @Injectable()

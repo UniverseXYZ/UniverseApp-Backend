@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
-import { SignedChallengeStrategy } from './signed-challenge.strategy';
 
 import { UsersModule } from '../users/users.module';
 import { EthersModule } from '../ethers/ethers.module';
@@ -11,6 +10,8 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { configValues } from '../configuration';
 import { AuthController } from './auth.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { LoginChallenge } from './model/login-challenge.entity';
 
 @Module({
   imports: [
@@ -22,8 +23,9 @@ import { AuthController } from './auth.controller';
       secret: configValues.auth.jwtSecret,
       signOptions: { expiresIn: '360d' },
     }),
+    TypeOrmModule.forFeature([LoginChallenge]),
   ],
-  providers: [AuthService, JwtStrategy, SignedChallengeStrategy],
+  providers: [AuthService, JwtStrategy],
   exports: [AuthService],
   controllers: [AuthController],
 })
