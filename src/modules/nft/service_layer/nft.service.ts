@@ -91,13 +91,13 @@ export class NftService {
     const dbSavedNft = await this.savedNftRepository.save(savedNft);
     const serialized = {
       id: dbSavedNft.id,
+      collection: null,
       name: dbSavedNft.name,
       description: dbSavedNft.description,
       properties: dbSavedNft.properties,
       royalties: dbSavedNft.royalties,
       numberOfEditions: dbSavedNft.numberOfEditions,
       createdAt: dbSavedNft.createdAt,
-      collection: null,
     };
 
     if (typeof params.collectionId === 'number') {
