@@ -29,6 +29,7 @@ type SaveNftParams = {
   numberOfEditions: number;
   properties?: any;
   royalties: number;
+  collectionId?: number;
 };
 
 type EditSavedNftParams = {
@@ -85,19 +86,36 @@ export class NftService {
       properties: params.properties,
       royalties: params.royalties,
       userId: params.userId,
+      collectionId: params.collectionId,
     });
     const dbSavedNft = await this.savedNftRepository.save(savedNft);
+    const serialized = {
+      id: dbSavedNft.id,
+      name: dbSavedNft.name,
+      description: dbSavedNft.description,
+      properties: dbSavedNft.properties,
+      royalties: dbSavedNft.royalties,
+      numberOfEditions: dbSavedNft.numberOfEditions,
+      createdAt: dbSavedNft.createdAt,
+      collection: null,
+    };
+
+    if (typeof params.collectionId === 'number') {
+      const collection = await this.nftCollectionRepository.findOne({ id: params.collectionId });
+
+      if (collection) {
+        serialized.collection = {
+          id: collection.id,
+          name: collection.name,
+          symbol: collection.symbol,
+          address: collection.address,
+          coverUrl: collection.coverUrl,
+        };
+      }
+    }
 
     return {
-      savedNft: {
-        id: dbSavedNft.id,
-        name: dbSavedNft.name,
-        description: dbSavedNft.description,
-        properties: dbSavedNft.properties,
-        royalties: dbSavedNft.royalties,
-        numberOfEditions: dbSavedNft.numberOfEditions,
-        createdAt: dbSavedNft.createdAt,
-      },
+      savedNft: { ...serialized },
     };
   }
 

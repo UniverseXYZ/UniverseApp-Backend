@@ -46,6 +46,7 @@ export class NftController {
       numberOfEditions: body.numberOfEditions,
       properties: body.properties,
       royalties: body.royalties,
+      collectionId: body.collectionId,
       userId: req.user.sub,
     });
   }
