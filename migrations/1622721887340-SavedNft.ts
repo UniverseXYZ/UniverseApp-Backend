@@ -7,6 +7,7 @@ export class SavedNft1622721887340 implements MigrationInterface {
         await queryRunner.query(`CREATE TABLE "saved_nft" (
             "id" SERIAL NOT NULL, 
             "userId" integer NOT NULL,
+            "collectionId" integer,
             "txHash" character varying,
             "tokenUris" jsonb NOT NULL DEFAULT '[]',
             "name" character varying NOT NULL, 
