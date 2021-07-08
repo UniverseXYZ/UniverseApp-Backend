@@ -197,7 +197,7 @@ export class AuctionService {
     startingBid: number;
     txHash: string
   }) {
-    console.log(userId, auctionId, params)
+
     const auction = await this.validateAuctionPermissions(userId, auctionId);
 
     auction.name = params.name ? params.name : auction.name;

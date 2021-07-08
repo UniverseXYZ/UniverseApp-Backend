@@ -162,4 +162,13 @@ export class NftController {
   async getMyNfts(@Req() req) {
     return await this.nftService.getMyNfts(req.user.sub);
   }
+
+  @Get('nfts/collections/my-collections/summary')
+  @UseGuards(JwtAuthGuard)
+  @ApiTags('nfts')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get the list of all my collections' })
+  async getMyCollectionsSummary(@Req() req) {
+    return await this.nftService.getMyCollectionsSummary(req.user.sub);
+  }
 }

@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Connection, Repository } from 'typeorm';
+import { Connection, In, Repository } from 'typeorm';
 import { customAlphabet } from 'nanoid';
 import { Nft } from '../domain/nft.entity';
 import { NftCollection } from '../domain/collection.entity';
@@ -319,6 +319,17 @@ export class NftService {
 
   public async getMyNfts(userId: number) {
     return await this.nftRepository.find({ where: { userId } });
+  }
+
+  public async getMyCollectionsSummary(userId: number) {
+    const nfts = await this.nftRepository.find({ where: { userId }, order: { createdAt: 'DESC' } });
+    const collectionIds = nfts.map((nft) => nft.collectionId);
+    const collections = await this.nftCollectionRepository.find({ where: { id: In(collectionIds) } });
+
+    return collections.map((collection) => {
+      const { id, address, name, symbol, coverUrl } = collection;
+      return { id, address, name, symbol, coverUrl };
+    });
   }
 
   private async generateTokenUrisForSavedNft(savedNft: SavedNft) {
