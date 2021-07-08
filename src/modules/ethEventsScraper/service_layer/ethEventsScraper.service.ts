@@ -55,7 +55,7 @@ export class EthEventsScraperService {
 
       const collection = this.nftCollectionRepository.create();
       collection.txHash = event.tx_hash;
-      collection.address = event.contract_address;
+      collection.address = event.contract_address?.toLowerCase();
       collection.name = event.token_name;
       collection.symbol = event.token_symbol;
 
@@ -92,7 +92,9 @@ export class EthEventsScraperService {
         const response = await this.httpService.get(event.token_uri).toPromise();
         const artworkType = (response.data.image_url as string).split(/[.]+/);
         const user = await this.userRepository.findOne({ where: { address: event.receiver } });
-        const collection = await this.nftCollectionRepository.findOne({ where: { address: event.contract_address } });
+        const collection = await this.nftCollectionRepository.findOne({
+          where: { address: event.contract_address.toLowerCase() },
+        });
 
         if (user && collection) {
           const nft = this.nftRepository.create();

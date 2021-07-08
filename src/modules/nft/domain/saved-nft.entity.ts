@@ -13,6 +13,9 @@ export class SavedNft {
   @Column()
   userId: number;
 
+  @Column()
+  collectionId: number;
+
   @Column({ nullable: true })
   txHash: string;
 

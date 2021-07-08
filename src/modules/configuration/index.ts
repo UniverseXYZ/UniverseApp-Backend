@@ -17,6 +17,9 @@ export const configValues = {
     infuraProjectSecret: process.env.INFURA_PROJECT_SECRET,
     ethereumNetwork: process.env.ETHEREUM_NETWORK,
     beWalletPK: process.env.BE_WALLET_PK,
+    contracts: {
+      universalNFTAddress: process.env.UNIVERSE_UNIVERSAL_NFT_ADDRESS,
+    },
   },
   auth: {
     jwtSecret: process.env.JWT_SECRET,
