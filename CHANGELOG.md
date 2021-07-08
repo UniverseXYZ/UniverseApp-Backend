@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.3.0...v1.4.0) (2021-07-08)
+
+
+### Features
+
+* add collection to saved nfts ([6d302cb](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/6d302cb163cbd22f2709cbef8ec71a2e4d0fce61))
+
 # [1.3.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.2.0...v1.3.0) (2021-06-30)
 
 
