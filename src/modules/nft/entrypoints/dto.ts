@@ -173,6 +173,15 @@ export class EditSavedNftBody {
     required: false,
   })
   txHash: string;
+
+  @IsNumber()
+  @IsOptional()
+  @ApiProperty({
+    example: 10,
+    description: 'The id of the collection',
+    required: false,
+  })
+  collectionId?: number;
 }
 
 export class GetNftTokenUriBody {

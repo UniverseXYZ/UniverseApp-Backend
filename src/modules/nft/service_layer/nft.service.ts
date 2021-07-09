@@ -39,6 +39,7 @@ type EditSavedNftParams = {
   properties?: any;
   royalties?: number;
   txHash?: string;
+  collectionId: number;
 };
 
 type SaveCollectibleParams = {
@@ -325,6 +326,7 @@ export class NftService {
       'properties',
       'royalties',
       'txHash',
+      'collectionId',
     ]);
 
     for (const param in filteredParams) {
