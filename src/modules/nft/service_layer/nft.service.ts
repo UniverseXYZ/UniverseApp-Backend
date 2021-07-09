@@ -338,7 +338,56 @@ export class NftService {
   }
 
   public async getMyNfts(userId: number) {
-    return await this.nftRepository.find({ where: { userId } });
+    const nfts = await this.nftRepository.find({ where: { userId }, order: { createdAt: 'DESC' } });
+    const groupedNfts = nfts.reduce((acc, nft) => {
+      const previousNfts = acc[nft.editionUUID] || [];
+      return {
+        ...acc,
+        [nft.editionUUID]: [...previousNfts, nft],
+      };
+    }, {} as Record<string, Nft[]>);
+    const collectionIds = Object.keys(nfts.reduce((acc, nft) => ({ ...acc, [nft.collectionId]: true }), {}));
+    const collections = await this.nftCollectionRepository.find({ where: { id: In(collectionIds) } });
+    const collectionsMap = collections.reduce(
+      (acc, collection) => ({ ...acc, [collection.id]: collection }),
+      {} as Record<string, NftCollection>,
+    );
+
+    return {
+      nfts: Object.values(groupedNfts).map((nfts) => {
+        const {
+          id,
+          name,
+          original_url,
+          thumbnail_url,
+          optimized_url,
+          url,
+          createdAt,
+          artworkType,
+          collectionId,
+        } = nfts[0];
+        const tokenIds = nfts.map((nft) => nft.tokenId);
+        const collection = collectionsMap[collectionId] && {
+          id: collectionsMap[collectionId].id,
+          name: collectionsMap[collectionId].name,
+          symbol: collectionsMap[collectionId].symbol,
+          coverUrl: collectionsMap[collectionId].coverUrl,
+        };
+
+        return {
+          id,
+          name,
+          original_url,
+          thumbnail_url,
+          optimized_url,
+          url,
+          artworkType,
+          tokenIds,
+          collection,
+          createdAt,
+        };
+      }),
+    };
   }
 
   public async getMyCollections(userId: number) {
@@ -349,10 +398,12 @@ export class NftService {
       where: [{ id: In(collectionIds) }, { address: universalCollectionAddress.toLowerCase() }],
     });
 
-    return collections.map((collection) => {
-      const { id, address, name, symbol, coverUrl } = collection;
-      return { id, address, name, symbol, coverUrl };
-    });
+    return {
+      collections: collections.map((collection) => {
+        const { id, address, name, symbol, coverUrl } = collection;
+        return { id, address, name, symbol, coverUrl };
+      }),
+    };
   }
 
   private async generateTokenUrisForSavedNft(savedNft: SavedNft) {

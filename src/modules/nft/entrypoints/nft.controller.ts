@@ -155,7 +155,6 @@ export class NftController {
 
   @Get('nfts/my-nfts')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
   @ApiTags('nfts')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get my nfts' })
