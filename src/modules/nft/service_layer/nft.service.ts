@@ -341,7 +341,7 @@ export class NftService {
     return await this.nftRepository.find({ where: { userId } });
   }
 
-  public async getMyCollectionsSummary(userId: number) {
+  public async getMyCollections(userId: number) {
     const universalCollectionAddress = this.config.values.ethereum.contracts.universalNFTAddress;
     const nfts = await this.nftRepository.find({ where: { userId }, order: { createdAt: 'DESC' } });
     const collectionIds = nfts.map((nft) => nft.collectionId);
