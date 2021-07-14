@@ -1,16 +1,12 @@
-import { Exclude } from 'class-transformer';
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity()
 export class RewardTier {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column()
+  auctionId: number;
 
   @Column()
   userId: number;
@@ -24,35 +20,24 @@ export class RewardTier {
   @Column({ type: 'integer' })
   nftsPerWinner: number;
 
-  @Column()
+  @Column({ type: 'decimal', nullable: true })
   minimumBid: number;
-
-  @Column()
-  auctionId: number;
 
   @Column()
   tierPosition: number;
 
-  @Column({nullable:true})
+  @Column({ nullable: true })
   customDescription: string;
 
-  @Column({nullable:true})
-  tierImage: string;
+  @Column({ nullable: true })
+  tierImageUrl: string;
 
-  @Column({nullable:true})
+  @Column({ nullable: true })
   tierColor: string;
 
   @CreateDateColumn()
-  @Exclude()
   createdAt: Date;
 
   @UpdateDateColumn()
-  @Exclude()
   updatedAt: Date;
-
-  nfts: any[];
 }
-
-/*
- * up to 20 winners and up to 5 nfts per winner, so max 100 NFTs
- */

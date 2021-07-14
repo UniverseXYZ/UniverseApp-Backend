@@ -1,11 +1,5 @@
 import { Exclude } from 'class-transformer';
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity()
 export class Auction {
@@ -18,20 +12,20 @@ export class Auction {
   @Column()
   name: string;
 
-  @Column({ default: false })
-  onChain: boolean;
+  @Column({ nullable: true })
+  headline: string;
 
-  @Column({nullable: true})
-  onChainId: number;
-
-  @Column({nullable: true})
-  txHash: string;
-
-  @Column()
+  @Column({ type: 'decimal' })
   startingBid: number;
 
-  @Column({ default: 'ETH' })
-  bidCurrency: string;
+  @Column()
+  tokenAddress: string;
+
+  @Column()
+  tokenSymbol: string;
+
+  @Column()
+  tokenDecimals: number;
 
   @Column()
   startDate: Date;
@@ -39,28 +33,33 @@ export class Auction {
   @Column()
   endDate: Date;
 
-  @Column({nullable: true})
-  headline: string;
+  @Column({ type: 'jsonb', nullable: true })
+  royaltySplits: { address: string; percentAmount: number }[];
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   link: string;
 
-  @Column({nullable: true})
-  promoImage: string;
+  @Column({ nullable: true })
+  promoImageUrl: string;
 
-  @Column({nullable: true})
-  backgroundImage: string;
+  @Column({ nullable: true })
+  backgroundImageUrl: string;
 
   @Column({ default: false })
-  backgroundBlur: boolean;
+  backgroundImageBlur: boolean;
 
-  @Exclude()
+  @Column({ default: false })
+  onChain: boolean;
+
+  @Column({ nullable: true })
+  onChainId: number;
+
+  @Column({ nullable: true })
+  txHash: string;
+
   @CreateDateColumn()
   createdAt: Date;
 
-  @Exclude()
   @UpdateDateColumn()
   updatedAt: Date;
-
-  rewardTiers: any[]
 }
