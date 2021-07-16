@@ -345,3 +345,12 @@ export class EditMintingCollectionBody {
   })
   txHash?: string;
 }
+
+export class DeleteSavedNftParams {
+  @IsNumberString()
+  @ApiProperty({
+    description: 'The id of the Saved NFT to be deleted',
+    example: 1,
+  })
+  id: number;
+}
