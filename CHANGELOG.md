@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.4.0...v1.5.0) (2021-07-16)
+
+
+### Features
+
+* delete Saved NFTs ([250e500](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/250e500c922c72faf2e6c3ba95fed6d20d8dc182))
+
 # [1.4.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.3.0...v1.4.0) (2021-07-08)
 
 
