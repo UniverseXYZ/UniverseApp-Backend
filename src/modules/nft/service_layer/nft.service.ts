@@ -21,6 +21,8 @@ import { UploadResult } from '../../file-storage/model/UploadResult';
 import { MintingCollection } from '../domain/minting-collection.entity';
 import { MintingCollectionNotFoundException } from './exceptions/MintingCollectionNotFoundException';
 import { MintingCollectionBadOwnerException } from './exceptions/MintingCollectionBadOwnerException';
+import { SavedNftNotFoundException } from './exceptions/SavedNftNotFoundException';
+import { SavedNftOwnerException } from './exceptions/SavedNftOwnerException';
 
 type SaveNftParams = {
   userId: number;
@@ -404,6 +406,22 @@ export class NftService {
         return { id, address, name, symbol, coverUrl };
       }),
     };
+  }
+
+  public async deleteSavedNft(id: number, userId: number) {
+    const savedNft = await this.savedNftRepository.findOne({ where: { id } });
+
+    if (!savedNft) {
+      throw new SavedNftNotFoundException();
+    }
+
+    if (savedNft.userId !== userId) {
+      throw new SavedNftOwnerException();
+    }
+
+    await this.savedNftRepository.delete({ id });
+
+    return { id };
   }
 
   private async generateTokenUrisForSavedNft(savedNft: SavedNft) {
