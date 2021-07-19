@@ -86,6 +86,8 @@ export class AuctionController {
 
   @Patch('auctions/:id')
   @UseGuards(JwtAuthGuard)
+  @ApiTags('auction')
+  @ApiOperation({ summary: 'Edit auction' })
   async updateAuction(
     @Req() req,
     @Param() editAuctionParams: EditAuctionParams,
