@@ -7,8 +7,15 @@ import { S3Service } from '../../file-storage/s3.service';
 import { AppConfig } from 'src/modules/configuration/configuration.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuctionStatus } from '../domain/types';
-import { CreateAuctionBody, UpdateAuctionBodyParams, UpdateAuctionExtraBodyParams } from '../entrypoints/dto';
+import {
+  CreateAuctionBody,
+  EditAuctionBody,
+  UpdateAuctionBodyParams,
+  UpdateAuctionExtraBodyParams,
+} from '../entrypoints/dto';
 import { Nft } from 'src/modules/nft/domain/nft.entity';
+import { AuctionNotFoundException } from './exceptions/AuctionNotFoundException';
+import { AuctionBadOwnerException } from './exceptions/AuctionBadOwnerException';
 @Injectable()
 export class AuctionService {
   constructor(
@@ -206,38 +213,25 @@ export class AuctionService {
     const auction = await this.auctionRepository.findOne({ where: { id: auctionId } });
 
     if (!auction) {
-      //return auction not found
+      throw new AuctionNotFoundException();
     }
 
     if (userId !== auction.userId) {
-      //return error if missmatch
+      throw new AuctionBadOwnerException();
     }
 
     return auction;
   }
 
-  async updateAuction(
-    userId: number,
-    auctionId: number,
-    params: {
-      name: string;
-      startDate: Date;
-      endDate: Date;
-      bidCurrency: string;
-      startingBid: number;
-      txHash: string;
-    },
-  ) {
-    // const auction = await this.validateAuctionPermissions(userId, auctionId);
-    //
-    // auction.name = params.name ? params.name : auction.name;
-    // auction.startDate = params.startDate ? params.startDate : auction.startDate;
-    // auction.endDate = params.endDate ? params.endDate : auction.endDate;
-    // auction.bidCurrency = params.bidCurrency ? params.bidCurrency : auction.bidCurrency;
-    // auction.startingBid = params.startingBid ? params.startingBid : auction.startingBid;
-    // auction.txHash = params.txHash ? params.txHash : auction.txHash;
-    //
-    // return await this.auctionRepository.save(auction);
+  async updateAuction(userId: number, auctionId: number, updateAuctionBody: EditAuctionBody) {
+    let auction = await this.validateAuctionPermissions(userId, auctionId);
+
+    for (const key in updateAuctionBody) {
+      auction[key] = updateAuctionBody[key];
+    }
+    auction = await this.auctionRepository.save(auction);
+
+    return auction;
   }
 
   async updateAuctionExtraData(

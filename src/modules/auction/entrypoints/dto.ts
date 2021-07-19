@@ -2,8 +2,8 @@ import {
   ArrayMinSize,
   IsArray,
   IsBoolean,
-  IsDateString,
-  IsNumber,
+  IsDateString, IsNotEmpty,
+  IsNumber, IsNumberString,
   IsOptional,
   IsString,
   Length,
@@ -122,6 +122,96 @@ export class CreateAuctionBody {
   @Type(() => CreateRewardTierBody)
   @ApiProperty({ type: () => CreateRewardTierBody, isArray: true })
   rewardTiers: CreateRewardTierBody[];
+}
+
+export class EditAuctionParams {
+  @IsNumberString()
+  id: number;
+}
+
+export class EditAuctionBody {
+  @ApiProperty({
+    description: 'The name of the auction',
+    example: 'Auction1',
+  })
+  @IsString()
+  @IsOptional()
+  @Length(1, 100)
+  name: string;
+
+  @ApiProperty({
+    description: 'Starting bid of the auction',
+    example: 0.1,
+  })
+  @IsNumber()
+  @IsOptional()
+  startingBid: number;
+
+  @ApiProperty({
+    description: 'Address of the bidding token',
+    example: '0x0000000000000000000000000000000',
+  })
+  @IsString()
+  @IsOptional()
+  tokenAddress: string;
+
+  @ApiProperty({
+    description: 'Symbol of the bidding token',
+    example: 'XYZ',
+  })
+  @IsNotEmpty({ always: true })
+  @IsOptional()
+  @IsString()
+  tokenSymbol: string;
+
+  @ApiProperty({
+    description: 'Number of decimals of the bidding token',
+    example: 18,
+  })
+  @IsOptional()
+  @IsNumber()
+  tokenDecimals: number;
+
+  @ApiProperty({
+    description: 'Start date of the auction in ISO format',
+    example: '2021-07-20T09:02:31.168Z',
+  })
+  @IsOptional()
+  @IsDateString()
+  startDate: Date;
+
+  @ApiProperty({
+    description: 'End date of the auction in ISO format',
+    example: '2021-07-20T09:02:31.168Z',
+  })
+  @IsOptional()
+  @IsDateString()
+  endDate: Date;
+
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => CreateAuctionRoyaltySplitBody)
+  @ApiProperty({ type: () => CreateAuctionRoyaltySplitBody, isArray: true })
+  royaltySplits: CreateAuctionRoyaltySplitBody[];
+
+  @IsString()
+  @IsOptional()
+  @Length(1, 255)
+  @ApiProperty({ description: 'The headline of the auction', example: `Auction's headline` })
+  headline: string;
+
+  @IsString()
+  @IsOptional()
+  @Length(1, 50)
+  @ApiProperty({ description: 'The custom link of the auction', example: `auction1` })
+  link: string;
+
+  @IsBoolean()
+  @IsOptional()
+  @ApiProperty({ description: 'Sete background image blur', example: false })
+  backgroundImageBlur: boolean;
 }
 
 export class CreateRewardTierBody {

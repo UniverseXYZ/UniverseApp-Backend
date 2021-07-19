@@ -15,6 +15,8 @@ import {
 import {
   CreateAuctionBody,
   CreateRewardTierBody,
+  EditAuctionBody,
+  EditAuctionParams,
   UpdateAuctionBody,
   UpdateAuctionExtraBody,
   UpdateAuctionExtraBodyParams,
@@ -82,17 +84,14 @@ export class AuctionController {
     return await this.auctionService.createAuction(req.user.sub, createAuctionBody);
   }
 
-  @Patch('auction')
+  @Patch('auctions/:id')
   @UseGuards(JwtAuthGuard)
-  async updateAuction(@Req() req, @Body() updateAuctionBody: UpdateAuctionBody) {
-    return await this.auctionService.updateAuction(req.user.sub, updateAuctionBody.auctionId, {
-      name: updateAuctionBody.name,
-      startDate: updateAuctionBody.startDate,
-      endDate: updateAuctionBody.endDate,
-      bidCurrency: updateAuctionBody.bidCurrency,
-      startingBid: updateAuctionBody.startingBid,
-      txHash: updateAuctionBody.txHash,
-    });
+  async updateAuction(
+    @Req() req,
+    @Param() editAuctionParams: EditAuctionParams,
+    @Body() updateAuctionBody: EditAuctionBody,
+  ) {
+    return await this.auctionService.updateAuction(req.user.sub, editAuctionParams.id, updateAuctionBody);
   }
 
   @Patch('auction-extra-data')
