@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.5.0...v1.6.0) (2021-07-21)
+
+
+### Features
+
+* create & edit auction endpoints ([fb52eb9](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/fb52eb978f22984e91e78b55c6827dfbc7ec23e9))
+
 # [1.5.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.4.0...v1.5.0) (2021-07-16)
 
 
