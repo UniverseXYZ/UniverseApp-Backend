@@ -26,6 +26,7 @@ async function bootstrap() {
     .addTag('auth')
     .addTag('health')
     .addTag('nfts')
+    .addTag('auction')
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, options);
