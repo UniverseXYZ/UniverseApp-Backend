@@ -8,7 +8,7 @@ import {
   Put,
   Query,
   Req,
-  UploadedFile,
+  UploadedFile, UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -22,11 +22,13 @@ import {
   UpdateAuctionExtraBodyParams,
   UpdateRewardTierBody,
   UpdateRewardTierExtraBody,
+  UploaductionLandingImagesParams,
 } from './dto';
 import { AuctionService } from '../service-layer/auction.service';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { auctionLandingImagesMulterOptions } from '../../nft/entrypoints/multipart';
 
 @Controller('api')
 export class AuctionController {
@@ -94,6 +96,23 @@ export class AuctionController {
     @Body() updateAuctionBody: EditAuctionBody,
   ) {
     return await this.auctionService.updateAuction(req.user.sub, editAuctionParams.id, updateAuctionBody);
+  }
+
+  @Post('auctions/:id/landing-files')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'promo-image' }, { name: 'background-image' }], auctionLandingImagesMulterOptions()),
+  )
+  @ApiTags('auction')
+  @ApiOperation({ summary: 'Upload images for the landing page' })
+  async uploadAuctionLandingImages(
+    @Req() req,
+    @Param() params: UploaductionLandingImagesParams,
+    @UploadedFiles() files: Record<string, Express.Multer.File[]>,
+  ) {
+    const promoImage = files && files['promo-image'] && files['promo-image'][0];
+    const backgroundImage = files && files['background-image'] && files['background-image'][0];
+    return await this.auctionService.uploadAuctionLandingImages(req.user.sub, params.id, promoImage, backgroundImage);
   }
 
   @Patch('auction-extra-data')

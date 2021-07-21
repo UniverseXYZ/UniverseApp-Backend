@@ -11,6 +11,7 @@ import { RewardTierNft } from './domain/reward-tier-nft.entity';
 import { RewardTier } from './domain/reward-tier.entity';
 import { AuctionController } from './entrypoints/auction.controller';
 import { AuctionService } from './service-layer/auction.service';
+import { FileSystemModule } from '../file-system/file-system.module';
 
 @Module({
   imports: [
@@ -19,13 +20,9 @@ import { AuctionService } from './service-layer/auction.service';
     MulterModule.registerAsync({
       useClass: MulterConfigService,
     }),
-    TypeOrmModule.forFeature([
-      User,
-      Auction,
-      RewardTier,
-      RewardTierNft,
-      Nft
-    ])],
+    TypeOrmModule.forFeature([User, Auction, RewardTier, RewardTierNft, Nft]),
+    FileSystemModule,
+  ],
   controllers: [AuctionController],
   exports: [AuctionService],
   providers: [AuctionService],

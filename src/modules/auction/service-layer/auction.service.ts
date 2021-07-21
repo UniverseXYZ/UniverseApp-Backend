@@ -16,6 +16,7 @@ import {
 import { Nft } from 'src/modules/nft/domain/nft.entity';
 import { AuctionNotFoundException } from './exceptions/AuctionNotFoundException';
 import { AuctionBadOwnerException } from './exceptions/AuctionBadOwnerException';
+import { FileSystemService } from '../../file-system/file-system.service';
 @Injectable()
 export class AuctionService {
   constructor(
@@ -28,6 +29,7 @@ export class AuctionService {
     @InjectRepository(Nft)
     private nftRepository: Repository<Nft>,
     private s3Service: S3Service,
+    private fileSystemService: FileSystemService,
     private readonly config: AppConfig,
   ) {}
 
@@ -228,6 +230,36 @@ export class AuctionService {
 
     for (const key in updateAuctionBody) {
       auction[key] = updateAuctionBody[key];
+    }
+    auction = await this.auctionRepository.save(auction);
+
+    return auction;
+  }
+
+  async uploadAuctionLandingImages(
+    userId: number,
+    auctionId: number,
+    promoImageFile: Express.Multer.File,
+    backgroundImageFile: Express.Multer.File,
+  ) {
+    let auction = await this.validateAuctionPermissions(userId, auctionId);
+
+    if (promoImageFile) {
+      const uploadResult = await this.s3Service.uploadDocument(
+        promoImageFile.path,
+        `auctions/${promoImageFile.filename}`,
+      );
+      auction.promoImageUrl = uploadResult.url;
+      await this.fileSystemService.removeFile(promoImageFile.path);
+    }
+
+    if (backgroundImageFile) {
+      const uploadResult = await this.s3Service.uploadDocument(
+        backgroundImageFile.path,
+        `auctions/${backgroundImageFile.filename}`,
+      );
+      auction.backgroundImageUrl = uploadResult.url;
+      await this.fileSystemService.removeFile(backgroundImageFile.path);
     }
     auction = await this.auctionRepository.save(auction);
 

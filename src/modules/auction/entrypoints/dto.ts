@@ -129,6 +129,11 @@ export class EditAuctionParams {
   id: number;
 }
 
+export class UploaductionLandingImagesParams {
+  @IsNumberString()
+  id: number;
+}
+
 export class EditAuctionBody {
   @ApiProperty({
     description: 'The name of the auction',
