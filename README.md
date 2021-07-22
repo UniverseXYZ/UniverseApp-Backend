@@ -52,3 +52,13 @@ After you get the token you add as a header to all authenticated requests:
 ```shell script
  'Authorization': 'Bearer eyJhbGciOi...'
 ```
+
+## Mint new collection
+
+The process of minting new collection requires multiple steps:
+
+1. POST `/api/nfts/minting-collections`. This request will create the collection entity in the database so as to hold all off-chain data
+   
+2. Call the `deployUniverseERC721()` method of UniverseERC721Factory contract and keep the txHash in memory
+
+3. PATCH `/api/nfts/minting-collections/{id}`. Use this endpoint to send the txHash to backend
