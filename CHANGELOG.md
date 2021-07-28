@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.7.0...v1.8.0) (2021-07-28)
+
+
+### Features
+
+* add royalty split to NFTs ([00b441c](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/00b441c07b29fc1b4edcb1fc103bf85295c78409))
+
 # [1.7.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.6.0...v1.7.0) (2021-07-28)
 
 
