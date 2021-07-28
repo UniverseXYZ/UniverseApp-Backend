@@ -3,6 +3,7 @@ import {
   IsArray,
   IsNumber,
   IsNumberString,
+  IsObject,
   IsOptional,
   IsString,
   Length,
@@ -51,16 +52,18 @@ export class SaveNftBody {
   })
   properties?: any;
 
-  @IsNumber()
+  @IsArray()
   @IsOptional()
-  @Min(0)
-  @Max(100)
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => SaveNftRoyalty)
   @ApiProperty({
-    example: 10,
-    description: 'The royalties percentage',
+    example: [{ address: '0x0000000000000000000000000', amount: 100 }],
+    description: 'The royalty splits',
     required: false,
+    type: () => [SaveNftRoyalty],
   })
-  royalties?: number;
+  royalties?: SaveNftRoyalty[];
 
   @IsNumber()
   @IsOptional()
@@ -70,6 +73,16 @@ export class SaveNftBody {
     required: false,
   })
   collectionId?: number;
+}
+
+export class SaveNftRoyalty {
+  @IsString()
+  address: string;
+
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  amount: number;
 }
 
 export class SaveCollectionBody {
@@ -153,16 +166,18 @@ export class EditSavedNftBody {
   })
   properties?: any;
 
-  @IsNumber()
+  @IsArray()
   @IsOptional()
-  @Min(0)
-  @Max(100)
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => SaveNftRoyalty)
   @ApiProperty({
-    example: 10,
-    description: 'The royalties percentage',
+    example: [{ address: '0x0000000000000000000000000', amount: 100 }],
+    description: 'The royalty splits',
     required: false,
+    type: () => [SaveNftRoyalty],
   })
-  royalties?: number;
+  royalties?: SaveNftRoyalty[];
 
   @IsString()
   @IsOptional()

@@ -60,8 +60,8 @@ export class SavedNft {
   @Column({ type: 'jsonb', nullable: true })
   properties?: any;
 
-  @Column({ type: 'real', nullable: true })
-  royalties?: number;
+  @Column({ type: 'jsonb', nullable: true })
+  royalties?: any;
 
   @CreateDateColumn()
   createdAt: Date;

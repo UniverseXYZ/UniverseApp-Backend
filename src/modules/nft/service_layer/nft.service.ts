@@ -30,7 +30,7 @@ type SaveNftParams = {
   description?: string;
   numberOfEditions: number;
   properties?: any;
-  royalties: number;
+  royalties: { address: string, amount: number }[];
   collectionId?: number;
 };
 
@@ -39,7 +39,7 @@ type EditSavedNftParams = {
   description?: string;
   numberOfEditions?: number;
   properties?: any;
-  royalties?: number;
+  royalties: { address: string, amount: number }[];
   txHash?: string;
   collectionId: number;
 };
