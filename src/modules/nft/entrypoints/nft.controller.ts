@@ -125,7 +125,7 @@ export class NftController {
   @UseInterceptors(FileInterceptor('file', collectionFileMulterOptions()))
   @ApiTags('nfts')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Generate the token URI for an NFT' })
+  @ApiOperation({ summary: '' })
   @ApiConsumes('form/multi-part')
   async createCollection(@Req() req, @UploadedFile() file: Express.Multer.File) {
     return await this.nftService.createCollection(req.user.sub, req.body, file);

@@ -1,4 +1,5 @@
 import {
+  ArrayMaxSize,
   ArrayMinSize,
   IsArray,
   IsNumber,
@@ -55,6 +56,7 @@ export class SaveNftBody {
   @IsArray()
   @IsOptional()
   @ArrayMinSize(1)
+  @ArrayMaxSize(5)
   @ValidateNested({ each: true })
   @Type(() => SaveNftRoyalty)
   @ApiProperty({
@@ -107,6 +109,7 @@ export class SaveCollectionBody {
   @IsArray()
   @ValidateNested({ each: true })
   @ArrayMinSize(1)
+  @ArrayMaxSize(5)
   @Type(() => SaveNftBody)
   @ApiProperty({ type: () => [SaveNftBody] })
   collectibles: SaveNftBody[];
@@ -169,6 +172,7 @@ export class EditSavedNftBody {
   @IsArray()
   @IsOptional()
   @ArrayMinSize(1)
+  @ArrayMaxSize(5)
   @ValidateNested({ each: true })
   @Type(() => SaveNftRoyalty)
   @ApiProperty({
@@ -238,17 +242,20 @@ export class GetNftTokenUriBody {
   @Transform(({ value }) => value && JSON.parse(value))
   properties?: any;
 
-  @IsNumber()
+  @IsArray()
   @IsOptional()
-  @Min(0)
-  @Max(100)
+  @ArrayMinSize(1)
+  @ArrayMaxSize(5)
+  @ValidateNested({ each: true })
+  @Type(() => SaveNftRoyalty)
   @ApiProperty({
-    example: 10,
-    description: 'The royalties percentage',
+    example: [{ address: '0x0000000000000000000000000', amount: 100 }],
+    description: 'The royalty splits',
     required: false,
+    type: () => [SaveNftRoyalty],
   })
-  @Transform(({ value }) => value && parseInt(value))
-  royalties?: number;
+  @Transform(({ value }) => value && JSON.parse(value))
+  royalties?: SaveNftRoyalty[];
 }
 
 export class GetMyNftsResponse {

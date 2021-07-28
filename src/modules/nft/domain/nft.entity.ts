@@ -74,8 +74,8 @@ export class Nft {
   @Column({ type: 'jsonb', nullable: true })
   properties?: any;
 
-  @Column({ type: 'real', nullable: true })
-  royalties?: number;
+  @Column({ type: 'jsonb', nullable: true })
+  royalties?: any;
 
   @Exclude()
   @Column({ default: true })
