@@ -56,6 +56,7 @@ export class EthEventsScraperService {
       const collection = this.nftCollectionRepository.create();
       collection.txHash = event.tx_hash;
       collection.address = event.contract_address?.toLowerCase();
+      collection.owner = event.owner.toLowerCase();
       collection.name = event.token_name;
       collection.symbol = event.token_symbol;
 
