@@ -1,3 +1,10 @@
+## [1.8.3](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.8.2...v1.8.3) (2021-07-29)
+
+
+### Bug Fixes
+
+* pass the user address to get collections ([7c04c67](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/7c04c676d84d5f86658a69a690c9eeeca876ad35))
+
 ## [1.8.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.8.1...v1.8.2) (2021-07-29)
 
 
