@@ -49,6 +49,7 @@ export class EthEventsScraperService {
       await this.syncMintNftEvents();
       this.processing = false;
     } catch (e) {
+      this.processing = false;
       console.log(e);
     }
     this.logger.log('end');
