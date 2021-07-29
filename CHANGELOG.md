@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.8.0...v1.8.1) (2021-07-29)
+
+
+### Bug Fixes
+
+* lower case user addresses ([5f9f90c](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/5f9f90cb07455e388cd4d22f385e7cf42fd9cf30))
+
 # [1.8.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.7.0...v1.8.0) (2021-07-28)
 
 
