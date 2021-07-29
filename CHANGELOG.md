@@ -1,3 +1,10 @@
+## [1.8.4](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.8.3...v1.8.4) (2021-07-29)
+
+
+### Bug Fixes
+
+* improve cron error handling ([c32d554](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/c32d55480debb6a2e54b2b2c5e62c53c8a764ef9))
+
 ## [1.8.3](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.8.2...v1.8.3) (2021-07-29)
 
 
