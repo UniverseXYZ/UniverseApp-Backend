@@ -16,6 +16,7 @@ import { MintingCollection } from '../../nft/domain/minting-collection.entity';
 
 @Injectable()
 export class EthEventsScraperService {
+  private logger = new Logger(EthEventsScraperService.name);
   processing = false;
 
   constructor(
@@ -40,11 +41,17 @@ export class EthEventsScraperService {
 
   @Cron(CronExpression.EVERY_30_SECONDS)
   public async syncCollectionAndNftEvents() {
-    if (this.processing) return;
-    this.processing = true;
-    await this.syncDeployCollectionEvents();
-    await this.syncMintNftEvents();
-    this.processing = false;
+    this.logger.log('start');
+    try {
+      if (this.processing) return;
+      this.processing = true;
+      await this.syncDeployCollectionEvents();
+      await this.syncMintNftEvents();
+      this.processing = false;
+    } catch (e) {
+      console.log(e);
+    }
+    this.logger.log('end');
   }
 
   private async syncDeployCollectionEvents() {
