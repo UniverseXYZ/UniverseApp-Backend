@@ -1,3 +1,10 @@
+## [1.8.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.8.1...v1.8.2) (2021-07-29)
+
+
+### Bug Fixes
+
+* fix my collections endpoint ([fefc5b0](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/fefc5b0bcd7d5a911edf561eca74368e131bfc89))
+
 ## [1.8.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.8.0...v1.8.1) (2021-07-29)
 
 
