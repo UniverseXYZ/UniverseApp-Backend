@@ -23,6 +23,7 @@ import { MintingCollectionNotFoundException } from './exceptions/MintingCollecti
 import { MintingCollectionBadOwnerException } from './exceptions/MintingCollectionBadOwnerException';
 import { SavedNftNotFoundException } from './exceptions/SavedNftNotFoundException';
 import { SavedNftOwnerException } from './exceptions/SavedNftOwnerException';
+import { User } from '../../users/user.entity';
 
 type SaveNftParams = {
   userId: number;
@@ -74,6 +75,8 @@ export class NftService {
     private savedNftRepository: Repository<SavedNft>,
     @InjectRepository(MintingCollection)
     private mintingCollectionRepository: Repository<MintingCollection>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
     private fileProcessingService: FileProcessingService,
     private s3Service: S3Service,
     private arweaveService: ArweaveService,
@@ -393,8 +396,9 @@ export class NftService {
   }
 
   public async getMyCollections(userId: number) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
     const collections = await this.nftCollectionRepository.find({
-      where: { owner: userId },
+      where: { owner: user.address },
     });
 
     return {
