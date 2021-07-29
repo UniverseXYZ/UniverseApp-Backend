@@ -91,7 +91,7 @@ export class EthEventsScraperService {
       for (const event of events) {
         const response = await this.httpService.get(event.token_uri).toPromise();
         const artworkType = (response.data.image_url as string).split(/[.]+/);
-        const user = await this.userRepository.findOne({ where: { address: event.receiver } });
+        const user = await this.userRepository.findOne({ where: { address: event.receiver.toLowerCase() } });
         const collection = await this.nftCollectionRepository.findOne({
           where: { address: event.contract_address.toLowerCase() },
         });
