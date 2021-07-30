@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.8.6...v1.9.0) (2021-07-30)
+
+
+### Features
+
+* add ability to edit reward tier ([af1dd97](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/af1dd97e504ed336d7061a75cb0837fe204506d9))
+
 ## [1.8.6](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.8.5...v1.8.6) (2021-07-30)
 
 
