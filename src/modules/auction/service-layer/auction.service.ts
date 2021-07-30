@@ -11,12 +11,14 @@ import {
   CreateAuctionBody,
   EditAuctionBody,
   UpdateAuctionBodyParams,
-  UpdateAuctionExtraBodyParams,
+  UpdateAuctionExtraBodyParams, UpdateRewardTierBody,
 } from '../entrypoints/dto';
 import { Nft } from 'src/modules/nft/domain/nft.entity';
 import { AuctionNotFoundException } from './exceptions/AuctionNotFoundException';
 import { AuctionBadOwnerException } from './exceptions/AuctionBadOwnerException';
 import { FileSystemService } from '../../file-system/file-system.service';
+import { RewardTierNotFoundException } from './exceptions/RewardTierNotFoundException';
+import { RewardTierBadOwnerException } from './exceptions/RewardTierBadOwnerException';
 @Injectable()
 export class AuctionService {
   constructor(
@@ -75,23 +77,16 @@ export class AuctionService {
     });
   }
 
-  async updateRewardTier(
-    userId: number,
-    tierId: number,
-    params: {
-      name: string;
-      numberOfWinners: number;
-      nftsPerWinner: number;
-      nftIds: number[];
-    },
-  ) {
+  async updateRewardTier(userId: number, id: number, params: UpdateRewardTierBody) {
     return await getManager().transaction('SERIALIZABLE', async (transactionalEntityManager) => {
-      const tier = await this.rewardTierRepository.findOne({ where: { id: tierId } });
+      const tier = await this.rewardTierRepository.findOne({ where: { id } });
+
       if (!tier) {
-        //throw error
+        throw new RewardTierNotFoundException();
       }
+
       if (tier.userId !== userId) {
-        //throw error
+        throw new RewardTierBadOwnerException();
       }
 
       tier.name = params.name ? params.name : tier.name;
@@ -101,14 +96,11 @@ export class AuctionService {
       await transactionalEntityManager.save(tier);
 
       if (params.nftIds) {
-        const createdNfts = await this.rewardTierNftRepository.find({ where: { rewardTierId: tierId } });
-        const createdNftIds = [];
-        for (const nft of createdNfts) {
-          createdNftIds.push(nft.nftId);
-        }
+        const rewardTierNfts = await this.rewardTierNftRepository.find({ where: { rewardTierId: id } });
+        const nftIds = rewardTierNfts.map((nft) => nft.nftId);
 
-        const idsToDelete = createdNftIds.filter((x) => !params.nftIds.includes(x));
-        const idsToCreate = params.nftIds.filter((x) => !createdNftIds.includes(x));
+        const idsToDelete = nftIds.filter((nftId) => !params.nftIds.includes(nftId));
+        const idsToCreate = params.nftIds.filter((nftId) => !nftIds.includes(nftId));
         await transactionalEntityManager
           .createQueryBuilder()
           .delete()
@@ -116,17 +108,29 @@ export class AuctionService {
           .where('nftId IN (:...idsToDelete)', { idsToDelete })
           .execute();
 
-        const rewardTierNfts = idsToCreate.map((nftId) =>
+        const newRewardTierNfts = idsToCreate.map((nftId) =>
           this.rewardTierNftRepository.create({
             rewardTierId: tier.id,
             nftId: nftId,
           }),
         );
 
-        await Promise.all(rewardTierNfts.map((rewardTierNft) => this.rewardTierNftRepository.save(rewardTierNft)));
+        await Promise.all(newRewardTierNfts.map((rewardTierNft) => this.rewardTierNftRepository.save(rewardTierNft)));
       }
 
-      return tier;
+      return {
+        id: tier.id,
+        name: tier.name,
+        numberOfWinners: tier.numberOfWinners,
+        nftsPerWinner: tier.nftsPerWinner,
+        minimumBid: tier.minimumBid,
+        tierPosition: tier.tierPosition,
+        customDescription: tier.customDescription,
+        tierImageUrl: tier.tierImageUrl,
+        tierColor: tier.tierColor,
+        createdAt: tier.createdAt,
+        updatedAt: tier.updatedAt,
+      };
     });
   }
 

@@ -21,26 +21,53 @@ class RewardTierBodyParams {
   nftsPerWinner: number;
   nftIds: number[];
 }
-export class UpdateRewardTierBody {
-  @IsNumber()
-  tierId: number;
 
+export class UpdateRewardTierParams {
+  @IsNumberString()
+  id: number;
+}
+
+export class UpdateRewardTierBody {
+  @ApiProperty({
+    description: 'The name of reward tier',
+    example: 'Reward tier 1',
+  })
   @IsString()
+  @Length(1, 100)
   @IsOptional()
   name: string;
 
+  @ApiProperty({
+    description: 'Number of winners for the tier',
+    example: 3,
+  })
   @IsNumber()
   @IsOptional()
   numberOfWinners: number;
 
-  @IsNumber()
-  @IsOptional()
-  minimumBid: number;
-
+  @ApiProperty({
+    description: 'The number of allocated nfts per winner',
+    example: 1,
+  })
   @IsNumber()
   @IsOptional()
   nftsPerWinner: number;
 
+  @ApiProperty({
+    description: 'The minimum bid associated with the reward tier',
+    example: 0.1,
+    required: false,
+  })
+  @IsNumber()
+  @IsOptional()
+  minimumBid: number;
+
+  @ApiProperty({
+    description: 'The nft ids of the reward tier',
+    example: [1, 2, 3],
+  })
+  @IsArray()
+  @ArrayMinSize(1)
   @IsNumber({}, { each: true })
   @IsOptional()
   nftIds: number[];
@@ -330,4 +357,51 @@ export class UpdateAuctionExtraBody {
   @IsBoolean()
   @IsOptional()
   backgroundBlur: boolean;
+}
+
+export class EditRewardTierResponse {
+  @ApiProperty({
+    example: 1,
+  })
+  id: number;
+
+  @ApiProperty({
+    example: 'Reward tier name',
+  })
+  name: string;
+
+  @ApiProperty({
+    example: 1,
+  })
+  numberOfWinners: number;
+
+  @ApiProperty({
+    example: 1,
+  })
+  nftsPerWinner: number;
+
+  @ApiProperty({
+    example: "0.1",
+  })
+  minimumBid: string;
+
+  @ApiProperty({
+    example: 1,
+  })
+  tierPosition: number;
+
+  @ApiProperty()
+  customDescription: string;
+
+  @ApiProperty()
+  tierImageUrl: string;
+
+  @ApiProperty()
+  tierColor: string;
+
+  @ApiProperty()
+  createdAt: string;
+
+  @ApiProperty()
+  updatedAt: string;
 }
