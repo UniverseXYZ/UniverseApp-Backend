@@ -1,3 +1,10 @@
+## [1.8.5](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.8.4...v1.8.5) (2021-07-30)
+
+
+### Bug Fixes
+
+* handle NFTs minted in the same transaction ([11d3e46](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/11d3e464a4127c11c2f4880c938aad89222b73b1))
+
 ## [1.8.4](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.8.3...v1.8.4) (2021-07-29)
 
 
