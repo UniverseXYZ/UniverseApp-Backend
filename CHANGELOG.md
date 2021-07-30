@@ -1,3 +1,10 @@
+## [1.8.6](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.8.5...v1.8.6) (2021-07-30)
+
+
+### Bug Fixes
+
+* fix scraper ([2ee246c](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/2ee246cd17df7e69420e8a55e7c20b833a84ce39))
+
 ## [1.8.5](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.8.4...v1.8.5) (2021-07-30)
 
 
