@@ -31,7 +31,7 @@ type SaveNftParams = {
   description?: string;
   numberOfEditions: number;
   properties?: any;
-  royalties: { address: string, amount: number }[];
+  royalties: { address: string; amount: number }[];
   collectionId?: number;
 };
 
@@ -40,7 +40,7 @@ type EditSavedNftParams = {
   description?: string;
   numberOfEditions?: number;
   properties?: any;
-  royalties: { address: string, amount: number }[];
+  royalties: { address: string; amount: number }[];
   txHash?: string;
   collectionId: number;
 };
@@ -424,7 +424,7 @@ export class NftService {
   }
 
   private async generateTokenUrisForSavedNft(savedNft: SavedNft) {
-    const tokenUri = await this.arweaveService.store({
+    const tokenUri: string = await this.arweaveService.store({
       name: savedNft.name,
       description: savedNft.description,
       image_url: this.s3Service.getUrl(savedNft.url),
@@ -441,9 +441,9 @@ export class NftService {
     return keys.reduce((acc, key) => {
       return object.hasOwnProperty(key)
         ? {
-            ...acc,
-            [key]: object[key],
-          }
+          ...acc,
+          [key]: object[key],
+        }
         : acc;
     }, {});
   }
