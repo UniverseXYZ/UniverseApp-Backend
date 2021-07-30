@@ -19,8 +19,8 @@ export class SavedNft {
   @Column({ nullable: true })
   txHash: string;
 
-  @Column({ type: 'jsonb', default: [] })
-  tokenUris: string[];
+  @Column({ nullable: true })
+  tokenUri: string;
 
   @Column()
   name: string;

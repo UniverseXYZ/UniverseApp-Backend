@@ -212,10 +212,10 @@ export class NftService {
     }
 
     const idxs = [...Array(savedNft.numberOfEditions).keys()];
-    const tokenUris = await Promise.all(idxs.map(() => this.generateTokenUrisForSavedNft(savedNft)));
-    savedNft.tokenUris = tokenUris;
+    const tokenUri = await this.generateTokenUrisForSavedNft(savedNft);
+    savedNft.tokenUri = tokenUri;
     await this.savedNftRepository.save(savedNft);
-    return tokenUris;
+    return idxs.map(() => tokenUri);
   }
 
   public async getNftTokenURI(body, file: Express.Multer.File) {
@@ -230,10 +230,8 @@ export class NftService {
 
     const { optimisedFile, downsizedFile } = await this.processUploadedFile(file);
     const idxs = [...Array(bodyClass.numberOfEditions).keys()];
-
-    return await Promise.all(
-      idxs.map(() => this.generateTokenUriForNftBody(bodyClass, file, optimisedFile, downsizedFile)),
-    );
+    const tokenUri = await this.generateTokenUriForNftBody(bodyClass, file, optimisedFile, downsizedFile);
+    return idxs.map(() => tokenUri);
   }
 
   public async createCollection(userId: number, body: any, file: Express.Multer.File) {

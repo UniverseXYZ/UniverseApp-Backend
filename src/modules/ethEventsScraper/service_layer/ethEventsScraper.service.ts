@@ -83,19 +83,11 @@ export class EthEventsScraperService {
 
   private async syncMintNftEvents() {
     const events = await this.createNftEventRepository.find({ where: { processed: false } });
-    const txHashAndEventsMap = events.reduce((acc, event) => {
-      const prevEventsForTxHash = acc[event.tx_hash] || [];
-      return {
-        ...acc,
-        [event.tx_hash]: [...prevEventsForTxHash, event],
-      };
-    }, {} as Record<string, MintedNftEvent[]>);
+    const tokenUriEventsMap = this.mapTokenUriToEvents(events);
 
-    const txHashes = Object.keys(txHashAndEventsMap);
-
-    for (const txHash of txHashes) {
+    for (const tokenUri of Object.keys(tokenUriEventsMap)) {
       const editionUUID = customAlphabet('1234567890abcdefghijklmnopqrstuvwxyz', 10)();
-      const events = txHashAndEventsMap[txHash];
+      const events = tokenUriEventsMap[editionUUID];
 
       for (const event of events) {
         const response = await this.httpService.get(event.token_uri).toPromise();
@@ -109,7 +101,7 @@ export class EthEventsScraperService {
           const nft = this.nftRepository.create();
           nft.userId = user.id;
           nft.collectionId = collection.id;
-          nft.txHash = txHash;
+          nft.txHash = event.tx_hash;
           nft.editionUUID = editionUUID;
           nft.name = response.data.name as string;
           nft.description = response.data.description as string;
@@ -129,11 +121,22 @@ export class EthEventsScraperService {
           await this.nftRepository.save(nft);
         }
       }
-      await this.savedNftRepository.softDelete({ txHash });
+      await this.savedNftRepository.softDelete({ tokenUri });
     }
   }
 
-  //Todo: search for auctions with txHash and onChain flag false
+  private mapTokenUriToEvents(events: MintedNftEvent[]) {
+    const tokenUriEventsMap = events.reduce((acc, event) => {
+      const prevEventsForTokenUri = acc[event.token_uri] || [];
+      return {
+        ...acc,
+        [event.token_uri]: [...prevEventsForTokenUri, event],
+      };
+    }, {} as Record<string, MintedNftEvent[]>);
+    return tokenUriEventsMap;
+  }
+
+//Todo: search for auctions with txHash and onChain flag false
   async syncCreateAuctionEvents() {}
 
   //We might need to rethink how things are stored in the database, don't know if the jsonb encoded data is ok
