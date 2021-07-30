@@ -87,7 +87,7 @@ export class EthEventsScraperService {
 
     for (const tokenUri of Object.keys(tokenUriEventsMap)) {
       const editionUUID = customAlphabet('1234567890abcdefghijklmnopqrstuvwxyz', 10)();
-      const events = tokenUriEventsMap[editionUUID];
+      const events = tokenUriEventsMap[tokenUri];
 
       for (const event of events) {
         const response = await this.httpService.get(event.token_uri).toPromise();
