@@ -5,7 +5,6 @@ import {
   Param,
   Patch,
   Post,
-  Put,
   Query,
   Req,
   UploadedFile,
@@ -17,10 +16,10 @@ import {
   CreateAuctionBody,
   CreateRewardTierBody,
   EditAuctionBody,
-  EditAuctionParams, EditRewardTierResponse,
-  UpdateAuctionBody,
+  EditAuctionParams,
+  EditRewardTierResponse,
+  GetMyFutureAuctionsQuery,
   UpdateAuctionExtraBody,
-  UpdateAuctionExtraBodyParams,
   UpdateRewardTierBody,
   UpdateRewardTierExtraBody,
   UpdateRewardTierParams,
@@ -89,6 +88,15 @@ export class AuctionController {
       params.id,
       classToPlain(updateRewardTierBody) as any,
     );
+  }
+
+  @Get('pages/my-auctions/future')
+  @UseGuards(JwtAuthGuard)
+  @ApiTags('auction')
+  @ApiOperation({ summary: 'Edit the Reward Tier' })
+  @ApiResponse({ type: undefined, status: 200 })
+  async getMyFutureAuctions(@Req() req, @Query() query: GetMyFutureAuctionsQuery) {
+    return await this.auctionService.getMyFutureAuctions(req.user.sub, parseInt(query.limit), parseInt(query.offset));
   }
 
   /**

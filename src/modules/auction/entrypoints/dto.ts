@@ -405,3 +405,25 @@ export class EditRewardTierResponse {
   @ApiProperty()
   updatedAt: string;
 }
+
+export class GetMyFutureAuctionsQuery {
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    example: 10,
+    description: 'The number of returned auction items ',
+    type: 'number',
+    required: false,
+  })
+  limit: string;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    example: 10,
+    description: 'The number of auction items to be skipped',
+    type: 'number',
+    required: false,
+  })
+  offset: string;
+}

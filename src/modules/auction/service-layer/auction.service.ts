@@ -7,21 +7,19 @@ import { S3Service } from '../../file-storage/s3.service';
 import { AppConfig } from 'src/modules/configuration/configuration.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuctionStatus } from '../domain/types';
-import {
-  CreateAuctionBody,
-  EditAuctionBody,
-  UpdateAuctionBodyParams,
-  UpdateAuctionExtraBodyParams, UpdateRewardTierBody,
-} from '../entrypoints/dto';
+import { CreateAuctionBody, EditAuctionBody, UpdateRewardTierBody } from '../entrypoints/dto';
 import { Nft } from 'src/modules/nft/domain/nft.entity';
 import { AuctionNotFoundException } from './exceptions/AuctionNotFoundException';
 import { AuctionBadOwnerException } from './exceptions/AuctionBadOwnerException';
 import { FileSystemService } from '../../file-system/file-system.service';
 import { RewardTierNotFoundException } from './exceptions/RewardTierNotFoundException';
 import { RewardTierBadOwnerException } from './exceptions/RewardTierBadOwnerException';
+import { UsersService } from '../../users/users.service';
+
 @Injectable()
 export class AuctionService {
   constructor(
+    private usersService: UsersService,
     @InjectRepository(RewardTier)
     private rewardTierRepository: Repository<RewardTier>,
     @InjectRepository(RewardTierNft)
@@ -268,6 +266,84 @@ export class AuctionService {
     auction = await this.auctionRepository.save(auction);
 
     return auction;
+  }
+
+  async getMyFutureAuctions(userId: number, limit: number, offset: number) {
+    const user = await this.usersService.getById(userId, true);
+    const auctions = await this.auctionRepository.find({ where: { userId }, skip: offset, take: limit });
+    const auctionIds = auctions.map((auction) => auction.id);
+    const rewardTiers = await this.rewardTierRepository.find({ where: { auctionId: In(auctionIds) } });
+    const auctionRewardTiersMap: Record<string, RewardTier[]> = auctionIds.reduce((acc, auctionId) => {
+      const prevRewardTiers = acc[auctionId] || [];
+      return {
+        ...acc,
+        [auctionId]: [...prevRewardTiers, ...rewardTiers.filter((rewardTier) => rewardTier.auctionId === auctionId)],
+      };
+    }, {});
+
+    return auctions.map((auction) => {
+      const {
+        id,
+        name,
+        headline,
+        startingBid,
+        tokenAddress,
+        tokenSymbol,
+        tokenDecimals,
+        startDate,
+        endDate,
+        royaltySplits,
+        link,
+        promoImageUrl,
+        backgroundImageUrl,
+        backgroundImageBlur,
+      } = auction;
+      const rewardTiers = auctionRewardTiersMap[auction.id].map((rewardTier) => {
+        const {
+          id,
+          name,
+          numberOfWinners,
+          nftsPerWinner,
+          minimumBid,
+          tierPosition,
+          customDescription,
+          tierImageUrl,
+          tierColor,
+          createdAt,
+        } = rewardTier;
+
+        return {
+          id,
+          name,
+          numberOfWinners,
+          nftsPerWinner,
+          minimumBid,
+          tierPosition,
+          customDescription,
+          tierImageUrl,
+          tierColor,
+          createdAt,
+        };
+      });
+
+      return {
+        id,
+        name,
+        headline,
+        startingBid,
+        tokenAddress,
+        tokenSymbol,
+        tokenDecimals,
+        startDate,
+        endDate,
+        royaltySplits,
+        link,
+        promoImageUrl,
+        backgroundImageUrl,
+        backgroundImageBlur,
+        rewardTiers,
+      };
+    });
   }
 
   async updateAuctionExtraData(
