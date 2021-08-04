@@ -1,3 +1,10 @@
+## [1.9.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.9.0...v1.9.1) (2021-08-04)
+
+
+### Bug Fixes
+
+* add royalties and traits to My NFTs response ([9cccea1](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/9cccea1caf711fceaf061794b3ddc070fcc94ede))
+
 # [1.9.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.8.6...v1.9.0) (2021-07-30)
 
 
