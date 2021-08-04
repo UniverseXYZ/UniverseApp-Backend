@@ -136,6 +136,41 @@ export class AuctionController {
     return ret;
   }
 
+  /**
+   * old endpoints
+   */
+  //Todo: add endpoint to get reward tier ?
+  //Todo: needs to check that there are enough nfts, and that the nfts are not already set as rewards in other tiers
+  @Post('reward-tier')
+  @UseGuards(JwtAuthGuard)
+  async createRewardTier(@Req() req, @Body() createRewardTierBody: CreateRewardTierBody) {
+    // return await this.auctionService.createRewardTier(req.user.sub, createRewardTierBody.auctionId, {
+    //   name: createRewardTierBody.name,
+    //   numberOfWinners: createRewardTierBody.numberOfWinners,
+    //   nftsPerWinner: createRewardTierBody.nftsPerWinner,
+    //   nftIds: createRewardTierBody.nftIds,
+    //   minimumBid: createRewardTierBody.minimumBid,
+    //   tierPosition: createRewardTierBody.tierPosition,
+    // });
+  }
+
+  @Patch('reward-tier-extra-data')
+  @UseGuards(JwtAuthGuard)
+  async updateRewardTierExtraData(@Req() req, @Body() updateRewardTierExtraBody: UpdateRewardTierExtraBody) {
+    return await this.auctionService.updateRewardTierExtraData(req.user.sub, updateRewardTierExtraBody.tierId, {
+      customDescription: updateRewardTierExtraBody.customDescription,
+      tierColor: updateRewardTierExtraBody.tierColor,
+    });
+  }
+
+  @Post('/reward-tier-image')
+  @UseInterceptors(FileInterceptor('file'))
+  @UseGuards(JwtAuthGuard)
+  async uploadRewardsTierImage(@UploadedFile() file: Express.Multer.File, @Req() req) {
+    const ret = await this.auctionService.updateRewardTierImage(req.user, req.body.tierId, file);
+    return ret;
+  }
+
   @Patch('auction-extra-data')
   @UseGuards(JwtAuthGuard)
   async updateAuctionExtraData(@Req() req, @Body() updateAuctionExtraBody: UpdateAuctionExtraBody) {

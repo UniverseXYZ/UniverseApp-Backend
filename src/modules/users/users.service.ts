@@ -22,7 +22,7 @@ export class UsersService {
 
     if (!user) {
       user = new User();
-      user.address = address;
+      user.address = address.toLowerCase();
       user.isActive = true;
       await this.usersRepository.save(user);
     }

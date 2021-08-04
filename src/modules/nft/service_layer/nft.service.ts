@@ -23,6 +23,7 @@ import { MintingCollectionNotFoundException } from './exceptions/MintingCollecti
 import { MintingCollectionBadOwnerException } from './exceptions/MintingCollectionBadOwnerException';
 import { SavedNftNotFoundException } from './exceptions/SavedNftNotFoundException';
 import { SavedNftOwnerException } from './exceptions/SavedNftOwnerException';
+import { User } from '../../users/user.entity';
 
 type SaveNftParams = {
   userId: number;
@@ -30,7 +31,7 @@ type SaveNftParams = {
   description?: string;
   numberOfEditions: number;
   properties?: any;
-  royalties: { address: string, amount: number }[];
+  royalties: { address: string; amount: number }[];
   collectionId?: number;
 };
 
@@ -39,7 +40,7 @@ type EditSavedNftParams = {
   description?: string;
   numberOfEditions?: number;
   properties?: any;
-  royalties: { address: string, amount: number }[];
+  royalties: { address: string; amount: number }[];
   txHash?: string;
   collectionId: number;
 };
@@ -74,6 +75,8 @@ export class NftService {
     private savedNftRepository: Repository<SavedNft>,
     @InjectRepository(MintingCollection)
     private mintingCollectionRepository: Repository<MintingCollection>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
     private fileProcessingService: FileProcessingService,
     private s3Service: S3Service,
     private arweaveService: ArweaveService,
@@ -209,10 +212,10 @@ export class NftService {
     }
 
     const idxs = [...Array(savedNft.numberOfEditions).keys()];
-    const tokenUris = await Promise.all(idxs.map(() => this.generateTokenUrisForSavedNft(savedNft)));
-    savedNft.tokenUris = tokenUris;
+    const tokenUri = await this.generateTokenUrisForSavedNft(savedNft);
+    savedNft.tokenUri = tokenUri;
     await this.savedNftRepository.save(savedNft);
-    return tokenUris;
+    return idxs.map(() => tokenUri);
   }
 
   public async getNftTokenURI(body, file: Express.Multer.File) {
@@ -227,10 +230,8 @@ export class NftService {
 
     const { optimisedFile, downsizedFile } = await this.processUploadedFile(file);
     const idxs = [...Array(bodyClass.numberOfEditions).keys()];
-
-    return await Promise.all(
-      idxs.map(() => this.generateTokenUriForNftBody(bodyClass, file, optimisedFile, downsizedFile)),
-    );
+    const tokenUri = await this.generateTokenUriForNftBody(bodyClass, file, optimisedFile, downsizedFile);
+    return idxs.map(() => tokenUri);
   }
 
   public async createCollection(userId: number, body: any, file: Express.Multer.File) {
@@ -393,11 +394,9 @@ export class NftService {
   }
 
   public async getMyCollections(userId: number) {
-    const universalCollectionAddress = this.config.values.ethereum.contracts.universalNFTAddress;
-    const nfts = await this.nftRepository.find({ where: { userId }, order: { createdAt: 'DESC' } });
-    const collectionIds = nfts.map((nft) => nft.collectionId);
+    const user = await this.userRepository.findOne({ where: { id: userId } });
     const collections = await this.nftCollectionRepository.find({
-      where: [{ id: In(collectionIds) }, { address: universalCollectionAddress.toLowerCase() }],
+      where: { owner: user.address },
     });
 
     return {
@@ -425,7 +424,7 @@ export class NftService {
   }
 
   private async generateTokenUrisForSavedNft(savedNft: SavedNft) {
-    const tokenUri = await this.arweaveService.store({
+    const tokenUri: string = await this.arweaveService.store({
       name: savedNft.name,
       description: savedNft.description,
       image_url: this.s3Service.getUrl(savedNft.url),
@@ -442,9 +441,9 @@ export class NftService {
     return keys.reduce((acc, key) => {
       return object.hasOwnProperty(key)
         ? {
-            ...acc,
-            [key]: object[key],
-          }
+          ...acc,
+          [key]: object[key],
+        }
         : acc;
     }, {});
   }

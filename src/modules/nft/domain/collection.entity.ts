@@ -22,6 +22,9 @@ export class NftCollection {
   @Column({ nullable: true })
   address?: string;
 
+  @Column({ nullable: true })
+  owner?: string;
+
   @Column()
   name: string;
 

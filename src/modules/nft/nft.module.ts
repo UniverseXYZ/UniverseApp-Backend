@@ -10,11 +10,12 @@ import { AppConfigModule } from '../configuration/configuration.module';
 import { FileSystemModule } from '../file-system/file-system.module';
 import { SavedNft } from './domain/saved-nft.entity';
 import { MintingCollection } from './domain/minting-collection.entity';
+import { User } from '../users/user.entity';
 
 @Module({
   providers: [NftService],
   imports: [
-    TypeOrmModule.forFeature([Nft, NftCollection, SavedNft, MintingCollection]),
+    TypeOrmModule.forFeature([Nft, NftCollection, SavedNft, MintingCollection, User]),
     FileProcessingModule,
     FileStorageModule,
     AppConfigModule,

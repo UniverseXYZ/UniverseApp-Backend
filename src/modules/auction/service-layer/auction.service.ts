@@ -11,7 +11,7 @@ import {
   CreateAuctionBody,
   EditAuctionBody,
   UpdateAuctionBodyParams,
-  UpdateAuctionExtraBodyParams,
+  UpdateAuctionExtraBodyParams, UpdateRewardTierBody,
 } from '../entrypoints/dto';
 import { Nft } from 'src/modules/nft/domain/nft.entity';
 import { AuctionNotFoundException } from './exceptions/AuctionNotFoundException';

@@ -1,3 +1,52 @@
+# [1.9.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.8.6...v1.9.0) (2021-07-30)
+
+
+### Features
+
+* add ability to edit reward tier ([af1dd97](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/af1dd97e504ed336d7061a75cb0837fe204506d9))
+
+## [1.8.6](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.8.5...v1.8.6) (2021-07-30)
+
+
+### Bug Fixes
+
+* fix scraper ([2ee246c](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/2ee246cd17df7e69420e8a55e7c20b833a84ce39))
+
+## [1.8.5](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.8.4...v1.8.5) (2021-07-30)
+
+
+### Bug Fixes
+
+* handle NFTs minted in the same transaction ([11d3e46](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/11d3e464a4127c11c2f4880c938aad89222b73b1))
+
+## [1.8.4](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.8.3...v1.8.4) (2021-07-29)
+
+
+### Bug Fixes
+
+* improve cron error handling ([c32d554](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/c32d55480debb6a2e54b2b2c5e62c53c8a764ef9))
+
+## [1.8.3](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.8.2...v1.8.3) (2021-07-29)
+
+
+### Bug Fixes
+
+* pass the user address to get collections ([7c04c67](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/7c04c676d84d5f86658a69a690c9eeeca876ad35))
+
+## [1.8.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.8.1...v1.8.2) (2021-07-29)
+
+
+### Bug Fixes
+
+* fix my collections endpoint ([fefc5b0](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/fefc5b0bcd7d5a911edf561eca74368e131bfc89))
+
+## [1.8.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.8.0...v1.8.1) (2021-07-29)
+
+
+### Bug Fixes
+
+* lower case user addresses ([5f9f90c](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/5f9f90cb07455e388cd4d22f385e7cf42fd9cf30))
+
 # [1.8.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.7.0...v1.8.0) (2021-07-28)
 
 

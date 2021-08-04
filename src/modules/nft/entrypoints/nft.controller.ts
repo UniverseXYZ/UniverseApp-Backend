@@ -10,7 +10,8 @@ import {
   Get,
   Req,
   ClassSerializerInterceptor,
-  Patch, Delete,
+  Patch,
+  Delete,
 } from '@nestjs/common';
 import {
   DeleteSavedNftParams,
@@ -105,6 +106,7 @@ export class NftController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Generate the token URI for Saved NFT' })
   @ApiParam({ name: 'id', description: 'The id of the nft', required: true, example: 1 })
+  @ApiResponse({ status: 200, description: 'The URLs for tokens metadata', type: 'string', isArray: true })
   async getTokenURI(@Param() params: GetNftTokenURIParams) {
     return await this.nftService.getTokenURI(params.id);
   }
@@ -116,6 +118,7 @@ export class NftController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Generate the token URI for an NFT' })
   @ApiConsumes('form/multi-part')
+  @ApiResponse({ status: 200, description: 'The URLs for tokens metadata', type: 'string', isArray: true })
   async getNftTokenURI(@Req() req: Request, @UploadedFile() file: Express.Multer.File) {
     return await this.nftService.getNftTokenURI(req.body, file);
   }
