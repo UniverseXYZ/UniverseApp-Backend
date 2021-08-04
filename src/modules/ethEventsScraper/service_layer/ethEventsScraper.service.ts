@@ -39,7 +39,7 @@ export class EthEventsScraperService {
     private createNftEventRepository: Repository<MintedNftEvent>,
   ) {}
 
-  @Cron(CronExpression.EVERY_30_SECONDS)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   public async syncCollectionAndNftEvents() {
     this.logger.log('start');
     try {
