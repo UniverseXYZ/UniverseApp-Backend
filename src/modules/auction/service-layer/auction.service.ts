@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Column, getManager, In, Repository, Transaction, TransactionRepository } from 'typeorm';
+import { getManager, In, Repository, Transaction, TransactionRepository } from 'typeorm';
 import { RewardTier } from '../domain/reward-tier.entity';
 import { RewardTierNft } from '../domain/reward-tier-nft.entity';
 import { Auction } from '../domain/auction.entity';
@@ -7,12 +7,7 @@ import { S3Service } from '../../file-storage/s3.service';
 import { AppConfig } from 'src/modules/configuration/configuration.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuctionStatus } from '../domain/types';
-import {
-  CreateAuctionBody,
-  EditAuctionBody,
-  UpdateAuctionBodyParams,
-  UpdateAuctionExtraBodyParams, UpdateRewardTierBody,
-} from '../entrypoints/dto';
+import { CreateAuctionBody, EditAuctionBody, UpdateRewardTierBody } from '../entrypoints/dto';
 import { Nft } from 'src/modules/nft/domain/nft.entity';
 import { AuctionNotFoundException } from './exceptions/AuctionNotFoundException';
 import { AuctionBadOwnerException } from './exceptions/AuctionBadOwnerException';
@@ -20,7 +15,6 @@ import { FileSystemService } from '../../file-system/file-system.service';
 import { RewardTierNotFoundException } from './exceptions/RewardTierNotFoundException';
 import { RewardTierBadOwnerException } from './exceptions/RewardTierBadOwnerException';
 import { UsersService } from '../../users/users.service';
-import { of } from 'rxjs';
 
 @Injectable()
 export class AuctionService {
