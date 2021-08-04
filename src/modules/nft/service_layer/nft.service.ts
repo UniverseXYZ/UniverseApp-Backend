@@ -342,25 +342,24 @@ export class NftService {
 
   public async getMyNfts(userId: number) {
     const nfts = await this.nftRepository.find({ where: { userId }, order: { createdAt: 'DESC' } });
-    const groupedNfts = nfts.reduce((acc, nft) => {
-      const previousNfts = acc[nft.editionUUID] || [];
-      return {
-        ...acc,
-        [nft.editionUUID]: [...previousNfts, nft],
-      };
-    }, {} as Record<string, Nft[]>);
+    const editionNFTsMap: Record<string, Nft[]> = nfts.reduce(
+      (acc, nft) => ({ ...acc, [nft.editionUUID]: [...(acc[nft.editionUUID] || []), nft] }),
+      {},
+    );
+
     const collectionIds = Object.keys(nfts.reduce((acc, nft) => ({ ...acc, [nft.collectionId]: true }), {}));
     const collections = await this.nftCollectionRepository.find({ where: { id: In(collectionIds) } });
-    const collectionsMap = collections.reduce(
+    const collectionsMap: Record<string, NftCollection> = collections.reduce(
       (acc, collection) => ({ ...acc, [collection.id]: collection }),
-      {} as Record<string, NftCollection>,
+      {},
     );
 
     return {
-      nfts: Object.values(groupedNfts).map((nfts) => {
+      nfts: Object.values(editionNFTsMap).map((nfts) => {
         const {
           id,
           name,
+          description,
           original_url,
           thumbnail_url,
           optimized_url,
@@ -368,6 +367,8 @@ export class NftService {
           createdAt,
           artworkType,
           collectionId,
+          royalties,
+          properties,
         } = nfts[0];
         const tokenIds = nfts.map((nft) => nft.tokenId);
         const collection = collectionsMap[collectionId] && {
@@ -379,14 +380,17 @@ export class NftService {
 
         return {
           id,
+          collection,
           name,
+          description,
+          artworkType,
           original_url,
-          thumbnail_url,
           optimized_url,
           url,
-          artworkType,
+          thumbnail_url,
           tokenIds,
-          collection,
+          royalties,
+          properties,
           createdAt,
         };
       }),
