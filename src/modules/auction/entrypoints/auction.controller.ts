@@ -5,7 +5,6 @@ import {
   Param,
   Patch,
   Post,
-  Put,
   Query,
   Req,
   UploadedFile,
@@ -17,10 +16,10 @@ import {
   CreateAuctionBody,
   CreateRewardTierBody,
   EditAuctionBody,
-  EditAuctionParams, EditRewardTierResponse, GetMyFutureAuctionsQuery,
-  UpdateAuctionBody,
+  EditAuctionParams,
+  EditRewardTierResponse,
+  GetMyFutureAuctionsQuery,
   UpdateAuctionExtraBody,
-  UpdateAuctionExtraBodyParams,
   UpdateRewardTierBody,
   UpdateRewardTierExtraBody,
   UpdateRewardTierParams,
@@ -96,8 +95,7 @@ export class AuctionController {
   @ApiTags('auction')
   @ApiOperation({ summary: 'Edit the Reward Tier' })
   @ApiResponse({ type: undefined, status: 200 })
-  async getMyFutureAuctions(@Req() req, @Query() query: GetMyFutureAuctionsQuery
-  ) {
+  async getMyFutureAuctions(@Req() req, @Query() query: GetMyFutureAuctionsQuery) {
     return await this.auctionService.getMyFutureAuctions(req.user.sub, parseInt(query.limit), parseInt(query.offset));
   }
 
