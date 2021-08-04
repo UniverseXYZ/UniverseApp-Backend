@@ -12,6 +12,7 @@ import { RewardTier } from './domain/reward-tier.entity';
 import { AuctionController } from './entrypoints/auction.controller';
 import { AuctionService } from './service-layer/auction.service';
 import { FileSystemModule } from '../file-system/file-system.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { FileSystemModule } from '../file-system/file-system.module';
     }),
     TypeOrmModule.forFeature([User, Auction, RewardTier, RewardTierNft, Nft]),
     FileSystemModule,
+    UsersModule,
   ],
   controllers: [AuctionController],
   exports: [AuctionService],
