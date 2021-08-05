@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.9.1...v1.10.0) (2021-08-05)
+
+
+### Features
+
+* add endpoints for active and past auctions ([9599c5d](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/9599c5d0544257d810a426e6f156a3c4e14b157a))
+
 ## [1.9.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.9.0...v1.9.1) (2021-08-04)
 
 
