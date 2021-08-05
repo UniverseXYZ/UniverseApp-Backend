@@ -1,4 +1,5 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Exclude } from 'class-transformer';
 
 @Entity()
 export class Auction {
@@ -6,6 +7,7 @@ export class Auction {
   id: number;
 
   @Column()
+  @Exclude()
   userId: number;
 
   @Column()
@@ -48,12 +50,15 @@ export class Auction {
   backgroundImageBlur: boolean;
 
   @Column({ default: false })
+  @Exclude()
   onChain: boolean;
 
   @Column({ nullable: true })
+  @Exclude()
   onChainId: number;
 
   @Column({ nullable: true })
+  @Exclude()
   txHash: string;
 
   @CreateDateColumn()

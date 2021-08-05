@@ -18,7 +18,7 @@ import {
   EditAuctionBody,
   EditAuctionParams,
   EditRewardTierResponse,
-  GetMyFutureAuctionsQuery,
+  GetMyAuctionsQuery, GetMyAuctionsResponse,
   UpdateAuctionExtraBody,
   UpdateRewardTierBody,
   UpdateRewardTierExtraBody,
@@ -93,10 +93,40 @@ export class AuctionController {
   @Get('pages/my-auctions/future')
   @UseGuards(JwtAuthGuard)
   @ApiTags('auction')
-  @ApiOperation({ summary: 'Edit the Reward Tier' })
-  @ApiResponse({ type: undefined, status: 200 })
-  async getMyFutureAuctions(@Req() req, @Query() query: GetMyFutureAuctionsQuery) {
-    return await this.auctionService.getMyFutureAuctions(req.user.sub, parseInt(query.limit), parseInt(query.offset));
+  @ApiOperation({ summary: 'Get my future auctions' })
+  @ApiResponse({ type: GetMyAuctionsResponse, status: 200 })
+  async getMyFutureAuctions(@Req() req, @Query() query: GetMyAuctionsQuery) {
+    return await this.auctionService.getMyFutureAuctionsPage(
+      req.user.sub,
+      parseInt(query.limit) || undefined,
+      parseInt(query.offset) || undefined,
+    );
+  }
+
+  @Get('pages/my-auctions/active')
+  @UseGuards(JwtAuthGuard)
+  @ApiTags('auction')
+  @ApiOperation({ summary: 'Get my active auctions' })
+  @ApiResponse({ type: GetMyAuctionsResponse, status: 200 })
+  async getMyActiveAuctions(@Req() req, @Query() query: GetMyAuctionsQuery) {
+    return await this.auctionService.getMyActiveAuctionsPage(
+      req.user.sub,
+      parseInt(query.limit) || undefined,
+      parseInt(query.offset) || undefined,
+    );
+  }
+
+  @Get('pages/my-auctions/past')
+  @UseGuards(JwtAuthGuard)
+  @ApiTags('auction')
+  @ApiOperation({ summary: 'Get my past auctions' })
+  @ApiResponse({ type: GetMyAuctionsResponse, status: 200 })
+  async getMyPastAuctions(@Req() req, @Query() query: GetMyAuctionsQuery) {
+    return await this.auctionService.getMyPastAuctionsPage(
+      req.user.sub,
+      parseInt(query.limit) || undefined,
+      parseInt(query.offset) || undefined,
+    );
   }
 
   /**

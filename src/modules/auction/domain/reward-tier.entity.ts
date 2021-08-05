@@ -1,4 +1,5 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Exclude } from 'class-transformer';
 
 @Entity()
 export class RewardTier {
@@ -9,6 +10,7 @@ export class RewardTier {
   auctionId: number;
 
   @Column()
+  @Exclude()
   userId: number;
 
   @Column()

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { getManager, In, Repository, Transaction, TransactionRepository } from 'typeorm';
+import { getManager, In, LessThan, MoreThan, Repository, Transaction, TransactionRepository } from 'typeorm';
 import { RewardTier } from '../domain/reward-tier.entity';
 import { RewardTierNft } from '../domain/reward-tier-nft.entity';
 import { Auction } from '../domain/auction.entity';
@@ -15,6 +15,7 @@ import { FileSystemService } from '../../file-system/file-system.service';
 import { RewardTierNotFoundException } from './exceptions/RewardTierNotFoundException';
 import { RewardTierBadOwnerException } from './exceptions/RewardTierBadOwnerException';
 import { UsersService } from '../../users/users.service';
+import { classToPlain } from 'class-transformer';
 
 @Injectable()
 export class AuctionService {
@@ -268,9 +269,95 @@ export class AuctionService {
     return auction;
   }
 
-  async getMyFutureAuctions(userId: number, limit: number, offset: number) {
+  private async getMyFutureAuctions(userId: number, limit: number, offset: number) {
+    const now = new Date().toISOString();
+    const [auctions, count] = await this.auctionRepository.findAndCount({
+      where: {
+        userId,
+        startDate: MoreThan(now),
+      },
+      skip: offset,
+      take: limit,
+    });
+
+    return { auctions, count };
+  }
+
+  private async getMyActiveAuctions(userId: number, limit: number, offset: number) {
+    const now = new Date().toISOString();
+    const [auctions, count] = await this.auctionRepository.findAndCount({
+      where: {
+        userId,
+        startDate: LessThan(now),
+        endDate: MoreThan(now),
+      },
+      skip: offset,
+      take: limit,
+    });
+
+    return { auctions, count };
+  }
+
+  private async getMyPastAuctions(userId: number, limit: number, offset: number) {
+    const now = new Date().toISOString();
+    const [auctions, count] = await this.auctionRepository.findAndCount({
+      where: {
+        userId,
+        endDate: LessThan(now),
+      },
+      skip: offset,
+      take: limit,
+    });
+
+    return { auctions, count };
+  }
+
+  async getMyFutureAuctionsPage(userId: number, limit: number, offset: number) {
     const user = await this.usersService.getById(userId, true);
-    const auctions = await this.auctionRepository.find({ where: { userId }, skip: offset, take: limit });
+    const { count, auctions } = await this.getMyFutureAuctions(userId, limit, offset);
+    const formattedAuctions = await this.formatMyAuctions(auctions);
+
+    return {
+      pagination: {
+        total: count,
+        offset,
+        limit,
+      },
+      auctions: formattedAuctions,
+    };
+  }
+
+  async getMyPastAuctionsPage(userId: number, limit: number, offset: number) {
+    const user = await this.usersService.getById(userId, true);
+    const { count, auctions } = await this.getMyPastAuctions(userId, limit, offset);
+    const formattedAuctions = await this.formatMyAuctions(auctions);
+
+    return {
+      pagination: {
+        total: count,
+        offset,
+        limit,
+      },
+      auctions: formattedAuctions,
+    };
+  }
+
+  async getMyActiveAuctionsPage(userId: number, limit: number, offset: number) {
+    const user = await this.usersService.getById(userId, true);
+    const { count, auctions } = await this.getMyActiveAuctions(userId, limit, offset);
+    const formattedAuctions = await this.formatMyAuctions(auctions);
+
+    return {
+      pagination: {
+        total: count,
+        offset,
+        limit,
+      },
+      auctions: formattedAuctions,
+    };
+  }
+
+  private async formatMyAuctions(auctions: Auction[]) {
     const auctionIds = auctions.map((auction) => auction.id);
     const rewardTiers = await this.rewardTierRepository.find({ where: { auctionId: In(auctionIds) } });
     const auctionRewardTiersMap: Record<string, RewardTier[]> = auctionIds.reduce((acc, auctionId) => {
@@ -282,67 +369,9 @@ export class AuctionService {
     }, {});
 
     return auctions.map((auction) => {
-      const {
-        id,
-        name,
-        headline,
-        startingBid,
-        tokenAddress,
-        tokenSymbol,
-        tokenDecimals,
-        startDate,
-        endDate,
-        royaltySplits,
-        link,
-        promoImageUrl,
-        backgroundImageUrl,
-        backgroundImageBlur,
-      } = auction;
-      const rewardTiers = auctionRewardTiersMap[auction.id].map((rewardTier) => {
-        const {
-          id,
-          name,
-          numberOfWinners,
-          nftsPerWinner,
-          minimumBid,
-          tierPosition,
-          customDescription,
-          tierImageUrl,
-          tierColor,
-          createdAt,
-        } = rewardTier;
+      const rewardTiers = auctionRewardTiersMap[auction.id].map((rewardTier) => classToPlain(rewardTier));
 
-        return {
-          id,
-          name,
-          numberOfWinners,
-          nftsPerWinner,
-          minimumBid,
-          tierPosition,
-          customDescription,
-          tierImageUrl,
-          tierColor,
-          createdAt,
-        };
-      });
-
-      return {
-        id,
-        name,
-        headline,
-        startingBid,
-        tokenAddress,
-        tokenSymbol,
-        tokenDecimals,
-        startDate,
-        endDate,
-        royaltySplits,
-        link,
-        promoImageUrl,
-        backgroundImageUrl,
-        backgroundImageBlur,
-        rewardTiers,
-      };
+      return { ...classToPlain(auction), rewardTiers };
     });
   }
 
