@@ -406,7 +406,7 @@ export class EditRewardTierResponse {
   updatedAt: string;
 }
 
-export class GetMyFutureAuctionsQuery {
+export class GetMyAuctionsQuery {
   @IsNumberString()
   @IsOptional()
   @ApiProperty({
@@ -427,3 +427,125 @@ export class GetMyFutureAuctionsQuery {
   })
   offset: string;
 }
+
+export class GetMyAuctionsPaginationResponse {
+  @ApiProperty({
+    example: 10,
+    description: 'The number of returned auction items ',
+  })
+  limit: number;
+
+  @ApiProperty({
+    example: 0,
+    description: 'The number of auction items to be skipped',
+  })
+  offset: number;
+
+  @ApiProperty({
+    example: 10,
+    description: 'The total number of auctions',
+  })
+  total: number;
+}
+
+export class AuctionResponse {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty()
+  name: string;
+
+  @ApiProperty()
+  headline: string;
+
+  @ApiProperty()
+  startingBid: number;
+
+  @ApiProperty()
+  tokenAddress: string;
+
+  @ApiProperty()
+  tokenSymbol: string;
+
+  @ApiProperty()
+  tokenDecimals: number;
+
+  @ApiProperty()
+  startDate: string;
+
+  @ApiProperty()
+  endDate: string;
+
+  @ApiProperty()
+  link: string;
+
+  @ApiProperty()
+  promoImageUrl: string;
+
+  @ApiProperty()
+  backgroundImageUrl: string;
+
+  @ApiProperty({ type: 'boolean', example: false })
+  backgroundImageBlur: boolean;
+
+  @ApiProperty()
+  createdAt: string;
+
+  @ApiProperty()
+  updatedAt: string;
+
+  @ApiProperty({ isArray: true, type: () => RewardTierResponse })
+  rewardTiers: RewardTierResponse[];
+}
+
+export class RewardTierResponse {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty()
+  auctionId: number;
+
+  @ApiProperty()
+  name: string;
+
+  @ApiProperty()
+  numberOfWinners: number;
+
+  @ApiProperty()
+  nftsPerWinner: number;
+
+  @ApiProperty()
+  minimumBid: number;
+
+  @ApiProperty()
+  tierPosition: number;
+
+  @ApiProperty()
+  customDescription: string;
+
+  @ApiProperty()
+  tierImageUrl: string;
+
+  @ApiProperty()
+  tierColor: string;
+
+  @ApiProperty()
+  createdAt: string;
+
+  @ApiProperty()
+  updatedAt: string;
+}
+
+export class GetMyAuctionsResponse {
+  @ApiProperty({
+    type: GetMyAuctionsPaginationResponse,
+  })
+  pagination: GetMyAuctionsPaginationResponse;
+
+  @ApiProperty({
+    type: AuctionResponse,
+    isArray: true,
+  })
+  auctions: AuctionResponse[];
+}
+
