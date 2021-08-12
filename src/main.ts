@@ -7,15 +7,10 @@ import { AppConfig } from 'src/modules/configuration/configuration.service';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from './modules/validation.pipe';
 
-import session from 'express-session';
-
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const config = app.get(AppConfig);
   const port = config.values.app.port;
-  const frontendDomain = config.values.frontend.domain;
-
-  app.enableCors({ origin: 'http://localhost:3000', credentials: true });
   app.use(helmet());
   app.useGlobalPipes(new ValidationPipe());
 
@@ -31,14 +26,6 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('docs', app, document);
-
-  app.use(
-    session({
-      secret: config.values.app.sessionSecret,
-      resave: false,
-      saveUninitialized: false,
-    }),
-  );
 
   await app.listen(port);
 }
