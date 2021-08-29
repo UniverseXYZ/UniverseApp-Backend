@@ -40,6 +40,9 @@ export class NftCollection {
   @Column({ nullable: true })
   coverUrl?: string;
 
+  @Column({ default: false })
+  publicCollection?: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 

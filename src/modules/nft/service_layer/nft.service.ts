@@ -404,8 +404,8 @@ export class NftService {
 
     return {
       collections: collections.map((collection) => {
-        const { id, address, name, symbol, coverUrl } = collection;
-        return { id, address, name, symbol, coverUrl };
+        const { id, address, name, symbol, coverUrl, publicCollection } = collection;
+        return { id, address, name, symbol, coverUrl, publicCollection };
       }),
     };
   }
