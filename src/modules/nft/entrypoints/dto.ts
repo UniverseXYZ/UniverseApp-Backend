@@ -336,14 +336,6 @@ export class CreateCollectionBody {
     required: false,
   })
   description?: string;
-
-  @IsString()
-  @ApiProperty({
-    example: 'shortUrl',
-    description: 'The short url to access the collection',
-    required: true,
-  })
-  shortUrl: string;
 }
 
 export class EditMintingCollectionParams {

@@ -249,7 +249,6 @@ export class NftService {
       description: bodyClass.description,
       symbol: bodyClass.symbol,
       coverUrl: s3Result.url,
-      shortUrl: bodyClass.shortUrl,
     });
     mintingCollection = await this.mintingCollectionRepository.save(mintingCollection);
 
