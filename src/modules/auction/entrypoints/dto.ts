@@ -244,6 +244,14 @@ export class EditAuctionBody {
   @IsOptional()
   @ApiProperty({ description: 'Sete background image blur', example: false })
   backgroundImageBlur: boolean;
+
+  @ApiProperty({
+    description: `The auction's id from the smart contract`,
+    example: 1,
+  })
+  @IsNumber()
+  @IsOptional()
+  onChainId: number;
 }
 
 export class CreateRewardTierBody {
