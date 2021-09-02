@@ -30,6 +30,7 @@ export class Nft {
     enum: NftSource,
     default: NftSource.UNIVERSE,
   })
+  @Exclude()
   source: NftSource;
 
   @Column({ nullable: true })

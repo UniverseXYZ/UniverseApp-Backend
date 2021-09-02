@@ -360,19 +360,35 @@ export class AuctionService {
   private async formatMyAuctions(auctions: Auction[]) {
     const auctionIds = auctions.map((auction) => auction.id);
     const rewardTiers = await this.rewardTierRepository.find({ where: { auctionId: In(auctionIds) } });
-    const auctionRewardTiersMap: Record<string, RewardTier[]> = auctionIds.reduce((acc, auctionId) => {
+    const auctionRewardTiersMap = auctionIds.reduce((acc, auctionId) => {
       const prevRewardTiers = acc[auctionId] || [];
       return {
         ...acc,
         [auctionId]: [...prevRewardTiers, ...rewardTiers.filter((rewardTier) => rewardTier.auctionId === auctionId)],
       };
-    }, {});
-
-    return auctions.map((auction) => {
-      const rewardTiers = auctionRewardTiersMap[auction.id].map((rewardTier) => classToPlain(rewardTier));
-
-      return { ...classToPlain(auction), rewardTiers };
+    }, {} as Record<string, RewardTier[]>);
+    const rewardTierNfts = await this.rewardTierNftRepository.find({
+      where: { id: In(rewardTiers.map((rewardTier) => rewardTier.id)) },
     });
+    const nfts = await this.nftRepository.find({
+      where: { id: In(rewardTierNfts.map((rewardTierNft) => rewardTierNft.nftId)) },
+    });
+    const idNftMap = nfts.reduce((acc, nft) => ({ ...acc, [nft.id]: nft }), {} as Record<string, Nft>);
+    const rewardTierNftsMap = rewardTierNfts.reduce(
+      (acc, rewardTierNft) => ({
+        ...acc,
+        [rewardTierNft.rewardTierId]: [...(acc[rewardTierNft.rewardTierId] || []), idNftMap[rewardTierNft.nftId]],
+      }),
+      {} as Record<string, Nft[]>,
+    );
+
+    return auctions.map((auction) => ({
+      ...classToPlain(auction),
+      rewardTiers: auctionRewardTiersMap[auction.id].map((rewardTier) => ({
+        ...classToPlain(rewardTier),
+        nfts: rewardTierNftsMap[rewardTier.id].map((nft) => classToPlain(nft)),
+      })),
+    }));
   }
 
   async updateAuctionExtraData(
