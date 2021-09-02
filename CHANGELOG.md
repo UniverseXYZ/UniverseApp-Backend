@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.10.0...v1.10.1) (2021-09-02)
+
+
+### Bug Fixes
+
+* fetch reward tiers by correct id ([b4353e7](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/b4353e7658c565520930603820d72822c3f8abd6))
+
 # [1.10.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.9.1...v1.10.0) (2021-08-05)
 
 
