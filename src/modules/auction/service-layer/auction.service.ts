@@ -368,7 +368,7 @@ export class AuctionService {
       };
     }, {} as Record<string, RewardTier[]>);
     const rewardTierNfts = await this.rewardTierNftRepository.find({
-      where: { id: In(rewardTiers.map((rewardTier) => rewardTier.id)) },
+      where: { rewardTierId: In(rewardTiers.map((rewardTier) => rewardTier.id)) },
     });
     const nfts = await this.nftRepository.find({
       where: { id: In(rewardTierNfts.map((rewardTierNft) => rewardTierNft.nftId)) },
