@@ -136,7 +136,7 @@ export class EthEventsScraperService {
     return tokenUriEventsMap;
   }
 
-//Todo: search for auctions with txHash and onChain flag false
+  //Todo: search for auctions with txHash and onChain flag false
   async syncCreateAuctionEvents() {}
 
   //We might need to rethink how things are stored in the database, don't know if the jsonb encoded data is ok

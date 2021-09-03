@@ -34,6 +34,42 @@ export class AuctionService {
     private readonly config: AppConfig,
   ) {}
 
+  async getAuctionPage(userId: number, auctionId: number) {
+    const auction = await this.auctionRepository.findOne({ where: { id: auctionId } });
+
+    if (!auction) {
+      throw new AuctionNotFoundException();
+    }
+
+    const rewardTiers = await this.rewardTierRepository.find({ where: { auctionId } });
+    const rewardTierNfts = await this.rewardTierNftRepository.find({
+      where: { rewardTierId: In(rewardTiers.map((rewardTier) => rewardTier.id)) },
+    });
+    const nftIds = rewardTierNfts.map((rewardTierNft) => rewardTierNft.nftId);
+    console.log(nftIds);
+    const nfts = await this.nftRepository.find({ where: { id: In(nftIds) } });
+    const idNftMap = nfts.reduce((acc, nft) => ({ ...acc, [nft.id]: nft }), {} as Record<string, Nft>);
+    console.log(idNftMap);
+    const rewardTierNftsMap = rewardTierNfts.reduce(
+      (acc, rewardTierNft) => ({
+        ...acc,
+        [rewardTierNft.rewardTierId]: [...(acc[rewardTierNft.rewardTierId] || []), idNftMap[rewardTierNft.nftId]],
+      }),
+      {} as Record<string, Nft[]>,
+    );
+    const artist = await this.usersService.getById(auction.userId, false);
+
+    return {
+      auction: classToPlain(auction),
+      rewardTiers: rewardTiers.map((rewardTier) => ({
+        ...classToPlain(rewardTier),
+        nfts: rewardTierNftsMap[rewardTier.id].map((nft) => classToPlain(nft)),
+      })),
+      bids: [],
+      artist: classToPlain(artist),
+    };
+  }
+
   async createRewardTier(
     userId: number,
     auctionId: number,

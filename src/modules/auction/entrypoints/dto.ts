@@ -2,8 +2,10 @@ import {
   ArrayMinSize,
   IsArray,
   IsBoolean,
-  IsDateString, IsNotEmpty,
-  IsNumber, IsNumberString,
+  IsDateString,
+  IsNotEmpty,
+  IsNumber,
+  IsNumberString,
   IsOptional,
   IsString,
   Length,
@@ -389,7 +391,7 @@ export class EditRewardTierResponse {
   nftsPerWinner: number;
 
   @ApiProperty({
-    example: "0.1",
+    example: '0.1',
   })
   minimumBid: string;
 
@@ -557,3 +559,11 @@ export class GetMyAuctionsResponse {
   auctions: AuctionResponse[];
 }
 
+export class GetAuctionPageParams {
+  @ApiProperty({
+    example: '1',
+    description: 'The id of the auction to be fetched',
+  })
+  @IsNumberString()
+  id: string;
+}

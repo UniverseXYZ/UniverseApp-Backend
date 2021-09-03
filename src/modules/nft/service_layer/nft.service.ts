@@ -444,9 +444,9 @@ export class NftService {
     return keys.reduce((acc, key) => {
       return object.hasOwnProperty(key)
         ? {
-          ...acc,
-          [key]: object[key],
-        }
+            ...acc,
+            [key]: object[key],
+          }
         : acc;
     }, {});
   }

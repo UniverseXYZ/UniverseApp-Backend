@@ -18,7 +18,9 @@ import {
   EditAuctionBody,
   EditAuctionParams,
   EditRewardTierResponse,
-  GetMyAuctionsQuery, GetMyAuctionsResponse,
+  GetAuctionPageParams,
+  GetMyAuctionsQuery,
+  GetMyAuctionsResponse,
   UpdateAuctionExtraBody,
   UpdateRewardTierBody,
   UpdateRewardTierExtraBody,
@@ -26,7 +28,7 @@ import {
   UploaductionLandingImagesParams,
 } from './dto';
 import { AuctionService } from '../service-layer/auction.service';
-import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { JwtAuthGuard, OptionalJwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { auctionLandingImagesMulterOptions } from '../../nft/entrypoints/multipart';
@@ -127,6 +129,14 @@ export class AuctionController {
       parseInt(query.limit) || undefined,
       parseInt(query.offset) || undefined,
     );
+  }
+
+  @Get('pages/auctions/:id')
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiTags('auction')
+  @ApiOperation({ summary: 'Get the public page of the auction' })
+  async getAuctionPage(@Req() req, @Param() params: GetAuctionPageParams) {
+    return await this.auctionService.getAuctionPage(req.user.sub, parseInt(params.id));
   }
 
   /**

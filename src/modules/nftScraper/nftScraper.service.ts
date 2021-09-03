@@ -4,10 +4,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { QueueService } from '../queue/queue.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Nft, NftSource } from '../nft/domain/nft.entity';
-import {
-  CollectionSource,
-  NftCollection,
-} from '../nft/domain/collection.entity';
+import { CollectionSource, NftCollection } from '../nft/domain/collection.entity';
 
 import { Repository } from 'typeorm';
 import { User } from '../users/user.entity';
@@ -36,11 +33,7 @@ export class NftScraperService {
     const limit = 10;
     console.log(address, page);
     const scraperResponse = await this.httpService
-      .get(
-        `https://api.opensea.io/api/v1/assets?owner=${address}&offset=${
-          page * limit
-        }&limit=${limit}`,
-      )
+      .get(`https://api.opensea.io/api/v1/assets?owner=${address}&offset=${page * limit}&limit=${limit}`)
       .toPromise();
 
     const user = await this.userRepository.findOne({ where: { address } });
