@@ -557,3 +557,11 @@ export class GetMyAuctionsResponse {
   auctions: AuctionResponse[];
 }
 
+export class GetAuctionPageParams {
+  @ApiProperty({
+    example: '1',
+    description: 'The id of the auction to be fetched',
+  })
+  @IsNumberString()
+  id: string;
+}
