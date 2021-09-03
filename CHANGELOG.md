@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.10.1...v1.11.0) (2021-09-03)
+
+
+### Features
+
+* add endpoint for public Auction Page ([#30](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/30)) ([74c4a8c](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/74c4a8c07c8e533d289c7f6e6651a2ecfa63a6fb))
+
 ## [1.10.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.10.0...v1.10.1) (2021-09-02)
 
 
