@@ -4,8 +4,8 @@ import { S3Service } from './s3.service';
 import { ArweaveService } from './arweave.service';
 
 @Module({
-    imports: [AppConfigModule],
-    providers: [S3Service, ArweaveService],
-    exports: [S3Service, ArweaveService],
+  imports: [AppConfigModule],
+  providers: [S3Service, ArweaveService],
+  exports: [S3Service, ArweaveService],
 })
-export class FileStorageModule { }
+export class FileStorageModule {}

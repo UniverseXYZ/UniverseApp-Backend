@@ -9,11 +9,16 @@ import { MulterConfigService } from '../multer/multer.service';
 import { AppConfigModule } from '../configuration/configuration.module';
 
 @Module({
-  imports: [AppConfigModule, FileStorageModule, MulterModule.registerAsync({
-    useClass: MulterConfigService,
-  }), TypeOrmModule.forFeature([User])],
+  imports: [
+    AppConfigModule,
+    FileStorageModule,
+    MulterModule.registerAsync({
+      useClass: MulterConfigService,
+    }),
+    TypeOrmModule.forFeature([User]),
+  ],
   providers: [UsersService],
   exports: [UsersService],
-  controllers: [UserController]
+  controllers: [UserController],
 })
-export class UsersModule { }
+export class UsersModule {}

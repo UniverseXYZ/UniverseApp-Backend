@@ -2,7 +2,8 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 
 export class InvalidSignedMessageException extends HttpException {
   constructor() {
-    super({
+    super(
+      {
         error: 'InvalidSignedMessageException',
         message: 'The signed message is invalid',
       },

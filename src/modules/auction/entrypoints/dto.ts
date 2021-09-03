@@ -2,8 +2,10 @@ import {
   ArrayMinSize,
   IsArray,
   IsBoolean,
-  IsDateString, IsNotEmpty,
-  IsNumber, IsNumberString,
+  IsDateString,
+  IsNotEmpty,
+  IsNumber,
+  IsNumberString,
   IsOptional,
   IsString,
   Length,
@@ -389,7 +391,7 @@ export class EditRewardTierResponse {
   nftsPerWinner: number;
 
   @ApiProperty({
-    example: "0.1",
+    example: '0.1',
   })
   minimumBid: string;
 

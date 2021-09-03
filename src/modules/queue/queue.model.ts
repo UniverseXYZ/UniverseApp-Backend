@@ -5,6 +5,6 @@ import { AppConfigModule } from '../configuration/configuration.module';
 @Module({
   providers: [QueueService],
   exports: [QueueService],
-  imports: [AppConfigModule]
+  imports: [AppConfigModule],
 })
 export class QueueModel {}
