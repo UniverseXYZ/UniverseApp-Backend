@@ -11,6 +11,7 @@ import { FileSystemModule } from '../file-system/file-system.module';
 import { SavedNft } from './domain/saved-nft.entity';
 import { MintingCollection } from './domain/minting-collection.entity';
 import { User } from '../users/user.entity';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   providers: [NftService],
@@ -20,6 +21,7 @@ import { User } from '../users/user.entity';
     FileStorageModule,
     AppConfigModule,
     FileSystemModule,
+    UsersModule,
   ],
   exports: [],
   controllers: [NftController],

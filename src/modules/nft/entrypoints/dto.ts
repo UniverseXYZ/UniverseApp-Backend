@@ -368,3 +368,12 @@ export class DeleteSavedNftParams {
   })
   id: number;
 }
+
+export class GetMyCollectionParams {
+  @IsNumberString()
+  @ApiProperty({
+    description: 'The id of the Collection',
+    example: 1,
+  })
+  id: number;
+}

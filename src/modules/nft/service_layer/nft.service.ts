@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Connection, In, Repository } from 'typeorm';
-import { customAlphabet } from 'nanoid';
+import { In, Repository } from 'typeorm';
 import { Nft } from '../domain/nft.entity';
 import { NftCollection } from '../domain/collection.entity';
 import { NftNotFoundException } from './exceptions/NftNotFoundException';
@@ -11,9 +10,7 @@ import { AppConfig } from '../../configuration/configuration.service';
 import { FileSystemService } from '../../file-system/file-system.service';
 import { ArweaveService } from '../../file-storage/arweave.service';
 import { SavedNft } from '../domain/saved-nft.entity';
-import { filter } from 'rxjs/operators';
-import { Multer } from 'multer';
-import { plainToClass } from 'class-transformer';
+import { classToPlain, plainToClass } from 'class-transformer';
 import { CreateCollectionBody, GetNftTokenUriBody } from '../entrypoints/dto';
 import { validateOrReject } from 'class-validator';
 import { ProcessedFile } from '../../file-processing/model/ProcessedFile';
@@ -24,6 +21,8 @@ import { MintingCollectionBadOwnerException } from './exceptions/MintingCollecti
 import { SavedNftNotFoundException } from './exceptions/SavedNftNotFoundException';
 import { SavedNftOwnerException } from './exceptions/SavedNftOwnerException';
 import { User } from '../../users/user.entity';
+import { UsersService } from 'src/modules/users/users.service';
+import { NftCollectionNotFoundException } from './exceptions/NftCollectionNotFoundException';
 
 type SaveNftParams = {
   userId: number;
@@ -77,6 +76,7 @@ export class NftService {
     private mintingCollectionRepository: Repository<MintingCollection>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    private usersService: UsersService,
     private fileProcessingService: FileProcessingService,
     private s3Service: S3Service,
     private arweaveService: ArweaveService,
@@ -424,6 +424,21 @@ export class NftService {
     await this.savedNftRepository.delete({ id });
 
     return { id };
+  }
+
+  public async getMyCollection(userId: number, collectionId: number) {
+    await this.usersService.getById(userId, true);
+    const collection = await this.nftCollectionRepository.findOne({ where: { id: collectionId } });
+    const nfts = await this.nftRepository.find({ where: { collectionId, userId } });
+
+    if (!collection) {
+      throw new NftCollectionNotFoundException();
+    }
+
+    return {
+      collection: classToPlain(collection),
+      nfts: nfts.map((nft) => classToPlain(nft)),
+    };
   }
 
   private async generateTokenUrisForSavedNft(savedNft: SavedNft) {

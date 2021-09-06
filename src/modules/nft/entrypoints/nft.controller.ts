@@ -18,6 +18,7 @@ import {
   EditMintingCollectionBody,
   EditMintingCollectionParams,
   EditSavedNftBody,
+  GetMyCollectionParams,
   GetMyNftsResponse,
   GetNftTokenURIParams,
   PatchSavedNftParams,
@@ -183,5 +184,14 @@ export class NftController {
   @ApiOperation({ summary: 'Delete saved NFT' })
   async deleteSavedNft(@Req() req, @Param() params: DeleteSavedNftParams) {
     return await this.nftService.deleteSavedNft(params.id, req.user.sub);
+  }
+
+  @Get('pages/my-collections/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiTags('nfts')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get data for My Collection page' })
+  async getMyCollectionPage(@Req() req, @Param() params: GetMyCollectionParams) {
+    return this.nftService.getMyCollection(req.user.sub, params.id);
   }
 }
