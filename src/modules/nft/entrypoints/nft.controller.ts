@@ -15,6 +15,7 @@ import {
 } from '@nestjs/common';
 import {
   DeleteSavedNftParams,
+  EditCollectionBody,
   EditCollectionParams,
   EditMintingCollectionBody,
   EditMintingCollectionParams,
@@ -177,6 +178,15 @@ export class NftController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     return await this.nftService.changeCollectionBannerImage(params.id, req.user.sub, file);
+  }
+
+  @Patch('collections/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiTags('nfts')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Edit collection' })
+  async editCollection(@Req() req, @Param() params: EditCollectionParams, @Body() body: EditCollectionBody) {
+    return await this.nftService.editCollection(params.id, req.user.sub, body);
   }
 
   @Get('saved-nfts')

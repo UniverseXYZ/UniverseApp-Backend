@@ -11,7 +11,7 @@ import { FileSystemService } from '../../file-system/file-system.service';
 import { ArweaveService } from '../../file-storage/arweave.service';
 import { SavedNft } from '../domain/saved-nft.entity';
 import { classToPlain, plainToClass } from 'class-transformer';
-import { CreateCollectionBody, GetNftTokenUriBody } from '../entrypoints/dto';
+import { CreateCollectionBody, EditCollectionBody, GetNftTokenUriBody } from '../entrypoints/dto';
 import { validateOrReject } from 'class-validator';
 import { ProcessedFile } from '../../file-processing/model/ProcessedFile';
 import { UploadResult } from '../../file-storage/model/UploadResult';
@@ -311,6 +311,23 @@ export class NftService {
       await this.nftCollectionRepository.save(collection);
     }
 
+    return classToPlain(collection);
+  }
+
+  public async editCollection(id: number, userId: number, data: EditCollectionBody) {
+    const user = await this.usersService.getById(userId, true);
+    const collection = await this.nftCollectionRepository.findOne({ where: { id } });
+
+    if (collection.owner !== user.address) {
+      throw new NftCollectionBadOwnerException();
+    }
+
+    const filteredAttributes = this.filterObjectAttributes(data, ['description']);
+    for (const attribute in filteredAttributes) {
+      collection[attribute] = filteredAttributes[attribute];
+    }
+
+    await this.nftCollectionRepository.save(collection);
     return classToPlain(collection);
   }
 

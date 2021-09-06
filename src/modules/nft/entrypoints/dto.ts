@@ -16,6 +16,17 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { NftSource } from '../domain/nft.entity';
 
+export class EditCollectionBody {
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The new description of the collection',
+    example: 'New description text',
+    required: false,
+  })
+  description?: string;
+}
+
 export class SaveNftBody {
   @IsString()
   @Length(1, 32)
