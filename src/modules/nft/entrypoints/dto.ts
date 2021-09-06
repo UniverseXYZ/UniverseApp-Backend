@@ -348,6 +348,16 @@ export class EditMintingCollectionParams {
   id: number;
 }
 
+export class EditCollectionParams {
+  @IsString()
+  @ApiProperty({
+    example: '1',
+    description: 'The id of the collection',
+    required: true,
+  })
+  id: number;
+}
+
 export class EditMintingCollectionBody {
   @IsString()
   @IsOptional()

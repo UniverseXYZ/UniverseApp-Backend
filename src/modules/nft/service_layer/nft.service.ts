@@ -23,6 +23,7 @@ import { SavedNftOwnerException } from './exceptions/SavedNftOwnerException';
 import { User } from '../../users/user.entity';
 import { UsersService } from 'src/modules/users/users.service';
 import { NftCollectionNotFoundException } from './exceptions/NftCollectionNotFoundException';
+import { NftCollectionBadOwnerException } from './exceptions/NftCollectionBadOwnerException';
 
 type SaveNftParams = {
   userId: number;
@@ -273,6 +274,44 @@ export class NftService {
       mintingCollection[attribute] = filteredAttributes[attribute];
     }
     await this.mintingCollectionRepository.save(mintingCollection);
+  }
+
+  public async changeCollectionCoverImage(id: number, userId: number, file: Express.Multer.File) {
+    const user = await this.usersService.getById(userId, true);
+    const collection = await this.nftCollectionRepository.findOne({ where: { id } });
+
+    if (collection.owner !== user.address) {
+      throw new NftCollectionBadOwnerException();
+    }
+
+    let s3Result: UploadResult;
+
+    if (file) {
+      s3Result = await this.s3Service.uploadDocument(file.path, file.filename);
+      collection.coverUrl = s3Result.url;
+      await this.nftCollectionRepository.save(collection);
+    }
+
+    return classToPlain(collection);
+  }
+
+  public async changeCollectionBannerImage(id: number, userId: number, file: Express.Multer.File) {
+    const user = await this.usersService.getById(userId, true);
+    const collection = await this.nftCollectionRepository.findOne({ where: { id } });
+
+    if (collection.owner !== user.address) {
+      throw new NftCollectionBadOwnerException();
+    }
+
+    let s3Result: UploadResult;
+
+    if (file) {
+      s3Result = await this.s3Service.uploadDocument(file.path, file.filename);
+      collection.bannerUrl = s3Result.url;
+      await this.nftCollectionRepository.save(collection);
+    }
+
+    return classToPlain(collection);
   }
 
   private async generateTokenUriForNftBody(
