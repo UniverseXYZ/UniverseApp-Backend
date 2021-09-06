@@ -15,6 +15,8 @@ import {
 } from '@nestjs/common';
 import {
   DeleteSavedNftParams,
+  EditCollectionBody,
+  EditCollectionParams,
   EditMintingCollectionBody,
   EditMintingCollectionParams,
   EditSavedNftBody,
@@ -29,8 +31,8 @@ import {
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { NftService } from '../service_layer/nft.service';
 import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { collectionFileMulterOptions, nftFileMulterOptions } from './multipart';
+import { FileFieldsInterceptor, FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { collectionBannerMulterOptions, collectionFileMulterOptions, nftFileMulterOptions } from './multipart';
 import { classToPlain } from 'class-transformer';
 
 @Controller('api')
@@ -146,6 +148,45 @@ export class NftController {
     @Body() body: EditMintingCollectionBody,
   ) {
     return await this.nftService.editMintingCollection(req.user.sub, params.id, body);
+  }
+
+  @Post('collections/:id/cover-image')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('cover', collectionFileMulterOptions()))
+  @ApiTags('nfts')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Change collection cover image' })
+  @ApiConsumes('form/multi-part')
+  async changeCollectionCover(
+    @Req() req,
+    @Param() params: EditCollectionParams,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return await this.nftService.changeCollectionCoverImage(params.id, req.user.sub, file);
+  }
+
+  @Post('collections/:id/banner-image')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('banner', collectionBannerMulterOptions()))
+  @ApiTags('nfts')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Change collection banner image' })
+  @ApiConsumes('form/multi-part')
+  async editCollectionBanner(
+    @Req() req,
+    @Param() params: EditCollectionParams,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return await this.nftService.changeCollectionBannerImage(params.id, req.user.sub, file);
+  }
+
+  @Patch('collections/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiTags('nfts')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Edit collection' })
+  async editCollection(@Req() req, @Param() params: EditCollectionParams, @Body() body: EditCollectionBody) {
+    return await this.nftService.editCollection(params.id, req.user.sub, body);
   }
 
   @Get('saved-nfts')

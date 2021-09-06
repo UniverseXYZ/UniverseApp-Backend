@@ -40,6 +40,9 @@ export class NftCollection {
   @Column({ nullable: true })
   coverUrl?: string;
 
+  @Column({ nullable: true })
+  bannerUrl?: string;
+
   @Column({ default: false })
   publicCollection?: boolean;
 
