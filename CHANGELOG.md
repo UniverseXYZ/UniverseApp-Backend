@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.11.0...v1.12.0) (2021-09-06)
+
+
+### Features
+
+* add endpoint to get my collection based on id ([e1d4739](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/e1d4739da23746f024bcc43295f3e71ad9fe9246))
+
 # [1.11.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.10.1...v1.11.0) (2021-09-03)
 
 
