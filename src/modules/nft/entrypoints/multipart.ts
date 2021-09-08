@@ -9,7 +9,7 @@ export const collectionFileMulterOptions = () => {
 };
 
 export const collectionBannerMulterOptions = () => {
-  return multerOptionsFactory(3, ['image/jpeg', 'image/png']);
+  return multerOptionsFactory(3, ['image/jpeg', 'image/png', 'image/webp']);
 };
 
 export const auctionLandingImagesMulterOptions = () => {
@@ -45,7 +45,7 @@ const multerOptionsFactory: (sizeInMb: number, validMimeTypes: string[]) => Mult
       if (isValid) {
         callback(null, true);
       } else {
-        callback(new InvalidFileTypeException(), false);
+        callback(new InvalidFileTypeException(validMimeTypes), false);
       }
     },
   };
@@ -68,11 +68,11 @@ const isMimeTypeValid = (mimeType: string, validMimeTypes: string[]) => {
 };
 
 class InvalidFileTypeException extends HttpException {
-  constructor() {
+  constructor(types: string[]) {
     super(
       {
         error: 'InvalidFileType',
-        message: 'File type is not valid. Supported file types: jpeg, png, gif, webp, mp4',
+        message: `File type is not valid. Supported types are: ${types}`,
       },
       HttpStatus.BAD_REQUEST,
     );
