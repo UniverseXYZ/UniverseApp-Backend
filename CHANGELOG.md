@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.12.0...v1.13.0) (2021-09-06)
+
+
+### Features
+
+* edit collection's off-chain attributes ([#31](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/31)) ([0cf8f11](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/0cf8f11bd9d87f18fa67f14f6fc087e52f560f94))
+
 # [1.12.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.11.0...v1.12.0) (2021-09-06)
 
 
