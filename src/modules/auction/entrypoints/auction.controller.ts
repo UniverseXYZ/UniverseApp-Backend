@@ -85,11 +85,7 @@ export class AuctionController {
     @Param() params: UpdateRewardTierParams,
     @Body() updateRewardTierBody: UpdateRewardTierBody,
   ) {
-    return await this.auctionService.updateRewardTier(
-      req.user.sub,
-      params.id,
-      classToPlain(updateRewardTierBody) as any,
-    );
+    return await this.auctionService.updateRewardTier(req.user.sub, params.id, updateRewardTierBody);
   }
 
   @Get('pages/my-auctions/future')

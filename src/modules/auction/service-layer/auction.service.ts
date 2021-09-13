@@ -128,6 +128,18 @@ export class AuctionService {
       tier.numberOfWinners = params.numberOfWinners ? params.numberOfWinners : tier.numberOfWinners;
       tier.nftsPerWinner = params.nftsPerWinner ? params.nftsPerWinner : tier.nftsPerWinner;
 
+      if (typeof params.description === 'string' || params.description === null) {
+        tier.description = params.description;
+      }
+
+      if (typeof params.minimumBid === 'number' || params.minimumBid === null) {
+        tier.minimumBid = params.minimumBid;
+      }
+
+      if (typeof params.color === 'string' || params.color === null) {
+        tier.color = params.color;
+      }
+
       await transactionalEntityManager.save(tier);
 
       if (params.nftIds) {
@@ -153,18 +165,12 @@ export class AuctionService {
         await Promise.all(newRewardTierNfts.map((rewardTierNft) => this.rewardTierNftRepository.save(rewardTierNft)));
       }
 
+      const rewardTierNfts = await this.rewardTierNftRepository.find({ where: { rewardTierId: id } });
+      const nftIds = rewardTierNfts.map((nft) => nft.nftId);
+      const nfts = await this.nftRepository.find({ where: { id: In(nftIds) } });
       return {
-        id: tier.id,
-        name: tier.name,
-        numberOfWinners: tier.numberOfWinners,
-        nftsPerWinner: tier.nftsPerWinner,
-        minimumBid: tier.minimumBid,
-        tierPosition: tier.tierPosition,
-        customDescription: tier.customDescription,
-        tierImageUrl: tier.tierImageUrl,
-        tierColor: tier.tierColor,
-        createdAt: tier.createdAt,
-        updatedAt: tier.updatedAt,
+        ...classToPlain(tier),
+        nfts: nfts.map((nft) => classToPlain(nft)),
       };
     });
   }
@@ -187,22 +193,22 @@ export class AuctionService {
     tierId: number,
     params: { customDescription: string; tierColor: string },
   ) {
-    const tier = await this.validateTierPermissions(userId, tierId);
+    // const tier = await this.validateTierPermissions(userId, tierId);
 
-    tier.customDescription = params.customDescription ? params.customDescription : tier.customDescription;
-    tier.tierColor = params.tierColor ? params.tierColor : tier.tierColor;
-    await this.rewardTierRepository.save(tier);
-    return tier;
+    // tier.customDescription = params.customDescription ? params.customDescription : tier.customDescription;
+    // tier.tierColor = params.tierColor ? params.tierColor : tier.tierColor;
+    // await this.rewardTierRepository.save(tier);
+    // return tier;
   }
 
   async updateRewardTierImage(userId: number, tierId: number, file: Express.Multer.File) {
-    const tier = await this.validateTierPermissions(userId, tierId);
+    // const tier = await this.validateTierPermissions(userId, tierId);
 
-    await this.s3Service.uploadDocument(`${file.path}`, `${file.filename}`);
+    // await this.s3Service.uploadDocument(`${file.path}`, `${file.filename}`);
 
-    tier.tierImageUrl = file.filename;
-    await this.rewardTierRepository.save(tier);
-    return tier;
+    // tier.tierImageUrl = file.filename;
+    // await this.rewardTierRepository.save(tier);
+    // return tier;
   }
 
   @Transaction()
