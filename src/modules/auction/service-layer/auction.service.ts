@@ -275,6 +275,24 @@ export class AuctionService {
     return auction;
   }
 
+  async cancelFutureAuction(userId: number, auctionId: number) {
+    const auction = await this.validateAuctionPermissions(userId, auctionId);
+    let canceled = false;
+    const now = new Date();
+    // TODO: Add more validations if needed
+    if (now < auction.startDate) {
+      // TODO: Maybe add a bool field for deleted auctions instead of actually deleting them
+      // This will require adding find param to all the get endpoints for future auctions
+      this.auctionRepository.delete({ id: auction.id });
+      canceled = true;
+    }
+
+    return {
+      id: auction.id,
+      canceled,
+    };
+  }
+
   async uploadAuctionLandingImages(
     userId: number,
     auctionId: number,
@@ -486,7 +504,7 @@ export class AuctionService {
     // }
   }
 
-  async listAuctionsByUser(userId: number, page: number = 1, limit: number = 10) {
+  async listAuctionsByUser(userId: number, page = 1, limit = 10) {
     // const auctionsQuery = this.auctionRepository.createQueryBuilder().where('userId = :userId', { userId });
     // const countQuery = auctionsQuery.clone();
     //
@@ -501,7 +519,7 @@ export class AuctionService {
     // };
   }
 
-  async listAuctionsByUserAndStatus(userId: number, status: string, page: number = 1, limit: number = 10) {
+  async listAuctionsByUserAndStatus(userId: number, status: string, page = 1, limit = 10) {
     const auctionsQuery = this.auctionRepository.createQueryBuilder();
 
     if (status == AuctionStatus.draft) {
@@ -529,7 +547,7 @@ export class AuctionService {
     };
   }
 
-  async listAuctions(page: number = 1, limit: number = 10) {
+  async listAuctions(page = 1, limit = 10) {
     const auctionsQuery = this.auctionRepository.createQueryBuilder();
     const countQuery = auctionsQuery.clone();
 
@@ -544,7 +562,7 @@ export class AuctionService {
     };
   }
 
-  async listAuctionsByStatus(status: string, page: number = 1, limit: number = 10) {
+  async listAuctionsByStatus(status: string, page = 1, limit = 10) {
     const auctionsQuery = this.auctionRepository.createQueryBuilder();
 
     if (status == AuctionStatus.draft) {

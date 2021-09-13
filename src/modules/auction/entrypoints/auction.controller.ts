@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Delete,
   Query,
   Req,
   UploadedFile,
@@ -203,7 +204,7 @@ export class AuctionController {
 
   @Get('auctions/byUser')
   @UseGuards(JwtAuthGuard)
-  async listAuctionsByUser(@Req() req, @Query('page') page: number = 0, @Query('limit') limit: number = 0) {
+  async listAuctionsByUser(@Req() req, @Query('page') page = 0, @Query('limit') limit = 0) {
     return await this.auctionService.listAuctionsByUser(req.user.sub, page, limit);
   }
 
@@ -211,9 +212,9 @@ export class AuctionController {
   @UseGuards(JwtAuthGuard)
   async listAuctionsByUserFiltered(
     @Req() req,
-    @Query('page') page: number = 0,
-    @Query('limit') limit: number = 0,
-    @Param('status') status: string = '',
+    @Query('page') page = 0,
+    @Query('limit') limit = 0,
+    @Param('status') status = '',
   ) {
     if (status !== '') return;
 
@@ -222,7 +223,7 @@ export class AuctionController {
 
   @Get('auctions')
   @UseGuards(JwtAuthGuard)
-  async listAuctions(@Req() req, @Query('page') page: number = 0, @Query('limit') limit: number = 0) {
+  async listAuctions(@Req() req, @Query('page') page = 0, @Query('limit') limit = 0) {
     return await this.auctionService.listAuctions(page, limit);
   }
 
@@ -230,9 +231,9 @@ export class AuctionController {
   @UseGuards(JwtAuthGuard)
   async listAuctionsFiltered(
     @Req() req,
-    @Query('page') page: number = 0,
-    @Query('limit') limit: number = 0,
-    @Param('status') status: string = '',
+    @Query('page') page = 0,
+    @Query('limit') limit = 0,
+    @Param('status') status = '',
   ) {
     if (status !== '') return;
 
@@ -242,7 +243,15 @@ export class AuctionController {
   //Todo: add tier info
   @Get('auction/{:id}')
   @UseGuards(JwtAuthGuard)
-  async getAuction(@Req() req, @Param('id') id: number = 0) {
+  async getAuction(@Req() req, @Param('id') id = 0) {
     return await this.auctionService.getAuction(id);
+  }
+
+  @Delete('auction/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiTags('auction')
+  @ApiOperation({ summary: 'Cancel my future auction' })
+  async cancelAuction(@Req() req, @Param('id') id) {
+    return await this.auctionService.cancelFutureAuction(req.user.sub, id);
   }
 }
