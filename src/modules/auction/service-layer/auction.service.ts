@@ -127,9 +127,13 @@ export class AuctionService {
       tier.name = params.name ? params.name : tier.name;
       tier.numberOfWinners = params.numberOfWinners ? params.numberOfWinners : tier.numberOfWinners;
       tier.nftsPerWinner = params.nftsPerWinner ? params.nftsPerWinner : tier.nftsPerWinner;
-      
+
       if (typeof params.description === 'string' || params.description === null) {
         tier.description = params.description;
+      }
+
+      if (typeof params.minimumBid === 'number' || params.minimumBid === null) {
+        tier.minimumBid = params.minimumBid;
       }
 
       if (typeof params.color === 'string' || params.color === null) {
