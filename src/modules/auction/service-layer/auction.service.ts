@@ -308,7 +308,7 @@ export class AuctionService {
     }
     auction = await this.auctionRepository.save(auction);
 
-    return auction;
+    return classToPlain(auction);
   }
 
   private async getMyFutureAuctions(userId: number, limit: number, offset: number) {
