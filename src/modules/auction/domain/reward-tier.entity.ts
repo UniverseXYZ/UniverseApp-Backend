@@ -29,13 +29,13 @@ export class RewardTier {
   tierPosition: number;
 
   @Column({ nullable: true })
-  customDescription: string;
+  description: string;
 
   @Column({ nullable: true })
-  tierImageUrl: string;
+  imageUrl: string;
 
   @Column({ nullable: true })
-  tierColor: string;
+  color: string;
 
   @CreateDateColumn()
   createdAt: Date;
