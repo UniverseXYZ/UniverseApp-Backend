@@ -1,3 +1,10 @@
+## [1.13.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.13.0...v1.13.1) (2021-09-13)
+
+
+### Bug Fixes
+
+* edit color and description of reward tier ([#32](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/32)) ([f68d179](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/f68d17905ccd9e8de69f61d22d00427eec5c05c0))
+
 # [1.13.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.12.0...v1.13.0) (2021-09-06)
 
 
