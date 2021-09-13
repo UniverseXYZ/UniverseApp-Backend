@@ -281,9 +281,12 @@ export class AuctionService {
     const now = new Date();
     // TODO: Add more validations if needed
     if (now < auction.startDate) {
-      // TODO: Maybe add a bool field for deleted auctions instead of actually deleting them
-      // This will require adding find param to all the get endpoints for future auctions
-      this.auctionRepository.delete({ id: auction.id });
+      await this.auctionRepository.delete({ id: auction.id });
+      const rewardTiers = await this.rewardTierRepository.find({ auctionId: auction.id });
+      await this.rewardTierRepository.delete({ auctionId: auction.id });
+      rewardTiers.forEach(async (tier) => {
+        await this.rewardTierNftRepository.delete({ rewardTierId: tier.id });
+      });
       canceled = true;
     }
 
