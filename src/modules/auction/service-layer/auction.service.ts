@@ -281,11 +281,22 @@ export class AuctionService {
     const now = new Date();
     // TODO: Add more validations if needed
     if (now < auction.startDate) {
-      await this.auctionRepository.delete({ id: auction.id });
-      const rewardTiers = await this.rewardTierRepository.find({ auctionId: auction.id });
-      await this.rewardTierRepository.delete({ auctionId: auction.id });
-      rewardTiers.forEach(async (tier) => {
-        await this.rewardTierNftRepository.delete({ rewardTierId: tier.id });
+      await getManager().transaction(async (transactionalEntityManager) => {
+        const auctionDelete = await this.auctionRepository.delete({ id: auction.id });
+        await transactionalEntityManager.save(auctionDelete);
+
+        const rewardTiers = await this.rewardTierRepository.find({ auctionId: auction.id });
+        const idsToDelete = rewardTiers.map((tier) => tier.id);
+
+        const tierDelete = await this.rewardTierRepository.delete({ auctionId: auction.id });
+        await transactionalEntityManager.save(tierDelete);
+
+        await transactionalEntityManager
+          .createQueryBuilder()
+          .delete()
+          .from(RewardTierNft)
+          .where('nftId IN (:...idsToDelete)', { idsToDelete })
+          .execute();
       });
       canceled = true;
     }
