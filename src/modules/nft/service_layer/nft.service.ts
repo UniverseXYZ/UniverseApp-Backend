@@ -507,7 +507,7 @@ export class NftService {
       collection: classToPlain(collection),
       nfts: Object.values(editionNFTsMap).map((nfts) => ({
         ...classToPlain(nfts[0]),
-        tokensIds: nfts.map((nft) => nft.tokenId),
+        tokenIds: nfts.map((nft) => nft.tokenId),
         numberOfEditions: editionsCount[nfts[0].editionUUID],
       })),
     };
