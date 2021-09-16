@@ -431,6 +431,7 @@ export class NftService {
           name: collectionsMap[collectionId].name,
           symbol: collectionsMap[collectionId].symbol,
           coverUrl: collectionsMap[collectionId].coverUrl,
+          publicCollection: collectionsMap[collectionId].publicCollection,
         };
 
         return {
