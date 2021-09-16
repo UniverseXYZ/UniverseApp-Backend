@@ -194,7 +194,6 @@ export class AuctionService {
     params: { customDescription: string; tierColor: string },
   ) {
     // const tier = await this.validateTierPermissions(userId, tierId);
-
     // tier.customDescription = params.customDescription ? params.customDescription : tier.customDescription;
     // tier.tierColor = params.tierColor ? params.tierColor : tier.tierColor;
     // await this.rewardTierRepository.save(tier);
@@ -203,9 +202,7 @@ export class AuctionService {
 
   async updateRewardTierImage(userId: number, tierId: number, file: Express.Multer.File) {
     // const tier = await this.validateTierPermissions(userId, tierId);
-
     // await this.s3Service.uploadDocument(`${file.path}`, `${file.filename}`);
-
     // tier.tierImageUrl = file.filename;
     // await this.rewardTierRepository.save(tier);
     // return tier;
@@ -316,7 +313,6 @@ export class AuctionService {
     const [auctions, count] = await this.auctionRepository.findAndCount({
       where: {
         userId,
-        startDate: MoreThan(now),
       },
       skip: offset,
       take: limit,
@@ -492,7 +488,7 @@ export class AuctionService {
     // }
   }
 
-  async listAuctionsByUser(userId: number, page: number = 1, limit: number = 10) {
+  async listAuctionsByUser(userId: number, page = 1, limit = 10) {
     // const auctionsQuery = this.auctionRepository.createQueryBuilder().where('userId = :userId', { userId });
     // const countQuery = auctionsQuery.clone();
     //
@@ -507,7 +503,7 @@ export class AuctionService {
     // };
   }
 
-  async listAuctionsByUserAndStatus(userId: number, status: string, page: number = 1, limit: number = 10) {
+  async listAuctionsByUserAndStatus(userId: number, status: string, page = 1, limit = 10) {
     const auctionsQuery = this.auctionRepository.createQueryBuilder();
 
     if (status == AuctionStatus.draft) {
@@ -535,7 +531,7 @@ export class AuctionService {
     };
   }
 
-  async listAuctions(page: number = 1, limit: number = 10) {
+  async listAuctions(page = 1, limit = 10) {
     const auctionsQuery = this.auctionRepository.createQueryBuilder();
     const countQuery = auctionsQuery.clone();
 
@@ -550,7 +546,7 @@ export class AuctionService {
     };
   }
 
-  async listAuctionsByStatus(status: string, page: number = 1, limit: number = 10) {
+  async listAuctionsByStatus(status: string, page = 1, limit = 10) {
     const auctionsQuery = this.auctionRepository.createQueryBuilder();
 
     if (status == AuctionStatus.draft) {
