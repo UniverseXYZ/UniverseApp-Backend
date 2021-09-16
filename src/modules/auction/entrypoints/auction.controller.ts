@@ -31,7 +31,7 @@ import { AuctionService } from '../service-layer/auction.service';
 import { JwtAuthGuard, OptionalJwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { auctionLandingImagesMulterOptions } from '../../nft/entrypoints/multipart';
+import { auctionLandingImagesMulterOptions, rewardTierImagesMulterOptions } from '../../nft/entrypoints/multipart';
 
 @Controller('api')
 export class AuctionController {
@@ -89,7 +89,7 @@ export class AuctionController {
 
   @Patch('reward-tiers/:id/image')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('image', auctionLandingImagesMulterOptions()))
+  @UseInterceptors(FileInterceptor('image', rewardTierImagesMulterOptions()))
   @ApiTags('reward tiers')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Change reward tier image' })

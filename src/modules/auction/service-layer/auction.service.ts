@@ -211,7 +211,7 @@ export class AuctionService {
     if (image) {
       s3Result = await this.s3Service.uploadDocument(image.path, image.filename);
       rewardTier.imageUrl = s3Result.url;
-      await this.fileSystemService.removeFile(image.path).catch(() => {});
+      await this.fileSystemService.removeFile(image.path);
       await this.rewardTierRepository.save(rewardTier);
     }
 
