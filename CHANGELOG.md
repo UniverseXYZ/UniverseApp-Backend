@@ -1,3 +1,10 @@
+## [1.13.3](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.13.2...v1.13.3) (2021-09-16)
+
+
+### Bug Fixes
+
+* change attribute name for token id ([#37](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/37)) ([a76c033](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/a76c0336f9a3fde85f85b89783e9fb42323d2cce))
+
 ## [1.13.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.13.1...v1.13.2) (2021-09-16)
 
 
