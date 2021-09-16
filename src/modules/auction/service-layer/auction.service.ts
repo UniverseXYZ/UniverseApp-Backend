@@ -16,6 +16,7 @@ import { RewardTierNotFoundException } from './exceptions/RewardTierNotFoundExce
 import { RewardTierBadOwnerException } from './exceptions/RewardTierBadOwnerException';
 import { UsersService } from '../../users/users.service';
 import { classToPlain } from 'class-transformer';
+import { UploadResult } from 'src/modules/file-storage/model/UploadResult';
 
 @Injectable()
 export class AuctionService {
@@ -177,12 +178,13 @@ export class AuctionService {
 
   private async validateTierPermissions(userId: number, tierId: number) {
     const tier = await this.rewardTierRepository.findOne({ where: { id: tierId } });
+
     if (!tier) {
-      //return tier not found
+      throw new RewardTierNotFoundException();
     }
 
-    if (userId !== tier.userId) {
-      //return error if missmatch
+    if (tier.userId !== userId) {
+      throw new RewardTierBadOwnerException();
     }
 
     return tier;
@@ -200,12 +202,20 @@ export class AuctionService {
     // return tier;
   }
 
-  async updateRewardTierImage(userId: number, tierId: number, file: Express.Multer.File) {
-    // const tier = await this.validateTierPermissions(userId, tierId);
-    // await this.s3Service.uploadDocument(`${file.path}`, `${file.filename}`);
-    // tier.tierImageUrl = file.filename;
-    // await this.rewardTierRepository.save(tier);
-    // return tier;
+  async updateRewardTierImage(userId: number, tierId: number, image: Express.Multer.File) {
+    const user = await this.usersService.getById(userId, true);
+    const rewardTier = await this.validateTierPermissions(user.id, tierId);
+
+    let s3Result: UploadResult;
+
+    if (image) {
+      s3Result = await this.s3Service.uploadDocument(image.path, image.filename);
+      rewardTier.imageUrl = s3Result.url;
+      await this.rewardTierRepository.save(rewardTier);
+      await this.fileSystemService.removeFile(image.path);
+    }
+
+    return classToPlain(rewardTier);
   }
 
   @Transaction()

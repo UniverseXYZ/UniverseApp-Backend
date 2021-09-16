@@ -16,6 +16,10 @@ export const auctionLandingImagesMulterOptions = () => {
   return multerOptionsFactory(3, ['image/jpeg', 'image/png']);
 };
 
+export const rewardTierImagesMulterOptions = () => {
+  return multerOptionsFactory(3, ['image/jpeg', 'image/png']);
+};
+
 export const nftFileMulterOptions = () => {
   return multerOptionsFactory(30, ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4']);
 };

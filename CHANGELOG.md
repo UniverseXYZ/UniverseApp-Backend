@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.13.3...v1.14.0) (2021-09-16)
+
+
+### Features
+
+* add change reward tier image endpoint and service ([#36](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/36)) ([83adf5b](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/83adf5bb44d2871398ba56671f9e635e1e0d0127))
+
 ## [1.13.3](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.13.2...v1.13.3) (2021-09-16)
 
 
