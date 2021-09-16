@@ -1,3 +1,10 @@
+## [1.14.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.14.1...v1.14.2) (2021-09-16)
+
+
+### Bug Fixes
+
+* add missing collection attribute to My NFTs response ([2c76694](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/2c766942ebc9180a54cb5d36f7e6dad207214b10))
+
 ## [1.14.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.14.0...v1.14.1) (2021-09-16)
 
 
