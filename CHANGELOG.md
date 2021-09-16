@@ -1,3 +1,10 @@
+## [1.13.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.13.1...v1.13.2) (2021-09-16)
+
+
+### Bug Fixes
+
+* group NFTs by edition for My Collection response ([#35](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/35)) ([37286af](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/37286af5f8291408fb7d52a3b35dc63960848d07))
+
 ## [1.13.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.13.0...v1.13.1) (2021-09-13)
 
 
