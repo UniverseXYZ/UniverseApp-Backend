@@ -211,8 +211,8 @@ export class AuctionService {
     if (image) {
       s3Result = await this.s3Service.uploadDocument(image.path, image.filename);
       rewardTier.imageUrl = s3Result.url;
-      await this.fileSystemService.removeFile(image.path);
       await this.rewardTierRepository.save(rewardTier);
+      await this.fileSystemService.removeFile(image.path);
     }
 
     return classToPlain(rewardTier);
@@ -323,7 +323,6 @@ export class AuctionService {
     const [auctions, count] = await this.auctionRepository.findAndCount({
       where: {
         userId,
-        startDate: MoreThan(now),
       },
       skip: offset,
       take: limit,
