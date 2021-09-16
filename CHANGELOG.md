@@ -1,3 +1,10 @@
+## [1.14.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.14.0...v1.14.1) (2021-09-16)
+
+
+### Bug Fixes
+
+* get my future auctions returns all auctions ([#38](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/38)) ([1b4645f](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/1b4645f7c725d1fd801792daf2b06b255f641270))
+
 # [1.14.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.13.3...v1.14.0) (2021-09-16)
 
 
