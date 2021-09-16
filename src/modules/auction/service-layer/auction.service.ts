@@ -16,6 +16,7 @@ import { RewardTierNotFoundException } from './exceptions/RewardTierNotFoundExce
 import { RewardTierBadOwnerException } from './exceptions/RewardTierBadOwnerException';
 import { UsersService } from '../../users/users.service';
 import { classToPlain } from 'class-transformer';
+import { UploadResult } from 'src/modules/file-storage/model/UploadResult';
 
 @Injectable()
 export class AuctionService {
@@ -177,12 +178,13 @@ export class AuctionService {
 
   private async validateTierPermissions(userId: number, tierId: number) {
     const tier = await this.rewardTierRepository.findOne({ where: { id: tierId } });
+
     if (!tier) {
-      //return tier not found
+      throw new RewardTierNotFoundException();
     }
 
-    if (userId !== tier.userId) {
-      //return error if missmatch
+    if (tier.userId !== userId) {
+      throw new RewardTierBadOwnerException();
     }
 
     return tier;
@@ -194,21 +196,26 @@ export class AuctionService {
     params: { customDescription: string; tierColor: string },
   ) {
     // const tier = await this.validateTierPermissions(userId, tierId);
-
     // tier.customDescription = params.customDescription ? params.customDescription : tier.customDescription;
     // tier.tierColor = params.tierColor ? params.tierColor : tier.tierColor;
     // await this.rewardTierRepository.save(tier);
     // return tier;
   }
 
-  async updateRewardTierImage(userId: number, tierId: number, file: Express.Multer.File) {
-    // const tier = await this.validateTierPermissions(userId, tierId);
+  async updateRewardTierImage(userId: number, tierId: number, image: Express.Multer.File) {
+    const user = await this.usersService.getById(userId, true);
+    const rewardTier = await this.validateTierPermissions(user.id, tierId);
 
-    // await this.s3Service.uploadDocument(`${file.path}`, `${file.filename}`);
+    let s3Result: UploadResult;
 
-    // tier.tierImageUrl = file.filename;
-    // await this.rewardTierRepository.save(tier);
-    // return tier;
+    if (image) {
+      s3Result = await this.s3Service.uploadDocument(image.path, image.filename);
+      rewardTier.imageUrl = s3Result.url;
+      await this.fileSystemService.removeFile(image.path).catch(() => {});
+      await this.rewardTierRepository.save(rewardTier);
+    }
+
+    return classToPlain(rewardTier);
   }
 
   @Transaction()
@@ -492,7 +499,7 @@ export class AuctionService {
     // }
   }
 
-  async listAuctionsByUser(userId: number, page: number = 1, limit: number = 10) {
+  async listAuctionsByUser(userId: number, page = 1, limit = 10) {
     // const auctionsQuery = this.auctionRepository.createQueryBuilder().where('userId = :userId', { userId });
     // const countQuery = auctionsQuery.clone();
     //
@@ -507,7 +514,7 @@ export class AuctionService {
     // };
   }
 
-  async listAuctionsByUserAndStatus(userId: number, status: string, page: number = 1, limit: number = 10) {
+  async listAuctionsByUserAndStatus(userId: number, status: string, page = 1, limit = 10) {
     const auctionsQuery = this.auctionRepository.createQueryBuilder();
 
     if (status == AuctionStatus.draft) {
@@ -535,7 +542,7 @@ export class AuctionService {
     };
   }
 
-  async listAuctions(page: number = 1, limit: number = 10) {
+  async listAuctions(page = 1, limit = 10) {
     const auctionsQuery = this.auctionRepository.createQueryBuilder();
     const countQuery = auctionsQuery.clone();
 
@@ -550,7 +557,7 @@ export class AuctionService {
     };
   }
 
-  async listAuctionsByStatus(status: string, page: number = 1, limit: number = 10) {
+  async listAuctionsByStatus(status: string, page = 1, limit = 10) {
     const auctionsQuery = this.auctionRepository.createQueryBuilder();
 
     if (status == AuctionStatus.draft) {

@@ -30,9 +30,8 @@ import {
 import { AuctionService } from '../service-layer/auction.service';
 import { JwtAuthGuard, OptionalJwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { auctionLandingImagesMulterOptions } from '../../nft/entrypoints/multipart';
-import { classToPlain } from 'class-transformer';
 
 @Controller('api')
 export class AuctionController {
@@ -86,6 +85,17 @@ export class AuctionController {
     @Body() updateRewardTierBody: UpdateRewardTierBody,
   ) {
     return await this.auctionService.updateRewardTier(req.user.sub, params.id, updateRewardTierBody);
+  }
+
+  @Patch('reward-tiers/:id/image')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('image', auctionLandingImagesMulterOptions()))
+  @ApiTags('reward tiers')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Change reward tier image' })
+  @ApiConsumes('form/multi-part')
+  async changeRewardTierImage(@Req() req, @Param('id') id = 0, @UploadedFile() file: Express.Multer.File) {
+    return await this.auctionService.updateRewardTierImage(req.user.sub, id, file);
   }
 
   @Get('pages/my-auctions/future')
@@ -199,7 +209,7 @@ export class AuctionController {
 
   @Get('auctions/byUser')
   @UseGuards(JwtAuthGuard)
-  async listAuctionsByUser(@Req() req, @Query('page') page: number = 0, @Query('limit') limit: number = 0) {
+  async listAuctionsByUser(@Req() req, @Query('page') page = 0, @Query('limit') limit = 0) {
     return await this.auctionService.listAuctionsByUser(req.user.sub, page, limit);
   }
 
@@ -207,9 +217,9 @@ export class AuctionController {
   @UseGuards(JwtAuthGuard)
   async listAuctionsByUserFiltered(
     @Req() req,
-    @Query('page') page: number = 0,
-    @Query('limit') limit: number = 0,
-    @Param('status') status: string = '',
+    @Query('page') page = 0,
+    @Query('limit') limit = 0,
+    @Param('status') status = '',
   ) {
     if (status !== '') return;
 
@@ -218,7 +228,7 @@ export class AuctionController {
 
   @Get('auctions')
   @UseGuards(JwtAuthGuard)
-  async listAuctions(@Req() req, @Query('page') page: number = 0, @Query('limit') limit: number = 0) {
+  async listAuctions(@Req() req, @Query('page') page = 0, @Query('limit') limit = 0) {
     return await this.auctionService.listAuctions(page, limit);
   }
 
@@ -226,9 +236,9 @@ export class AuctionController {
   @UseGuards(JwtAuthGuard)
   async listAuctionsFiltered(
     @Req() req,
-    @Query('page') page: number = 0,
-    @Query('limit') limit: number = 0,
-    @Param('status') status: string = '',
+    @Query('page') page = 0,
+    @Query('limit') limit = 0,
+    @Param('status') status = '',
   ) {
     if (status !== '') return;
 
@@ -238,7 +248,7 @@ export class AuctionController {
   //Todo: add tier info
   @Get('auction/{:id}')
   @UseGuards(JwtAuthGuard)
-  async getAuction(@Req() req, @Param('id') id: number = 0) {
+  async getAuction(@Req() req, @Param('id') id = 0) {
     return await this.auctionService.getAuction(id);
   }
 }
