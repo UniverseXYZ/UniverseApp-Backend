@@ -25,6 +25,9 @@ export class NftCollection {
   @Column({ nullable: true })
   owner?: string;
 
+  @Column({ nullable: true })
+  creator?: string;
+
   @Column()
   name: string;
 
