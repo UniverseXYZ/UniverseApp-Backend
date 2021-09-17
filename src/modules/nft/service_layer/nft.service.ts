@@ -470,25 +470,13 @@ export class NftService {
     );
     const mappedNfts = await Promise.all(
       Object.values(editionNFTsMap).map(async (nfts) => {
-        const {
-          id,
-          name,
-          description,
-          original_url,
-          thumbnail_url,
-          optimized_url,
-          url,
-          createdAt,
-          artworkType,
-          collectionId,
-          royalties,
-          properties,
-        } = nfts[0];
+        const { collectionId } = nfts[0];
 
         const tokenIds = [];
         for (const nft of nfts) {
           const rewardTier = await this.rewardTierNftRepository.findOne({ where: { nftId: nft.id } });
-          tokenIds.push({ nftId: nft.id, tokenId: nft.tokenId, rewardTierId: rewardTier?.id || 0 });
+          // tokenIds.push({ nftId: nft.id, tokenId: nft.tokenId, rewardTierId: rewardTier?.id || 0 });
+          tokenIds.push({ ...nft, rewardTierId: rewardTier?.id });
         }
 
         const collection = collectionsMap[collectionId] && {
@@ -499,25 +487,14 @@ export class NftService {
         };
 
         return {
-          id,
           collection,
-          name,
-          description,
-          artworkType,
-          original_url,
-          optimized_url,
-          url,
-          thumbnail_url,
-          tokenIds,
-          royalties,
-          properties,
-          createdAt,
+          nfts: tokenIds,
         };
       }),
     );
 
     return {
-      nfts: mappedNfts,
+      nfts: classToPlain(mappedNfts),
     };
   }
 
