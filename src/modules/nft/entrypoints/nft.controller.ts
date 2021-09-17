@@ -209,6 +209,16 @@ export class NftController {
     return await this.nftService.getMyNfts(req.user.sub);
   }
 
+  @Get('nfts/my-nfts/availability')
+  @UseGuards(JwtAuthGuard)
+  @ApiTags('nfts')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get my nfts with availability information' })
+  @ApiResponse({ type: GetMyNftsResponse, status: 200, isArray: true })
+  async getMyNftsAvailability(@Req() req) {
+    return await this.nftService.getMyNftsAvailability(req.user.sub);
+  }
+
   @Get('nfts/collections/my-collections')
   @UseGuards(JwtAuthGuard)
   @ApiTags('nfts')

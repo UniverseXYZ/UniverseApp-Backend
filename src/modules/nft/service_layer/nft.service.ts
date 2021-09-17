@@ -24,6 +24,7 @@ import { User } from '../../users/user.entity';
 import { UsersService } from 'src/modules/users/users.service';
 import { NftCollectionNotFoundException } from './exceptions/NftCollectionNotFoundException';
 import { NftCollectionBadOwnerException } from './exceptions/NftCollectionBadOwnerException';
+import { RewardTierNft } from 'src/modules/auction/domain/reward-tier-nft.entity';
 
 type SaveNftParams = {
   userId: number;
@@ -77,6 +78,8 @@ export class NftService {
     private mintingCollectionRepository: Repository<MintingCollection>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(RewardTierNft)
+    private rewardTierNftRepository: Repository<RewardTierNft>,
     private usersService: UsersService,
     private fileProcessingService: FileProcessingService,
     private s3Service: S3Service,
@@ -449,6 +452,72 @@ export class NftService {
           createdAt,
         };
       }),
+    };
+  }
+
+  public async getMyNftsAvailability(userId: number) {
+    const nfts = await this.nftRepository.find({ where: { userId }, order: { createdAt: 'DESC' } });
+    const editionNFTsMap: Record<string, Nft[]> = nfts.reduce(
+      (acc, nft) => ({ ...acc, [nft.editionUUID]: [...(acc[nft.editionUUID] || []), nft] }),
+      {},
+    );
+
+    const collectionIds = Object.keys(nfts.reduce((acc, nft) => ({ ...acc, [nft.collectionId]: true }), {}));
+    const collections = await this.nftCollectionRepository.find({ where: { id: In(collectionIds) } });
+    const collectionsMap: Record<string, NftCollection> = collections.reduce(
+      (acc, collection) => ({ ...acc, [collection.id]: collection }),
+      {},
+    );
+    const mappedNfts = await Promise.all(
+      Object.values(editionNFTsMap).map(async (nfts) => {
+        const {
+          id,
+          name,
+          description,
+          original_url,
+          thumbnail_url,
+          optimized_url,
+          url,
+          createdAt,
+          artworkType,
+          collectionId,
+          royalties,
+          properties,
+        } = nfts[0];
+
+        const tokenIds = [];
+        for (const nft of nfts) {
+          const rewardTier = await this.rewardTierNftRepository.findOne({ where: { nftId: nft.id } });
+          tokenIds.push({ nftId: nft.id, tokenId: nft.tokenId, rewardTierId: rewardTier?.id || 0 });
+        }
+
+        const collection = collectionsMap[collectionId] && {
+          id: collectionsMap[collectionId].id,
+          name: collectionsMap[collectionId].name,
+          symbol: collectionsMap[collectionId].symbol,
+          coverUrl: collectionsMap[collectionId].coverUrl,
+        };
+
+        return {
+          id,
+          collection,
+          name,
+          description,
+          artworkType,
+          original_url,
+          optimized_url,
+          url,
+          thumbnail_url,
+          tokenIds,
+          royalties,
+          properties,
+          createdAt,
+        };
+      }),
+    );
+
+    return {
+      nfts: mappedNfts,
     };
   }
 
