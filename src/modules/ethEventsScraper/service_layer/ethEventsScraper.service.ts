@@ -61,19 +61,19 @@ export class EthEventsScraperService {
     for (const event of events) {
       const mintingCollection = await this.mintingCollectionRepository.findOne({ where: { txHash: event.tx_hash } });
 
+      if (!mintingCollection) continue;
+
       const collection = this.nftCollectionRepository.create();
       collection.txHash = event.tx_hash;
       collection.address = event.contract_address?.toLowerCase();
       collection.owner = event.owner.toLowerCase();
+      collection.creator = event.owner.toLowerCase();
       collection.name = event.token_name;
       collection.symbol = event.token_symbol;
-
-      if (mintingCollection) {
-        collection.shortUrl = mintingCollection.shortUrl;
-        collection.coverUrl = mintingCollection.coverUrl;
-        collection.description = mintingCollection.description;
-        await this.mintingCollectionRepository.delete({ txHash: event.tx_hash });
-      }
+      collection.shortUrl = mintingCollection.shortUrl;
+      collection.coverUrl = mintingCollection.coverUrl;
+      collection.description = mintingCollection.description;
+      await this.mintingCollectionRepository.delete({ txHash: event.tx_hash });
 
       event.processed = true;
       await this.deployCollectionEventRepository.save(event);
