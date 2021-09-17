@@ -493,24 +493,29 @@ export class NftService {
       (acc, nft) => ({ ...acc, [nft.editionUUID]: [...(acc[nft.editionUUID] || []), nft] }),
       {} as Record<string, Nft[]>,
     );
-    const nftsGroupedByEdition = await this.nftRepository
-      .createQueryBuilder('nft')
-      .select('nft.editionUUID, COUNT(*)')
-      .where('nft.editionUUID IN (:...editions)', { editions: Object.keys(editionNFTsMap) })
-      .groupBy('nft.editionUUID')
-      .execute();
-    const editionsCount = nftsGroupedByEdition.reduce(
-      (acc, item) => ({ ...acc, [item.editionUUID]: parseInt(item.count) }),
-      {},
-    );
 
-    return {
-      collection: classToPlain(collection),
-      nfts: Object.values(editionNFTsMap).map((nfts) => ({
+    let formattedNfts = [];
+    if (Object.keys(editionNFTsMap).length > 0) {
+      const nftsGroupedByEdition = await this.nftRepository
+        .createQueryBuilder('nft')
+        .select('nft.editionUUID, COUNT(*)')
+        .where('nft.editionUUID IN (:...editions)', { editions: Object.keys(editionNFTsMap) })
+        .groupBy('nft.editionUUID')
+        .execute();
+      const editionsCount = nftsGroupedByEdition.reduce(
+        (acc, item) => ({ ...acc, [item.editionUUID]: parseInt(item.count) }),
+        {},
+      );
+      formattedNfts = Object.values(editionNFTsMap).map((nfts) => ({
         ...classToPlain(nfts[0]),
         tokenIds: nfts.map((nft) => nft.tokenId),
         numberOfEditions: editionsCount[nfts[0].editionUUID],
-      })),
+      }));
+    }
+
+    return {
+      collection: classToPlain(collection),
+      nfts: formattedNfts,
     };
   }
 
