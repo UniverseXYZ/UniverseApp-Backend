@@ -84,7 +84,7 @@ export class AuctionController {
     @Param() params: UpdateRewardTierParams,
     @Body() updateRewardTierBody: UpdateRewardTierBody,
   ) {
-    return await this.auctionService.updateRewardTier(req.user.sub, params.id, updateRewardTierBody);
+    return await this.auctionService.updateRewardTier(req.user.sub, parseInt(params.id), updateRewardTierBody);
   }
 
   @Patch('reward-tiers/:id/image')
@@ -94,8 +94,12 @@ export class AuctionController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Change reward tier image' })
   @ApiConsumes('form/multi-part')
-  async changeRewardTierImage(@Req() req, @Param('id') id = 0, @UploadedFile() file: Express.Multer.File) {
-    return await this.auctionService.updateRewardTierImage(req.user.sub, id, file);
+  async changeRewardTierImage(
+    @Req() req,
+    @Param() params: UpdateRewardTierParams,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return await this.auctionService.updateRewardTierImage(req.user.sub, parseInt(params.id), file);
   }
 
   @Get('pages/my-auctions/future')
