@@ -1,3 +1,10 @@
+## [1.14.4](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.14.3...v1.14.4) (2021-09-17)
+
+
+### Bug Fixes
+
+* get Collection which doesn't have NFTs ([0e4a943](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/0e4a9432ac4879817d5de301b32589487cba7fbd))
+
 ## [1.14.3](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.14.2...v1.14.3) (2021-09-17)
 
 
