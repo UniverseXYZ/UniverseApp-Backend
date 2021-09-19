@@ -1,3 +1,45 @@
+# [1.15.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.14.4...v1.15.0) (2021-09-19)
+
+
+### Features
+
+* add ability to cancel future auction ([#33](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/33)) ([42404a7](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/42404a7e29f61e9a911cae602bc658fa414b9aba))
+
+## [1.14.4](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.14.3...v1.14.4) (2021-09-17)
+
+
+### Bug Fixes
+
+* get Collection which doesn't have NFTs ([0e4a943](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/0e4a9432ac4879817d5de301b32589487cba7fbd))
+
+## [1.14.3](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.14.2...v1.14.3) (2021-09-17)
+
+
+### Bug Fixes
+
+* prevent creating collections without tx hash ([f32f041](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/f32f041828ae227b65c047c698e11d11da1d75b3))
+
+## [1.14.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.14.1...v1.14.2) (2021-09-16)
+
+
+### Bug Fixes
+
+* add missing collection attribute to My NFTs response ([2c76694](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/2c766942ebc9180a54cb5d36f7e6dad207214b10))
+
+## [1.14.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.14.0...v1.14.1) (2021-09-16)
+
+
+### Bug Fixes
+
+* get my future auctions returns all auctions ([#38](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/38)) ([1b4645f](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/1b4645f7c725d1fd801792daf2b06b255f641270))
+
+# [1.14.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.13.3...v1.14.0) (2021-09-16)
+
+
+### Features
+
+* add change reward tier image endpoint and service ([#36](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/36)) ([83adf5b](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/83adf5bb44d2871398ba56671f9e635e1e0d0127))
+
 ## [1.13.3](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.13.2...v1.13.3) (2021-09-16)
 
 
