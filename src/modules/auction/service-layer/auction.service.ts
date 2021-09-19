@@ -16,6 +16,7 @@ import { RewardTierNotFoundException } from './exceptions/RewardTierNotFoundExce
 import { RewardTierBadOwnerException } from './exceptions/RewardTierBadOwnerException';
 import { UsersService } from '../../users/users.service';
 import { classToPlain } from 'class-transformer';
+import { UploadResult } from 'src/modules/file-storage/model/UploadResult';
 
 @Injectable()
 export class AuctionService {
@@ -128,6 +129,18 @@ export class AuctionService {
       tier.numberOfWinners = params.numberOfWinners ? params.numberOfWinners : tier.numberOfWinners;
       tier.nftsPerWinner = params.nftsPerWinner ? params.nftsPerWinner : tier.nftsPerWinner;
 
+      if (typeof params.description === 'string' || params.description === null) {
+        tier.description = params.description;
+      }
+
+      if (typeof params.minimumBid === 'number' || params.minimumBid === null) {
+        tier.minimumBid = params.minimumBid;
+      }
+
+      if (typeof params.color === 'string' || params.color === null) {
+        tier.color = params.color;
+      }
+
       await transactionalEntityManager.save(tier);
 
       if (params.nftIds) {
@@ -153,30 +166,25 @@ export class AuctionService {
         await Promise.all(newRewardTierNfts.map((rewardTierNft) => this.rewardTierNftRepository.save(rewardTierNft)));
       }
 
+      const rewardTierNfts = await this.rewardTierNftRepository.find({ where: { rewardTierId: id } });
+      const nftIds = rewardTierNfts.map((nft) => nft.nftId);
+      const nfts = await this.nftRepository.find({ where: { id: In(nftIds) } });
       return {
-        id: tier.id,
-        name: tier.name,
-        numberOfWinners: tier.numberOfWinners,
-        nftsPerWinner: tier.nftsPerWinner,
-        minimumBid: tier.minimumBid,
-        tierPosition: tier.tierPosition,
-        customDescription: tier.customDescription,
-        tierImageUrl: tier.tierImageUrl,
-        tierColor: tier.tierColor,
-        createdAt: tier.createdAt,
-        updatedAt: tier.updatedAt,
+        ...classToPlain(tier),
+        nfts: nfts.map((nft) => classToPlain(nft)),
       };
     });
   }
 
   private async validateTierPermissions(userId: number, tierId: number) {
     const tier = await this.rewardTierRepository.findOne({ where: { id: tierId } });
+
     if (!tier) {
-      //return tier not found
+      throw new RewardTierNotFoundException();
     }
 
-    if (userId !== tier.userId) {
-      //return error if missmatch
+    if (tier.userId !== userId) {
+      throw new RewardTierBadOwnerException();
     }
 
     return tier;
@@ -187,22 +195,27 @@ export class AuctionService {
     tierId: number,
     params: { customDescription: string; tierColor: string },
   ) {
-    const tier = await this.validateTierPermissions(userId, tierId);
-
-    tier.customDescription = params.customDescription ? params.customDescription : tier.customDescription;
-    tier.tierColor = params.tierColor ? params.tierColor : tier.tierColor;
-    await this.rewardTierRepository.save(tier);
-    return tier;
+    // const tier = await this.validateTierPermissions(userId, tierId);
+    // tier.customDescription = params.customDescription ? params.customDescription : tier.customDescription;
+    // tier.tierColor = params.tierColor ? params.tierColor : tier.tierColor;
+    // await this.rewardTierRepository.save(tier);
+    // return tier;
   }
 
-  async updateRewardTierImage(userId: number, tierId: number, file: Express.Multer.File) {
-    const tier = await this.validateTierPermissions(userId, tierId);
+  async updateRewardTierImage(userId: number, tierId: number, image: Express.Multer.File) {
+    const user = await this.usersService.getById(userId, true);
+    const rewardTier = await this.validateTierPermissions(user.id, tierId);
 
-    await this.s3Service.uploadDocument(`${file.path}`, `${file.filename}`);
+    let s3Result: UploadResult;
 
-    tier.tierImageUrl = file.filename;
-    await this.rewardTierRepository.save(tier);
-    return tier;
+    if (image) {
+      s3Result = await this.s3Service.uploadDocument(image.path, image.filename);
+      rewardTier.imageUrl = s3Result.url;
+      await this.rewardTierRepository.save(rewardTier);
+      await this.fileSystemService.removeFile(image.path);
+    }
+
+    return classToPlain(rewardTier);
   }
 
   @Transaction()
@@ -334,7 +347,7 @@ export class AuctionService {
     }
     auction = await this.auctionRepository.save(auction);
 
-    return auction;
+    return classToPlain(auction);
   }
 
   private async getMyFutureAuctions(userId: number, limit: number, offset: number) {
@@ -342,7 +355,6 @@ export class AuctionService {
     const [auctions, count] = await this.auctionRepository.findAndCount({
       where: {
         userId,
-        startDate: MoreThan(now),
       },
       skip: offset,
       take: limit,

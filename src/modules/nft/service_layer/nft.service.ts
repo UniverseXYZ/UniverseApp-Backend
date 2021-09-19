@@ -431,6 +431,7 @@ export class NftService {
           name: collectionsMap[collectionId].name,
           symbol: collectionsMap[collectionId].symbol,
           coverUrl: collectionsMap[collectionId].coverUrl,
+          publicCollection: collectionsMap[collectionId].publicCollection,
         };
 
         return {
@@ -482,15 +483,39 @@ export class NftService {
   public async getMyCollection(userId: number, collectionId: number) {
     await this.usersService.getById(userId, true);
     const collection = await this.nftCollectionRepository.findOne({ where: { id: collectionId } });
-    const nfts = await this.nftRepository.find({ where: { collectionId, userId } });
 
     if (!collection) {
       throw new NftCollectionNotFoundException();
     }
 
+    const nfts = await this.nftRepository.find({ where: { collectionId, userId }, order: { createdAt: 'DESC' } });
+    const editionNFTsMap = nfts.reduce(
+      (acc, nft) => ({ ...acc, [nft.editionUUID]: [...(acc[nft.editionUUID] || []), nft] }),
+      {} as Record<string, Nft[]>,
+    );
+
+    let formattedNfts = [];
+    if (Object.keys(editionNFTsMap).length > 0) {
+      const nftsGroupedByEdition = await this.nftRepository
+        .createQueryBuilder('nft')
+        .select('nft.editionUUID, COUNT(*)')
+        .where('nft.editionUUID IN (:...editions)', { editions: Object.keys(editionNFTsMap) })
+        .groupBy('nft.editionUUID')
+        .execute();
+      const editionsCount = nftsGroupedByEdition.reduce(
+        (acc, item) => ({ ...acc, [item.editionUUID]: parseInt(item.count) }),
+        {},
+      );
+      formattedNfts = Object.values(editionNFTsMap).map((nfts) => ({
+        ...classToPlain(nfts[0]),
+        tokenIds: nfts.map((nft) => nft.tokenId),
+        numberOfEditions: editionsCount[nfts[0].editionUUID],
+      }));
+    }
+
     return {
       collection: classToPlain(collection),
-      nfts: nfts.map((nft) => classToPlain(nft)),
+      nfts: formattedNfts,
     };
   }
 

@@ -1,3 +1,59 @@
+## [1.14.4](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.14.3...v1.14.4) (2021-09-17)
+
+
+### Bug Fixes
+
+* get Collection which doesn't have NFTs ([0e4a943](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/0e4a9432ac4879817d5de301b32589487cba7fbd))
+
+## [1.14.3](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.14.2...v1.14.3) (2021-09-17)
+
+
+### Bug Fixes
+
+* prevent creating collections without tx hash ([f32f041](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/f32f041828ae227b65c047c698e11d11da1d75b3))
+
+## [1.14.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.14.1...v1.14.2) (2021-09-16)
+
+
+### Bug Fixes
+
+* add missing collection attribute to My NFTs response ([2c76694](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/2c766942ebc9180a54cb5d36f7e6dad207214b10))
+
+## [1.14.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.14.0...v1.14.1) (2021-09-16)
+
+
+### Bug Fixes
+
+* get my future auctions returns all auctions ([#38](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/38)) ([1b4645f](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/1b4645f7c725d1fd801792daf2b06b255f641270))
+
+# [1.14.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.13.3...v1.14.0) (2021-09-16)
+
+
+### Features
+
+* add change reward tier image endpoint and service ([#36](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/36)) ([83adf5b](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/83adf5bb44d2871398ba56671f9e635e1e0d0127))
+
+## [1.13.3](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.13.2...v1.13.3) (2021-09-16)
+
+
+### Bug Fixes
+
+* change attribute name for token id ([#37](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/37)) ([a76c033](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/a76c0336f9a3fde85f85b89783e9fb42323d2cce))
+
+## [1.13.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.13.1...v1.13.2) (2021-09-16)
+
+
+### Bug Fixes
+
+* group NFTs by edition for My Collection response ([#35](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/35)) ([37286af](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/37286af5f8291408fb7d52a3b35dc63960848d07))
+
+## [1.13.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.13.0...v1.13.1) (2021-09-13)
+
+
+### Bug Fixes
+
+* edit color and description of reward tier ([#32](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/32)) ([f68d179](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/f68d17905ccd9e8de69f61d22d00427eec5c05c0))
+
 # [1.13.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.12.0...v1.13.0) (2021-09-06)
 
 

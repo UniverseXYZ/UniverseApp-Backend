@@ -31,9 +31,8 @@ import {
 import { AuctionService } from '../service-layer/auction.service';
 import { JwtAuthGuard, OptionalJwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { auctionLandingImagesMulterOptions } from '../../nft/entrypoints/multipart';
-import { classToPlain } from 'class-transformer';
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { auctionLandingImagesMulterOptions, rewardTierImagesMulterOptions } from '../../nft/entrypoints/multipart';
 
 @Controller('api')
 export class AuctionController {
@@ -86,11 +85,22 @@ export class AuctionController {
     @Param() params: UpdateRewardTierParams,
     @Body() updateRewardTierBody: UpdateRewardTierBody,
   ) {
-    return await this.auctionService.updateRewardTier(
-      req.user.sub,
-      params.id,
-      classToPlain(updateRewardTierBody) as any,
-    );
+    return await this.auctionService.updateRewardTier(req.user.sub, parseInt(params.id), updateRewardTierBody);
+  }
+
+  @Patch('reward-tiers/:id/image')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('image', rewardTierImagesMulterOptions()))
+  @ApiTags('reward tiers')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Change reward tier image' })
+  @ApiConsumes('form/multi-part')
+  async changeRewardTierImage(
+    @Req() req,
+    @Param() params: UpdateRewardTierParams,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return await this.auctionService.updateRewardTierImage(req.user.sub, parseInt(params.id), file);
   }
 
   @Get('pages/my-auctions/future')

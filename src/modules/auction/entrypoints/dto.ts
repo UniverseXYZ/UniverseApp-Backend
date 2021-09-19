@@ -26,7 +26,7 @@ class RewardTierBodyParams {
 
 export class UpdateRewardTierParams {
   @IsNumberString()
-  id: number;
+  id: string;
 }
 
 export class UpdateRewardTierBody {
@@ -38,6 +38,24 @@ export class UpdateRewardTierBody {
   @Length(1, 100)
   @IsOptional()
   name: string;
+
+  @ApiProperty({
+    description: 'The description of the reward tier',
+    example: 'This is an amazing reward tier',
+  })
+  @IsString()
+  @Length(0, 600)
+  @IsOptional()
+  description?: string;
+
+  @ApiProperty({
+    description: 'The tint color of the reward tier in hex format',
+    example: '#456373',
+  })
+  @IsString()
+  @Length(0, 20)
+  @IsOptional()
+  color?: string;
 
   @ApiProperty({
     description: 'Number of winners for the tier',
