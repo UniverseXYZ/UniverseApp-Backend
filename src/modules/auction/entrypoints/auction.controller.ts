@@ -150,6 +150,14 @@ export class AuctionController {
     return await this.auctionService.getAuctionPage(req.user.sub, parseInt(params.id));
   }
 
+  @Delete('auctions/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiTags('auction')
+  @ApiOperation({ summary: 'Cancel my future auction' })
+  async cancelAuction(@Req() req, @Param('id') id) {
+    return await this.auctionService.cancelFutureAuction(req.user.sub, id);
+  }
+
   /**
    * old endpoints
    */
@@ -255,13 +263,5 @@ export class AuctionController {
   @UseGuards(JwtAuthGuard)
   async getAuction(@Req() req, @Param('id') id = 0) {
     return await this.auctionService.getAuction(id);
-  }
-
-  @Delete('auction/:id')
-  @UseGuards(JwtAuthGuard)
-  @ApiTags('auction')
-  @ApiOperation({ summary: 'Cancel my future auction' })
-  async cancelAuction(@Req() req, @Param('id') id) {
-    return await this.auctionService.cancelFutureAuction(req.user.sub, id);
   }
 }
