@@ -288,6 +288,28 @@ export class AuctionService {
     return auction;
   }
 
+  async cancelFutureAuction(userId: number, auctionId: number) {
+    const auction = await this.validateAuctionPermissions(userId, auctionId);
+    let canceled = false;
+    const now = new Date();
+    // TODO: Add more validations if needed
+    if (now < auction.startDate) {
+      await getManager().transaction(async (transactionalEntityManager) => {
+        await transactionalEntityManager.delete(Auction, { id: auctionId });
+        const rewardTiers = await this.rewardTierRepository.find({ auctionId: auction.id });
+        const rewardTiersIdsToDelete = rewardTiers.map((tier) => tier.id);
+        await transactionalEntityManager.delete(RewardTier, { id: In(rewardTiersIdsToDelete) });
+        await transactionalEntityManager.delete(RewardTierNft, { rewardTierId: In(rewardTiersIdsToDelete) });
+      });
+      canceled = true;
+    }
+
+    return {
+      id: auction.id,
+      canceled,
+    };
+  }
+
   async uploadAuctionLandingImages(
     userId: number,
     auctionId: number,

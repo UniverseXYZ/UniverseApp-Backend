@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Delete,
   Query,
   Req,
   UploadedFile,
@@ -147,6 +148,14 @@ export class AuctionController {
   @ApiOperation({ summary: 'Get the public page of the auction' })
   async getAuctionPage(@Req() req, @Param() params: GetAuctionPageParams) {
     return await this.auctionService.getAuctionPage(req.user.sub, parseInt(params.id));
+  }
+
+  @Delete('auctions/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiTags('auction')
+  @ApiOperation({ summary: 'Cancel my future auction' })
+  async cancelAuction(@Req() req, @Param('id') id) {
+    return await this.auctionService.cancelFutureAuction(req.user.sub, id);
   }
 
   /**
