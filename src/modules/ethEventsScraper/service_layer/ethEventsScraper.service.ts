@@ -96,13 +96,18 @@ export class EthEventsScraperService {
         const collection = await this.nftCollectionRepository.findOne({
           where: { address: event.contract_address.toLowerCase() },
         });
-
         if (user && collection) {
+          const nftByTokenUri = await this.nftRepository.findOne({
+            where: {
+              collectionId: collection.id,
+              tokenUri: event.token_uri,
+            },
+          });
           const nft = this.nftRepository.create();
           nft.userId = user.id;
           nft.collectionId = collection.id;
           nft.txHash = event.tx_hash;
-          nft.editionUUID = editionUUID;
+          nft.editionUUID = nftByTokenUri ? nftByTokenUri.editionUUID : editionUUID;
           nft.name = response.data.name as string;
           nft.description = response.data.description as string;
           nft.tokenId = event.token_id;
