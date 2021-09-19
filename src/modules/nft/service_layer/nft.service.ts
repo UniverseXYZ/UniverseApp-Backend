@@ -458,44 +458,29 @@ export class NftService {
 
   public async getMyNftsAvailability(userId: number) {
     const nfts = await this.nftRepository.find({ where: { userId }, order: { createdAt: 'DESC' } });
+    const nftsIds = nfts.map((nft) => nft.id);
     const editionNFTsMap: Record<string, Nft[]> = nfts.reduce(
       (acc, nft) => ({ ...acc, [nft.editionUUID]: [...(acc[nft.editionUUID] || []), nft] }),
       {},
     );
-
     const collectionIds = Object.keys(nfts.reduce((acc, nft) => ({ ...acc, [nft.collectionId]: true }), {}));
     const collections = await this.nftCollectionRepository.find({ where: { id: In(collectionIds) } });
     const collectionsMap: Record<string, NftCollection> = collections.reduce(
       (acc, collection) => ({ ...acc, [collection.id]: collection }),
       {},
     );
-    const mappedNfts = await Promise.all(
-      Object.values(editionNFTsMap).map(async (nfts) => {
-        const { collectionId } = nfts[0];
+    const rewardTiers = await this.rewardTierNftRepository.find({ where: { nftId: In(nftsIds) } });
+    const nftRewardTierIdMap = rewardTiers.reduce((acc, rewardTier) => ({ ...acc, [rewardTier.nftId]: rewardTier.id }));
 
-        const tokenIds = [];
-        for (const nft of nfts) {
-          const rewardTier = await this.rewardTierNftRepository.findOne({ where: { nftId: nft.id } });
-          // tokenIds.push({ nftId: nft.id, tokenId: nft.tokenId, rewardTierId: rewardTier?.id || 0 });
-          tokenIds.push({ ...nft, rewardTierId: rewardTier?.id });
-        }
-
-        const collection = collectionsMap[collectionId] && {
-          id: collectionsMap[collectionId].id,
-          name: collectionsMap[collectionId].name,
-          symbol: collectionsMap[collectionId].symbol,
-          coverUrl: collectionsMap[collectionId].coverUrl,
-        };
-
-        return {
-          collection,
-          nfts: tokenIds,
-        };
-      }),
-    );
+    const mappedNfts = Object.values(editionNFTsMap).map((nfts) => {
+      return {
+        nfts: nfts.map((nft) => ({ ...classToPlain(nft), rewardTierId: nftRewardTierIdMap[nft.id] })),
+        collection: nfts.length > 0 && classToPlain(collectionsMap[nfts[0].collectionId]),
+      };
+    });
 
     return {
-      nfts: classToPlain(mappedNfts),
+      nfts: mappedNfts,
     };
   }
 
