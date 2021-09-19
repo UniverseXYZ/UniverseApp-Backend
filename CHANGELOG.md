@@ -1,3 +1,10 @@
+## [1.15.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.15.0...v1.15.1) (2021-09-19)
+
+
+### Bug Fixes
+
+* handle editions minted in different blocks ([#43](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/43)) ([0cf059e](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/0cf059e9c75636516d1cc7bb9ee5e4a91b4ec630))
+
 # [1.15.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.14.4...v1.15.0) (2021-09-19)
 
 
