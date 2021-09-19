@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.14.4...v1.15.0) (2021-09-19)
+
+
+### Features
+
+* add ability to cancel future auction ([#33](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/33)) ([42404a7](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/42404a7e29f61e9a911cae602bc658fa414b9aba))
+
 ## [1.14.4](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.14.3...v1.14.4) (2021-09-17)
 
 
