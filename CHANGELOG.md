@@ -1,3 +1,10 @@
+# [1.16.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.15.1...v1.16.0) (2021-09-20)
+
+
+### Features
+
+* add endpoint for getting my nfts with availability information ([#40](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/40)) ([95804d1](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/95804d1b2293e26d8bfc5fbdb9d88da9c74148dd))
+
 ## [1.15.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.15.0...v1.15.1) (2021-09-19)
 
 
