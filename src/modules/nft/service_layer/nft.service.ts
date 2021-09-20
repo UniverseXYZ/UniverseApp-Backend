@@ -414,43 +414,13 @@ export class NftService {
 
     return {
       nfts: Object.values(editionNFTsMap).map((nfts) => {
-        const {
-          id,
-          name,
-          description,
-          original_url,
-          thumbnail_url,
-          optimized_url,
-          url,
-          createdAt,
-          artworkType,
-          collectionId,
-          royalties,
-          properties,
-        } = nfts[0];
         const tokenIds = nfts.map((nft) => nft.tokenId);
-        const collection = collectionsMap[collectionId] && {
-          id: collectionsMap[collectionId].id,
-          name: collectionsMap[collectionId].name,
-          symbol: collectionsMap[collectionId].symbol,
-          coverUrl: collectionsMap[collectionId].coverUrl,
-          publicCollection: collectionsMap[collectionId].publicCollection,
-        };
+        const collection = collectionsMap[nfts[0].collectionId] && classToPlain(collectionsMap[nfts[0].collectionId]);
 
         return {
-          id,
+          ...classToPlain(nfts[0]),
           collection,
-          name,
-          description,
-          artworkType,
-          original_url,
-          optimized_url,
-          url,
-          thumbnail_url,
           tokenIds,
-          royalties,
-          properties,
-          createdAt,
         };
       }),
     };

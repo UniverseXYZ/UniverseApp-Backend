@@ -3,8 +3,8 @@ import { AppConfig } from '../../configuration/configuration.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { QueueService } from '../../queue/queue.service';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Nft, NftSource } from '../../nft/domain/nft.entity';
-import { CollectionSource, NftCollection } from '../../nft/domain/collection.entity';
+import { Nft } from '../../nft/domain/nft.entity';
+import { NftCollection } from '../../nft/domain/collection.entity';
 
 import { Repository } from 'typeorm';
 import { User } from '../../users/user.entity';
@@ -20,8 +20,6 @@ export class EthEventsScraperService {
   processing = false;
 
   constructor(
-    private readonly config: AppConfig,
-    private readonly queue: QueueService,
     private httpService: HttpService,
     @InjectRepository(Nft)
     private nftRepository: Repository<Nft>,
@@ -103,6 +101,7 @@ export class EthEventsScraperService {
               tokenUri: event.token_uri,
             },
           });
+
           const nft = this.nftRepository.create();
           nft.userId = user.id;
           nft.collectionId = collection.id;
@@ -119,10 +118,36 @@ export class EthEventsScraperService {
           nft.tokenUri = event.token_uri;
           nft.properties = response.data.traits;
           nft.royalties = response.data.royalties;
+          nft.numberOfEditions = 1;
+
+          const savedNft = await this.savedNftRepository.findOne({ where: { tokenUri, collectionId: collection.id } });
+          if (savedNft) {
+            nft.numberOfEditions = savedNft.numberOfEditions;
+          } else {
+            const nftsCountByTokenUri = await this.nftRepository.count({
+              where: {
+                collectionId: collection.id,
+                tokenUri: event.token_uri,
+              },
+            });
+            if (nftsCountByTokenUri === 0) {
+              nft.numberOfEditions = 1;
+            } else {
+              nft.numberOfEditions = nftsCountByTokenUri + 1;
+              await this.savedNftRepository.update(
+                {
+                  collectionId: collection.id,
+                  tokenUri: event.token_uri,
+                },
+                {
+                  numberOfEditions: nftsCountByTokenUri + 1,
+                },
+              );
+            }
+          }
 
           event.processed = true;
           await this.createNftEventRepository.save(event);
-
           await this.nftRepository.save(nft);
         }
       }
