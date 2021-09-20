@@ -134,7 +134,7 @@ export class EthEventsScraperService {
               nft.numberOfEditions = 1;
             } else {
               nft.numberOfEditions = nftsCountByTokenUri + 1;
-              await this.savedNftRepository.update(
+              await this.nftRepository.update(
                 {
                   collectionId: collection.id,
                   tokenUri: event.token_uri,
