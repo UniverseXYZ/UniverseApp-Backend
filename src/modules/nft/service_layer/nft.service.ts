@@ -1,3 +1,4 @@
+import { UserNotFoundException } from './../../users/service-layer/exceptions/UserNotFoundException';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
@@ -401,8 +402,8 @@ export class NftService {
     return updatedEntity;
   }
 
-  public async getMyNfts(userId: number) {
-    const nfts = await this.nftRepository.find({ where: { userId }, order: { createdAt: 'DESC' } });
+  private async findAndFormatNfts(userId: number) {
+    const nfts = await this.nftRepository.find({ where: { userId: userId }, order: { createdAt: 'DESC' } });
     const editionNFTsMap: Record<string, Nft[]> = nfts.reduce(
       (acc, nft) => ({ ...acc, [nft.editionUUID]: [...(acc[nft.editionUUID] || []), nft] }),
       {},
@@ -427,6 +428,20 @@ export class NftService {
         };
       }),
     };
+  }
+
+  public async getMyNfts(userId: number) {
+    return await this.findAndFormatNfts(userId);
+  }
+
+  public async getUserNfts(username: string) {
+    const user = await this.userRepository.findOne({ where: { universePageUrl: username } });
+
+    if (!user) {
+      throw new UserNotFoundException();
+    }
+
+    return await this.findAndFormatNfts(user.id);
   }
 
   public async getMyNftsAvailability(userId: number) {

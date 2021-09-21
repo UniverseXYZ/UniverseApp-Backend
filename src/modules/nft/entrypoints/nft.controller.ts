@@ -23,6 +23,8 @@ import {
   GetCollectionParams,
   GetMyNftsResponse,
   GetNftTokenURIParams,
+  GetUserNftsParams,
+  GetUserNftsResponse,
   PatchSavedNftParams,
   SaveCollectionBody,
   SaveNftBody,
@@ -207,6 +209,14 @@ export class NftController {
   @ApiResponse({ type: GetMyNftsResponse, status: 200, isArray: true })
   async getMyNfts(@Req() req) {
     return await this.nftService.getMyNfts(req.user.sub);
+  }
+
+  @Get('pages/user-profile/:username/nfts')
+  @ApiTags('nfts')
+  @ApiOperation({ summary: 'Get my nfts' })
+  @ApiResponse({ type: GetUserNftsResponse, status: 200, isArray: true })
+  async getUserNfts(@Param() params: GetUserNftsParams) {
+    return await this.nftService.getUserNfts(params.username);
   }
 
   @Get('nfts/my-nfts/availability')

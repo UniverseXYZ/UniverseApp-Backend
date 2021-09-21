@@ -319,6 +319,55 @@ export class GetMyNftsResponse {
   updatedAt: Date;
 }
 
+export class GetUserNftsResponse {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty({ enum: NftSource, examples: [NftSource.UNIVERSE, NftSource.SCRAPER] })
+  source: string;
+
+  @ApiProperty({ example: '0x0000000000000000000000000000000000000000000000000000000000000000' })
+  txHash: string;
+
+  @ApiProperty()
+  name: string;
+
+  @ApiProperty()
+  description: string;
+
+  @ApiProperty()
+  tokenId: string;
+
+  @ApiProperty({ examples: ['jpeg', 'png', 'gif', 'webp', 'mp4'], example: 'jpeg' })
+  artworkType: string;
+
+  @ApiProperty()
+  url: string;
+
+  @ApiProperty()
+  optimized_url: string;
+
+  @ApiProperty()
+  thumbnail_url: string;
+
+  @ApiProperty()
+  original_url: string;
+
+  @ApiProperty()
+  tokenUri: string;
+
+  @ApiProperty({ type: JSON })
+  properties: any;
+
+  @ApiProperty({ example: 10 })
+  royalties: number;
+
+  @ApiProperty()
+  createdAt: Date;
+
+  @ApiProperty({ type: Date })
+  updatedAt: Date;
+}
 export class CreateCollectionBody {
   @IsString()
   @Length(1, 32)
@@ -369,6 +418,16 @@ export class EditCollectionParams {
   id: number;
 }
 
+export class GetUserNftsParams {
+  @IsString()
+  @ApiProperty({
+    example: 'username1',
+    description: 'The username of the user',
+    required: true,
+  })
+  username: string;
+}
+
 export class EditMintingCollectionBody {
   @IsString()
   @IsOptional()
@@ -394,7 +453,7 @@ export class GetCollectionParams {
   @IsString()
   @ApiProperty({
     description: 'The address of the Collection',
-    example: '0x24a5040dEa7354C679a422868242588aA4B7D58b',
+    example: '0x0000000000000000000000000',
   })
   address: string;
 }
