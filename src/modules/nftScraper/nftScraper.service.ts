@@ -49,7 +49,7 @@ export class NftScraperService {
       nftDB.tokenId = nft.token_id;
       nftDB.name = nft.name;
       nftDB.description = nft.description;
-      nftDB.properties = nft.traits;
+      nftDB.properties = nft.attributes;
       nftDB.source = NftSource.SCRAPER;
       nftDB.url = nft.image_url;
       nftDB.optimized_url = nft.image_preview_url;

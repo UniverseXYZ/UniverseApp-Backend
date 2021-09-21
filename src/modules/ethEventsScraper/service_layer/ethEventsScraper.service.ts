@@ -116,7 +116,9 @@ export class EthEventsScraperService {
           nft.thumbnail_url = response.data.image_thumbnail_url as string;
           nft.original_url = response.data.image_original_url as string;
           nft.tokenUri = event.token_uri;
-          nft.properties = response.data.traits;
+          nft.properties = response.data.attributes?.map((attributeObject) => ({
+            [attributeObject.trait_type]: attributeObject.value,
+          }));
           nft.royalties = response.data.royalties;
           nft.numberOfEditions = 1;
 

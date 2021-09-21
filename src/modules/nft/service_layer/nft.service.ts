@@ -348,7 +348,10 @@ export class NftService {
       image_thumbnail_url: this.s3Service.getUrl(downsizedFile.fullFilename()),
       image_original_url: this.s3Service.getUrl(file.filename),
       royalties: bodyClass.royalties,
-      traits: bodyClass.properties,
+      attributes: bodyClass.properties?.map((propertyItem) => ({
+        trait_type: Object.keys(propertyItem)[0],
+        value: Object.values(propertyItem)[0],
+      })),
     });
   }
 
@@ -529,7 +532,10 @@ export class NftService {
       image_thumbnail_url: this.s3Service.getUrl(savedNft.thumbnail_url),
       image_original_url: this.s3Service.getUrl(savedNft.original_url),
       royalties: savedNft.royalties,
-      traits: savedNft.properties,
+      attributes: savedNft.properties?.map((propertyItem) => ({
+        trait_type: Object.keys(propertyItem)[0],
+        value: Object.values(propertyItem)[0],
+      })),
     });
     return tokenUri;
   }
