@@ -251,7 +251,7 @@ export class GetNftTokenUriBody {
     required: false,
   })
   @Transform(({ value }) => value && JSON.parse(value))
-  properties?: any;
+  properties?: [{ [key: string]: string }];
 
   @IsArray()
   @IsOptional()
