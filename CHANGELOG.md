@@ -1,3 +1,10 @@
+## [1.16.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.16.0...v1.16.1) (2021-09-21)
+
+
+### Bug Fixes
+
+* modify NFT attributes to match updated OpenSea standard ([dbe6301](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/dbe630134a4bacc5d735f78fefbc0ce5f93638a7))
+
 # [1.16.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.15.1...v1.16.0) (2021-09-20)
 
 
