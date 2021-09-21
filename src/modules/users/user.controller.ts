@@ -50,4 +50,12 @@ export class UserController {
     const info = await this.usersService.getProfileInfo(address);
     return info;
   }
+
+  @Get('/pages/user-profile/:username')
+  @UseInterceptors(ClassSerializerInterceptor)
+  @ApiOperation({ summary: 'Get profile info for address' })
+  async getPublicInfo(@Param('username') username: string) {
+    const info = await this.usersService.getPublicInfo(username);
+    return info;
+  }
 }

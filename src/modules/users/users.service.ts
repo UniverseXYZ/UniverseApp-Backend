@@ -106,6 +106,16 @@ export class UsersService {
     return await this.usersRepository.findOne({ where: { address: address, isActive: true } });
   }
 
+  async getPublicInfo(username: string) {
+    const user = await this.usersRepository.findOne({ where: { universePageUrl: username, isActive: true } });
+
+    if (!user) {
+      throw new UserNotFoundException();
+    }
+
+    return user;
+  }
+
   async getById(id: number, validate = true) {
     const user = await this.usersRepository.findOne({ where: { id, isActive: true } });
 
