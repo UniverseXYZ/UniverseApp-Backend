@@ -484,15 +484,17 @@ export class NftService {
     return { id };
   }
 
-  public async getMyCollection(userId: number, collectionId: number) {
-    await this.usersService.getById(userId, true);
-    const collection = await this.nftCollectionRepository.findOne({ where: { id: collectionId } });
+  public async getCollection(collectionAddress: string) {
+    const collection = await this.nftCollectionRepository.findOne({ where: { address: collectionAddress } });
 
     if (!collection) {
       throw new NftCollectionNotFoundException();
     }
 
-    const nfts = await this.nftRepository.find({ where: { collectionId, userId }, order: { createdAt: 'DESC' } });
+    const nfts = await this.nftRepository.find({
+      where: { collectionId: collection.id },
+      order: { createdAt: 'DESC' },
+    });
     const editionNFTsMap = nfts.reduce(
       (acc, nft) => ({ ...acc, [nft.editionUUID]: [...(acc[nft.editionUUID] || []), nft] }),
       {} as Record<string, Nft[]>,
