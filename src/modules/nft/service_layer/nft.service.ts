@@ -402,13 +402,16 @@ export class NftService {
     return updatedEntity;
   }
 
-  private async findAndFormatNfts(userId: number) {
+  /**
+   * This function returns an array of NFTs grouped by edition.
+   * The NFTs are reduced to a single object, but differentiating attributes are reduced into a new one (eg. tokenIds)
+   */
+  private async reduceNftsByEdition(userId: number) {
     const nfts = await this.nftRepository.find({ where: { userId: userId }, order: { createdAt: 'DESC' } });
     const editionNFTsMap: Record<string, Nft[]> = nfts.reduce(
       (acc, nft) => ({ ...acc, [nft.editionUUID]: [...(acc[nft.editionUUID] || []), nft] }),
       {},
     );
-
     const collectionIds = Object.keys(nfts.reduce((acc, nft) => ({ ...acc, [nft.collectionId]: true }), {}));
     const collections = await this.nftCollectionRepository.find({ where: { id: In(collectionIds) } });
     const collectionsMap: Record<string, NftCollection> = collections.reduce(
