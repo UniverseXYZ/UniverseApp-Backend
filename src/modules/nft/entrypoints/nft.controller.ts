@@ -251,6 +251,6 @@ export class NftController {
   @ApiTags('nfts')
   @ApiOperation({ summary: 'Get data for Collection page' })
   async getCollectionPage(@Param() params: GetCollectionParams) {
-    return this.nftService.getCollection(params.address);
+    return this.nftService.getCollectionPage(params.address);
   }
 }

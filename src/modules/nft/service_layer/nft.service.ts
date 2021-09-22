@@ -502,8 +502,7 @@ export class NftService {
     return { id };
   }
 
-  public async getCollection(collectionAddress: string) {
-    const collection = await this.nftCollectionRepository.findOne({ where: { address: collectionAddress } });
+  public async getCollectionPage(address: string) {
 
     if (!collection) {
       throw new NftCollectionNotFoundException();
