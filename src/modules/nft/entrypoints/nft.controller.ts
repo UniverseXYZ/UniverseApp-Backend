@@ -20,9 +20,11 @@ import {
   EditMintingCollectionBody,
   EditMintingCollectionParams,
   EditSavedNftBody,
-  GetMyCollectionParams,
+  GetCollectionParams,
   GetMyNftsResponse,
   GetNftTokenURIParams,
+  GetUserNftsParams,
+  GetUserNftsResponse,
   PatchSavedNftParams,
   SaveCollectionBody,
   SaveNftBody,
@@ -209,6 +211,14 @@ export class NftController {
     return await this.nftService.getMyNfts(req.user.sub);
   }
 
+  @Get('pages/user-profile/:username/nfts')
+  @ApiTags('nfts')
+  @ApiOperation({ summary: 'Get user NFTs' })
+  @ApiResponse({ type: GetUserNftsResponse, status: 200, isArray: true })
+  async getUserNfts(@Param() params: GetUserNftsParams) {
+    return await this.nftService.getUserNfts(params.username);
+  }
+
   @Get('nfts/my-nfts/availability')
   @UseGuards(JwtAuthGuard)
   @ApiTags('nfts')
@@ -237,12 +247,10 @@ export class NftController {
     return await this.nftService.deleteSavedNft(params.id, req.user.sub);
   }
 
-  @Get('pages/my-collections/:id')
-  @UseGuards(JwtAuthGuard)
+  @Get('pages/collection/:address')
   @ApiTags('nfts')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get data for My Collection page' })
-  async getMyCollectionPage(@Req() req, @Param() params: GetMyCollectionParams) {
-    return this.nftService.getMyCollection(req.user.sub, params.id);
+  @ApiOperation({ summary: 'Get data for Collection page' })
+  async getCollectionPage(@Param() params: GetCollectionParams) {
+    return this.nftService.getCollectionPage(params.address);
   }
 }
