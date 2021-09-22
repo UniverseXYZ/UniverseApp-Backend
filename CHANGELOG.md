@@ -1,3 +1,10 @@
+# [1.17.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.16.1...v1.17.0) (2021-09-22)
+
+
+### Features
+
+* make collection and user endpoint public ([0e4fb27](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/0e4fb2721409dfd1e870773b561bc9288048d821))
+
 ## [1.16.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.16.0...v1.16.1) (2021-09-21)
 
 
