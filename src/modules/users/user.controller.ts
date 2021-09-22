@@ -55,7 +55,6 @@ export class UserController {
   @UseInterceptors(ClassSerializerInterceptor)
   @ApiOperation({ summary: 'Get profile info for address' })
   async getPublicInfo(@Param('username') username: string) {
-    const info = await this.usersService.getPublicInfo(username);
-    return info;
+    return await this.usersService.getByUsername(username);
   }
 }
