@@ -408,10 +408,7 @@ export class NftService {
    */
   private async reduceNftsByEdition(userId: number) {
     const nfts = await this.nftRepository.find({ where: { userId: userId }, order: { createdAt: 'DESC' } });
-    const editionNFTsMap: Record<string, Nft[]> = nfts.reduce(
-      (acc, nft) => ({ ...acc, [nft.editionUUID]: [...(acc[nft.editionUUID] || []), nft] }),
-      {},
-    );
+    const editionNFTsMap = this.groupNftsByEdition(nfts);
     const collectionIds = Object.keys(nfts.reduce((acc, nft) => ({ ...acc, [nft.collectionId]: true }), {}));
     const collections = await this.nftCollectionRepository.find({ where: { id: In(collectionIds) } });
     const collectionsMap: Record<string, NftCollection> = collections.reduce(
@@ -450,10 +447,7 @@ export class NftService {
   public async getMyNftsAvailability(userId: number) {
     const nfts = await this.nftRepository.find({ where: { userId }, order: { createdAt: 'DESC' } });
     const nftsIds = nfts.map((nft) => nft.id);
-    const editionNFTsMap: Record<string, Nft[]> = nfts.reduce(
-      (acc, nft) => ({ ...acc, [nft.editionUUID]: [...(acc[nft.editionUUID] || []), nft] }),
-      {},
-    );
+    const editionNFTsMap = this.groupNftsByEdition(nfts);
     const collectionIds = Object.keys(nfts.reduce((acc, nft) => ({ ...acc, [nft.collectionId]: true }), {}));
     const collections = await this.nftCollectionRepository.find({ where: { id: In(collectionIds) } });
     const collectionsMap: Record<string, NftCollection> = collections.reduce(
@@ -503,6 +497,7 @@ export class NftService {
   }
 
   public async getCollectionPage(address: string) {
+    const collection = await this.nftCollectionRepository.findOne({ where: { address } });
 
     if (!collection) {
       throw new NftCollectionNotFoundException();
@@ -512,27 +507,13 @@ export class NftService {
       where: { collectionId: collection.id },
       order: { createdAt: 'DESC' },
     });
-    const editionNFTsMap = nfts.reduce(
-      (acc, nft) => ({ ...acc, [nft.editionUUID]: [...(acc[nft.editionUUID] || []), nft] }),
-      {} as Record<string, Nft[]>,
-    );
-
+    const editionNFTsMap: Record<string, Nft[]> = this.groupNftsByEdition(nfts);
     let formattedNfts = [];
+
     if (Object.keys(editionNFTsMap).length > 0) {
-      const nftsGroupedByEdition = await this.nftRepository
-        .createQueryBuilder('nft')
-        .select('nft.editionUUID, COUNT(*)')
-        .where('nft.editionUUID IN (:...editions)', { editions: Object.keys(editionNFTsMap) })
-        .groupBy('nft.editionUUID')
-        .execute();
-      const editionsCount = nftsGroupedByEdition.reduce(
-        (acc, item) => ({ ...acc, [item.editionUUID]: parseInt(item.count) }),
-        {},
-      );
       formattedNfts = Object.values(editionNFTsMap).map((nfts) => ({
         ...classToPlain(nfts[0]),
         tokenIds: nfts.map((nft) => nft.tokenId),
-        numberOfEditions: editionsCount[nfts[0].editionUUID],
       }));
     }
 
@@ -540,6 +521,10 @@ export class NftService {
       collection: classToPlain(collection),
       nfts: formattedNfts,
     };
+  }
+
+  private groupNftsByEdition(nfts: Nft[]): Record<string, Nft[]> {
+    return nfts.reduce((acc, nft) => ({ ...acc, [nft.editionUUID]: [...(acc[nft.editionUUID] || []), nft] }), {});
   }
 
   private async generateTokenUrisForSavedNft(savedNft: SavedNft) {
