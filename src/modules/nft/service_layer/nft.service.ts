@@ -431,7 +431,7 @@ export class NftService {
   }
 
   public async getMyNfts(userId: number) {
-    return await this.findAndFormatNfts(userId);
+    return this.reduceNftsByEdition(userId);
   }
 
   public async getUserNfts(username: string) {
@@ -441,7 +441,7 @@ export class NftService {
       throw new UserNotFoundException();
     }
 
-    return await this.findAndFormatNfts(user.id);
+    return this.reduceNftsByEdition(user.id);
   }
 
   public async getMyNftsAvailability(userId: number) {
