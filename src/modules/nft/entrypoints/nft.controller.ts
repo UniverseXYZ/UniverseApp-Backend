@@ -213,7 +213,7 @@ export class NftController {
 
   @Get('pages/user-profile/:username/nfts')
   @ApiTags('nfts')
-  @ApiOperation({ summary: 'Get my nfts' })
+  @ApiOperation({ summary: 'Get user NFTs' })
   @ApiResponse({ type: GetUserNftsResponse, status: 200, isArray: true })
   async getUserNfts(@Param() params: GetUserNftsParams) {
     return await this.nftService.getUserNfts(params.username);
