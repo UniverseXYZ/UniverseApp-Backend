@@ -457,3 +457,12 @@ export class GetCollectionParams {
   })
   address: string;
 }
+
+export class GetNftParams {
+  @IsNumberString()
+  @ApiProperty({
+    description: 'The token id of the NFT',
+    example: '1',
+  })
+  tokenId: number;
+}

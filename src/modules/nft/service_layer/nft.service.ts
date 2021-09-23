@@ -402,6 +402,13 @@ export class NftService {
     return updatedEntity;
   }
 
+  public getNftPage = async (tokenId: number) => {
+    const nft = await this.nftRepository.findOne({ where: { tokenId: tokenId } });
+    return {
+      nft,
+    };
+  };
+
   /**
    * This function returns an array of NFTs grouped by edition.
    * The NFTs are reduced to a single object, but differentiating attributes are reduced into a new one (eg. tokenIds)
