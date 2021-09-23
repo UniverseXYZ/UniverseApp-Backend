@@ -255,10 +255,10 @@ export class NftController {
     return this.nftService.getCollectionPage(params.address);
   }
 
-  @Get('pages/nft/:tokenId')
+  @Get('pages/nft/:collectionAddress/:tokenId')
   @ApiTags('nfts')
   @ApiOperation({ summary: 'Get data for NFT page' })
   async getNFTPage(@Param() params: GetNftParams) {
-    return this.nftService.getNftPage(params.tokenId);
+    return this.nftService.getNftPage(params.collectionAddress, params.tokenId);
   }
 }

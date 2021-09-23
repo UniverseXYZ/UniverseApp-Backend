@@ -402,10 +402,21 @@ export class NftService {
     return updatedEntity;
   }
 
-  public getNftPage = async (tokenId: number) => {
-    const nft = await this.nftRepository.findOne({ where: { tokenId: tokenId } });
+  public getNftPage = async (collectionAddress: string, tokenId: number) => {
+    const collection = await this.nftCollectionRepository.findOne({ where: { address: collectionAddress } });
+    if (!collection) {
+      throw new NftCollectionNotFoundException();
+    }
+
+    const nft = await this.nftRepository.findOne({ where: { tokenId: tokenId, collectionId: collection.id } });
+
+    if (!nft) {
+      throw new NftNotFoundException();
+    }
+
     return {
       nft,
+      collection,
     };
   };
 
