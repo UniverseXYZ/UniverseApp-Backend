@@ -414,20 +414,24 @@ export class NftService {
       throw new NftNotFoundException();
     }
 
-    const owner = await this.userRepository.findOne({ id: nft.userId });
-    const moreFromCollection = await this.nftRepository
-      .createQueryBuilder('nft')
-      .where('nft.editionUUID != :edition', { edition: nft.editionUUID })
-      .distinctOn(['nft.editionUUID'])
-      .take(moreNftsCount)
-      .orderBy('nft.editionUUID')
-      .getMany();
+    const [owner, creator, moreFromCollection] = await Promise.all([
+      this.userRepository.findOne({ id: nft.userId }),
+      this.userRepository.findOne({ address: collection.creator }),
+      this.nftRepository
+        .createQueryBuilder('nft')
+        .where('nft.editionUUID != :edition', { edition: nft.editionUUID })
+        .distinctOn(['nft.editionUUID'])
+        .take(moreNftsCount)
+        .orderBy('nft.editionUUID')
+        .getMany(),
+    ]);
 
     return {
       nft: classToPlain(nft),
       collection: classToPlain(collection),
-      owner: classToPlain(owner),
       moreFromCollection: moreFromCollection.map((c) => classToPlain(c)),
+      creator: classToPlain(creator),
+      owner: classToPlain(owner),
     };
   };
 
