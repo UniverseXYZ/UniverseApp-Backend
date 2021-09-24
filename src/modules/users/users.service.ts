@@ -1,4 +1,3 @@
-import { DuplicateUniversePageUrlException } from './../../../.history/src/modules/users/service-layer/exceptions/DuplicateUniversePageUrlExceptions_20210924095037';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { config } from 'node:process';
@@ -8,6 +7,7 @@ import { S3Service } from '../file-storage/s3.service';
 import { UserInfoDto } from './user.dto';
 import { User } from './user.entity';
 import { UserNotFoundException } from './service-layer/exceptions/UserNotFoundException';
+import { DuplicateUniversePageUrlException } from './service-layer/exceptions/DuplicateUniversePageUrlException';
 
 @Injectable()
 export class UsersService {
