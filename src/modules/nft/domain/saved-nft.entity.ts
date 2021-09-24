@@ -1,10 +1,9 @@
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
-import { Exclude, Expose, Transform } from 'class-transformer';
-import { configValues } from '../../configuration';
+import { Exclude } from 'class-transformer';
 
-const transformFn = ({ value }) => value && configValues.aws.s3BaseUrl + '/' + value;
-
-@Entity()
+@Entity({
+  schema: 'universe-backend',
+})
 export class SavedNft {
   @PrimaryGeneratedColumn()
   id: number;
@@ -15,9 +14,6 @@ export class SavedNft {
 
   @Column()
   collectionId: number;
-
-  @Column({ nullable: true })
-  txHash: string;
 
   @Column({ nullable: true })
   tokenUri: string;
@@ -35,27 +31,20 @@ export class SavedNft {
   artworkType?: string;
 
   //artwork original s3
-  @Transform(transformFn)
   @Column({ nullable: true })
   url?: string;
 
   //artwork original optimized s3, less bytes per pixel/frame
-  @Transform(transformFn)
-  @Expose({ name: 'optimizedUrl' })
   @Column({ nullable: true })
-  optimized_url?: string;
+  optimizedUrl?: string;
 
   //either resized image, or in case of videos a snapshot of a frame
-  @Transform(transformFn)
-  @Expose({ name: 'thumbnailUrl' })
   @Column({ nullable: true })
-  thumbnail_url?: string;
+  thumbnailUrl?: string;
 
   //arweave content
-  @Transform(transformFn)
-  @Expose({ name: 'originalUrl' })
   @Column({ nullable: true })
-  original_url?: string;
+  originalUrl?: string;
 
   @Column({ type: 'jsonb', nullable: true })
   properties?: any;

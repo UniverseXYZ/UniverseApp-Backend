@@ -100,33 +100,13 @@ export class NftService {
       collectionId: params.collectionId,
     });
     const dbSavedNft = await this.savedNftRepository.save(savedNft);
-    const serialized = {
-      id: dbSavedNft.id,
-      collection: null,
-      name: dbSavedNft.name,
-      description: dbSavedNft.description,
-      properties: dbSavedNft.properties,
-      royalties: dbSavedNft.royalties,
-      numberOfEditions: dbSavedNft.numberOfEditions,
-      createdAt: dbSavedNft.createdAt,
-    };
-
-    if (typeof params.collectionId === 'number') {
-      const collection = await this.nftCollectionRepository.findOne({ id: params.collectionId });
-
-      if (collection) {
-        serialized.collection = {
-          id: collection.id,
-          name: collection.name,
-          symbol: collection.symbol,
-          address: collection.address,
-          coverUrl: collection.coverUrl,
-        };
-      }
-    }
+    const collection = await this.nftCollectionRepository.findOne({ id: params.collectionId });
 
     return {
-      savedNft: { ...serialized },
+      savedNft: {
+        ...classToPlain(dbSavedNft),
+        collection: classToPlain(collection),
+      },
     };
   }
 

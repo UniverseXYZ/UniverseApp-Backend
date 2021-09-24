@@ -79,13 +79,12 @@ export class SaveNftBody {
   royalties?: SaveNftRoyalty[];
 
   @IsNumber()
-  @IsOptional()
   @ApiProperty({
     example: 10,
     description: 'The id of the collection',
     required: false,
   })
-  collectionId?: number;
+  collectionId: number;
 }
 
 export class SaveNftRoyalty {
