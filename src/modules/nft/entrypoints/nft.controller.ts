@@ -91,7 +91,6 @@ export class NftController {
   @Post('/saved-nfts/:id/file')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('file', nftFileMulterOptions()))
-  @UseInterceptors(ClassSerializerInterceptor)
   @ApiTags('nfts')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Upload image for nft' })
@@ -102,7 +101,7 @@ export class NftController {
     @Param() params: UploadNftMediaFileParams,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return await this.nftService.uploadMediaFile(params.id, file);
+    return await this.nftService.uploadSavedNftFile(params.id, req.user.sub, file);
   }
 
   @Get('saved-nfts/:id/token-uri')
@@ -113,7 +112,7 @@ export class NftController {
   @ApiParam({ name: 'id', description: 'The id of the nft', required: true, example: 1 })
   @ApiResponse({ status: 200, description: 'The URLs for tokens metadata', type: 'string', isArray: true })
   async getTokenURI(@Param() params: GetNftTokenURIParams) {
-    return await this.nftService.getTokenURI(params.id);
+    return await this.nftService.getSavedNftTokenURI(params.id);
   }
 
   @Post('nfts/token-uri')

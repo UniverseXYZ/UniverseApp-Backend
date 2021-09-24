@@ -110,7 +110,7 @@ export class NftService {
     };
   }
 
-  public async uploadMediaFile(id: number, file: Express.Multer.File) {
+  public async uploadSavedNftFile(id: number, userId: number, file: Express.Multer.File) {
     try {
       const nft = await this.savedNftRepository.findOne({ where: { id } });
 
@@ -118,15 +118,19 @@ export class NftService {
         throw new NftNotFoundException();
       }
 
+      if (nft.userId !== userId) {
+        throw new SavedNftOwnerException();
+      }
+
       const { optimisedFile, downsizedFile } = await this.processUploadedFile(file);
-
-      nft.url = file.filename;
-      nft.optimized_url = optimisedFile.fullFilename();
-      nft.thumbnail_url = downsizedFile.fullFilename();
-      nft.original_url = file.filename;
+      nft.url = this.s3Service.getUrl(file.filename);
+      nft.optimizedUrl = this.s3Service.getUrl(optimisedFile.fullFilename());
+      nft.thumbnailUrl = this.s3Service.getUrl(downsizedFile.fullFilename());
+      nft.originalUrl = this.s3Service.getUrl(file.filename);
       nft.artworkType = file.mimetype.split('/')[1];
+      const dbSavedNft = await this.savedNftRepository.save(nft);
 
-      return await this.savedNftRepository.save(nft);
+      return classToPlain(dbSavedNft);
     } catch (error) {
       this.fileSystemService.removeFile(file.path).catch(() => {});
       throw error;
@@ -150,7 +154,7 @@ export class NftService {
     return { optimisedFile, downsizedFile };
   }
 
-  public async getTokenURI(id: number) {
+  public async getSavedNftTokenURI(id: number) {
     const savedNft = await this.savedNftRepository.findOne({ where: { id } });
 
     if (!savedNft) {
@@ -158,7 +162,16 @@ export class NftService {
     }
 
     const idxs = [...Array(savedNft.numberOfEditions).keys()];
-    const tokenUri = await this.generateTokenUrisForSavedNft(savedNft);
+    const tokenUri = await this.generateTokenUri({
+      name: savedNft.name,
+      description: savedNft.description,
+      attributes: savedNft.properties,
+      imageUrl: savedNft.url,
+      imageOriginalUrl: savedNft.originalUrl,
+      imagePreviewUrl: savedNft.optimizedUrl,
+      imageThumbnailUrl: savedNft.thumbnailUrl,
+      royalties: savedNft.name,
+    });
     savedNft.tokenUri = tokenUri;
     await this.savedNftRepository.save(savedNft);
     return idxs.map(() => tokenUri);
@@ -176,7 +189,16 @@ export class NftService {
 
     const { optimisedFile, downsizedFile } = await this.processUploadedFile(file);
     const idxs = [...Array(bodyClass.numberOfEditions).keys()];
-    const tokenUri = await this.generateTokenUriForNftBody(bodyClass, file, optimisedFile, downsizedFile);
+    const tokenUri = await this.generateTokenUri({
+      name: bodyClass.name,
+      description: bodyClass.description,
+      royalties: bodyClass.royalties,
+      attributes: bodyClass.properties,
+      imageUrl: this.s3Service.getUrl(file.filename),
+      imagePreviewUrl: this.s3Service.getUrl(optimisedFile.fullFilename()),
+      imageThumbnailUrl: this.s3Service.getUrl(downsizedFile.fullFilename()),
+      imageOriginalUrl: this.s3Service.getUrl(file.filename),
+    });
     return idxs.map(() => tokenUri);
   }
 
@@ -274,27 +296,6 @@ export class NftService {
 
     await this.nftCollectionRepository.save(collection);
     return classToPlain(collection);
-  }
-
-  private async generateTokenUriForNftBody(
-    bodyClass: GetNftTokenUriBody,
-    file: Express.Multer.File,
-    optimisedFile: ProcessedFile,
-    downsizedFile: ProcessedFile,
-  ) {
-    return this.arweaveService.store({
-      name: bodyClass.name,
-      description: bodyClass.description,
-      image_url: this.s3Service.getUrl(file.filename),
-      image_preview_url: this.s3Service.getUrl(optimisedFile.fullFilename()),
-      image_thumbnail_url: this.s3Service.getUrl(downsizedFile.fullFilename()),
-      image_original_url: this.s3Service.getUrl(file.filename),
-      royalties: bodyClass.royalties,
-      attributes: bodyClass.properties?.map((propertyItem) => ({
-        trait_type: Object.keys(propertyItem)[0],
-        value: Object.values(propertyItem)[0],
-      })),
-    });
   }
 
   private async validateReqBody(body) {
@@ -468,16 +469,25 @@ export class NftService {
     return nfts.reduce((acc, nft) => ({ ...acc, [nft.editionUUID]: [...(acc[nft.editionUUID] || []), nft] }), {});
   }
 
-  private async generateTokenUrisForSavedNft(savedNft: SavedNft) {
+  private async generateTokenUri({
+    name,
+    description,
+    imageUrl,
+    imagePreviewUrl,
+    imageThumbnailUrl,
+    imageOriginalUrl,
+    royalties,
+    attributes,
+  }) {
     const tokenUri: string = await this.arweaveService.store({
-      name: savedNft.name,
-      description: savedNft.description,
-      image_url: this.s3Service.getUrl(savedNft.url),
-      image_preview_url: this.s3Service.getUrl(savedNft.optimized_url),
-      image_thumbnail_url: this.s3Service.getUrl(savedNft.thumbnail_url),
-      image_original_url: this.s3Service.getUrl(savedNft.original_url),
-      royalties: savedNft.royalties,
-      attributes: savedNft.properties?.map((propertyItem) => ({
+      name,
+      description,
+      image_url: imageUrl,
+      image_preview_url: imagePreviewUrl,
+      image_thumbnail_url: imageThumbnailUrl,
+      image_original_url: imageOriginalUrl,
+      royalties: royalties,
+      attributes: attributes?.map((propertyItem) => ({
         trait_type: Object.keys(propertyItem)[0],
         value: Object.values(propertyItem)[0],
       })),
