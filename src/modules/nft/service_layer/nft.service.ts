@@ -408,32 +408,15 @@ export class NftService {
       throw new NftCollectionNotFoundException();
     }
 
-    let nfts = await this.nftRepository.find({ where: { collectionId: collection.id } });
+    const nft = await this.nftRepository.findOne({ where: { tokenId: tokenId, collectionId: collection.id } });
 
-    nfts.filter((nft) => nft.tokenId == tokenId);
-
-    let searchedNft = null;
-
-    for (let i = 0; i < nfts.length; i++) {
-      const nft = nfts[i];
-      if (nft.tokenId === tokenId) {
-        searchedNft = nfts[i];
-        nfts = nfts.splice(i);
-        break;
-      }
-    }
-
-    if (!searchedNft) {
+    if (!nft) {
       throw new NftNotFoundException();
     }
 
-    const owner = await this.userRepository.findOne({ id: searchedNft.userId });
-
     return {
-      searchedNft,
+      nft,
       collection,
-      owner,
-      moreNFTs: nfts,
     };
   };
 
