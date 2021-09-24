@@ -402,21 +402,32 @@ export class NftService {
     return updatedEntity;
   }
 
-  public getNftPage = async (collectionAddress: string, tokenId: number) => {
+  public getNftPage = async (collectionAddress: string, tokenId: number, moreNftsCount = 4) => {
     const collection = await this.nftCollectionRepository.findOne({ where: { address: collectionAddress } });
     if (!collection) {
       throw new NftCollectionNotFoundException();
     }
 
-    const nft = await this.nftRepository.findOne({ where: { tokenId: tokenId, collectionId: collection.id } });
+    const nft = await this.nftRepository.findOne({ where: { collectionId: collection.id, tokenId: tokenId } });
 
     if (!nft) {
       throw new NftNotFoundException();
     }
 
+    const owner = await this.userRepository.findOne({ id: nft.userId });
+    const moreFromCollection = await this.nftRepository
+      .createQueryBuilder('nft')
+      .where('nft.editionUUID != :edition', { edition: nft.editionUUID })
+      .distinctOn(['nft.editionUUID'])
+      .take(moreNftsCount)
+      .orderBy('nft.editionUUID')
+      .getMany();
+
     return {
-      nft,
-      collection,
+      nft: classToPlain(nft),
+      collection: classToPlain(collection),
+      owner: classToPlain(owner),
+      moreFromCollection: moreFromCollection.map((c) => classToPlain(c)),
     };
   };
 
