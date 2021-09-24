@@ -110,45 +110,6 @@ export class NftService {
     };
   }
 
-  // public async saveCollectionForLater(params: SaveCollectionParams) {
-  //   const collectibles = params.collectibles.reduce((acc, collectible) => {
-  //     return [...acc, ...this.createCollectible(collectible)];
-  //   }, []);
-  //   const collection = this.nftCollectionRepository.create({
-  //     name: params.name,
-  //     symbol: params.symbol,
-  //     userId: params.userId,
-  //     collectibles,
-  //   });
-  //
-  //   const dbCollection = await this.nftCollectionRepository.save(collection);
-  //
-  //   return {
-  //     id: dbCollection.id,
-  //     name: dbCollection.name,
-  //     symbol: dbCollection.symbol,
-  //     collectibles: dbCollection.collectibles.map((collectible) => ({
-  //       id: collectible.id,
-  //       name: collectible.name,
-  //       description: collectible.description,
-  //       properties: collectible.properties,
-  //       createdAt: collectible.createdAt,
-  //     })),
-  //     createdAt: dbCollection.createdAt,
-  //   };
-  // }
-
-  private createCollectible(collectible: SaveCollectibleParams) {
-    const nfts = [];
-    const idxs = [...Array(collectible.numberOfEditions).keys()];
-
-    for (const idx of idxs) {
-      nfts.push(this.nftRepository.create(collectible));
-    }
-
-    return nfts;
-  }
-
   public async uploadMediaFile(id: number, file: Express.Multer.File) {
     try {
       const nft = await this.savedNftRepository.findOne({ where: { id } });
