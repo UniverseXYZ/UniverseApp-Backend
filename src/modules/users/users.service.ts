@@ -1,3 +1,4 @@
+import { DuplicateUniversePageUrlException } from './../../../.history/src/modules/users/service-layer/exceptions/DuplicateUniversePageUrlExceptions_20210924095037';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { config } from 'node:process';
@@ -31,7 +32,13 @@ export class UsersService {
   }
 
   async saveProfileInfo(userInfoDto: UserInfoDto, user: any) {
-    const userDb = await this.usersRepository.findOne({ where: { address: user.address } });
+    const [userDb, duplicateUrlUser] = await Promise.all([
+      this.usersRepository.findOne({ where: { address: user.address } }),
+      this.usersRepository.findOne({
+        where: { universePageUrl: userInfoDto.universePageUrl },
+      }),
+    ]);
+
     if (!userDb) {
       throw new HttpException(
         {
@@ -40,6 +47,10 @@ export class UsersService {
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    }
+
+    if (duplicateUrlUser) {
+      throw new DuplicateUniversePageUrlException();
     }
 
     userDb.displayName = userInfoDto.displayName;
