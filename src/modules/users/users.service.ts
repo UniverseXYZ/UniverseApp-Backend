@@ -7,6 +7,7 @@ import { S3Service } from '../file-storage/s3.service';
 import { UserInfoDto } from './user.dto';
 import { User } from './user.entity';
 import { UserNotFoundException } from './service-layer/exceptions/UserNotFoundException';
+import { DuplicateUniversePageUrlException } from './service-layer/exceptions/DuplicateUniversePageUrlException';
 
 @Injectable()
 export class UsersService {
@@ -31,7 +32,13 @@ export class UsersService {
   }
 
   async saveProfileInfo(userInfoDto: UserInfoDto, user: any) {
-    const userDb = await this.usersRepository.findOne({ where: { address: user.address } });
+    const [userDb, duplicateUrlUser] = await Promise.all([
+      this.usersRepository.findOne({ where: { address: user.address } }),
+      this.usersRepository.findOne({
+        where: { universePageUrl: userInfoDto.universePageUrl },
+      }),
+    ]);
+
     if (!userDb) {
       throw new HttpException(
         {
@@ -42,6 +49,10 @@ export class UsersService {
       );
     }
 
+    if (duplicateUrlUser) {
+      throw new DuplicateUniversePageUrlException();
+    }
+
     userDb.displayName = userInfoDto.displayName;
     userDb.universePageUrl = userInfoDto.universePageUrl;
     userDb.about = userInfoDto.about;
@@ -50,7 +61,6 @@ export class UsersService {
 
     await this.usersRepository.save(userDb);
   }
-
   async uploadProfileImage(file: Express.Multer.File, user: any) {
     try {
       const userDb = await this.usersRepository.findOne({ where: { address: user.address } });
