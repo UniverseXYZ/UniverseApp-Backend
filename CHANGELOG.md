@@ -1,3 +1,17 @@
+## [1.17.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.17.1...v1.17.2) (2021-09-27)
+
+
+### Bug Fixes
+
+* check existing profile page url ([#50](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/50)) ([02e0f6e](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/02e0f6e698838ae1d476ff16ea5663ad78e27539))
+
+## [1.17.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.17.0...v1.17.1) (2021-09-24)
+
+
+### Bug Fixes
+
+* save profile info checks for duplicate user page url ([#48](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/48)) ([b43c95c](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/b43c95c2a4af7e94ea4f2c89165c5df2cf88d479))
+
 # [1.17.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.16.1...v1.17.0) (2021-09-22)
 
 
