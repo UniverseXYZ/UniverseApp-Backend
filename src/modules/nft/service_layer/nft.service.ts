@@ -407,8 +407,7 @@ export class NftService {
     if (!collection) {
       throw new NftCollectionNotFoundException();
     }
-
-    const nft = await this.nftRepository.findOne({ where: { collectionId: collection.id, tokenId: tokenId } });
+    const nft = await this.nftRepository.findOne({ where: { collectionId: collection.id, id: tokenId } });
 
     if (!nft) {
       throw new NftNotFoundException();
@@ -420,19 +419,63 @@ export class NftService {
       this.nftRepository
         .createQueryBuilder('nft')
         .where('nft.editionUUID != :edition', { edition: nft.editionUUID })
+        .andWhere('nft.collectionId = :collectionId', { collectionId: collection.id })
+        .leftJoinAndSelect(User, 'user', 'user.id = nft.userId')
         .distinctOn(['nft.editionUUID'])
         .take(moreNftsCount)
         .orderBy('nft.editionUUID')
-        .getMany(),
+        .getRawMany(),
     ]);
+
+    const mappedNfts = moreFromCollection.map((nft) => this.mapNftWithUserInfo(nft, 'owner'));
 
     return {
       nft: classToPlain(nft),
       collection: classToPlain(collection),
-      moreFromCollection: moreFromCollection.map((c) => classToPlain(c)),
       creator: classToPlain(creator),
       owner: classToPlain(owner),
+      moreFromCollection: classToPlain(mappedNfts),
     };
+  };
+
+  private mapNftWithUserInfo = (nft: any, userKey: string) => {
+    const mappedNft = {
+      nft: {
+        id: nft.nft_id,
+        collectionId: nft.nft_collectionId,
+        source: nft.nft_source,
+        txHash: nft.nft_txHash,
+        editionUUID: nft.nft_editionUUID,
+        name: nft.nft_name,
+        description: nft.nft_description,
+        tokenId: nft.nft_tokenId,
+        artworkType: nft.nft_artworkType,
+        url: nft.nft_url,
+        optimized_url: nft.nft_optimized_url,
+        thumbnail_url: nft.nft_thumbnail_url,
+        original_url: nft.nft_original_url,
+        tokenUri: nft.nft_tokenUri,
+        properties: nft.nft_properties,
+        royalties: nft.nft_royalties,
+        numberOfEditions: nft.nft_numberOfEditions,
+        refreshed: nft.nft_refreshed,
+        createdAt: nft.nft_createdAt,
+        updatedAt: nft.nft_updatedAt,
+      },
+    };
+    console.log(nft);
+    mappedNft[userKey] = {
+      id: nft.user_id,
+      address: nft.user_address,
+      profileImageUrl: `${this.config.values.aws.s3BaseUrl}/${nft.user_profileImageName}`,
+      logoImageName: nft.user_logoImageName,
+      displayName: nft.user_displayName,
+      universePageUrl: nft.user_universePageUrl,
+      about: nft.user_about,
+      instagramUser: nft.user_instagramUser,
+      twitterUser: nft.user_twitterUser,
+    };
+    return mappedNft;
   };
 
   /**
@@ -440,10 +483,15 @@ export class NftService {
    * The NFTs are reduced to a single object, but differentiating attributes are reduced into a new one (eg. tokenIds)
    */
   private async reduceNftsByEdition(userId: number) {
-    const nfts = await this.nftRepository.find({ where: { userId: userId }, order: { createdAt: 'DESC' } });
+    const [nfts, owner] = await Promise.all([
+      this.nftRepository.find({ where: { userId: userId }, order: { createdAt: 'DESC' } }),
+      this.userRepository.findOne({ where: { id: userId } }),
+    ]);
+
     const editionNFTsMap = this.groupNftsByEdition(nfts);
     const collectionIds = Object.keys(nfts.reduce((acc, nft) => ({ ...acc, [nft.collectionId]: true }), {}));
     const collections = await this.nftCollectionRepository.find({ where: { id: In(collectionIds) } });
+
     const collectionsMap: Record<string, NftCollection> = collections.reduce(
       (acc, collection) => ({ ...acc, [collection.id]: collection }),
       {},
@@ -458,6 +506,7 @@ export class NftService {
           ...classToPlain(nfts[0]),
           collection,
           tokenIds,
+          owner: classToPlain(owner),
         };
       }),
     };
