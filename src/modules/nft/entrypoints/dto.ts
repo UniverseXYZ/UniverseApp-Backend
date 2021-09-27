@@ -135,6 +135,11 @@ export class PatchSavedNftParams {
   id: number;
 }
 
+export class PatchMintingNftParams {
+  @IsNumberString()
+  id: number;
+}
+
 export class GetNftTokenURIParams {
   @IsNumberString()
   id: number;
@@ -455,4 +460,16 @@ export class GetCollectionParams {
     example: '0x0000000000000000000000000',
   })
   address: string;
+}
+
+export class EditMintingNftBody {
+  @IsString()
+  @IsOptional()
+  @Length(1, 100)
+  @ApiProperty({
+    example: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    description: 'The transaction hash associated with the Minting NFT',
+    required: false,
+  })
+  txHash: string;
 }

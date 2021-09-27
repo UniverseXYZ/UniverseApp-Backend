@@ -19,12 +19,14 @@ import {
   EditCollectionParams,
   EditMintingCollectionBody,
   EditMintingCollectionParams,
+  EditMintingNftBody,
   EditSavedNftBody,
   GetCollectionParams,
   GetMyNftsResponse,
   GetNftTokenURIParams,
   GetUserNftsParams,
   GetUserNftsResponse,
+  PatchMintingNftParams,
   PatchSavedNftParams,
   SaveCollectionBody,
   SaveNftBody,
@@ -67,6 +69,16 @@ export class NftController {
   @ApiOperation({ summary: 'Save NFT for later minting' })
   async editSavedNft(@Req() req, @Param() params: PatchSavedNftParams, @Body() body: EditSavedNftBody) {
     return await this.nftService.editSavedNft(params.id, req.user.sub, classToPlain(body) as any);
+  }
+
+  @Patch('/minting-nfts/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiTags('nfts')
+  @ApiParam({ name: 'id', description: 'The id of the minting NFT', example: 1, required: true })
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Edit minting NFT' })
+  async editMintingNft(@Req() req, @Param() params: PatchMintingNftParams, @Body() body: EditMintingNftBody) {
+    return await this.nftService.editMintingNft(params.id, req.user.sub, body);
   }
 
   // @Post('/collections')
@@ -123,8 +135,8 @@ export class NftController {
   @ApiOperation({ summary: 'Generate the token URI for an NFT' })
   @ApiConsumes('form/multi-part')
   @ApiResponse({ status: 200, description: 'The URLs for tokens metadata', type: 'string', isArray: true })
-  async getNftTokenURI(@Req() req: Request, @UploadedFile() file: Express.Multer.File) {
-    return await this.nftService.getNftTokenURI(req.body, file);
+  async getNftTokenURI(@Req() req: any, @UploadedFile() file: Express.Multer.File) {
+    return await this.nftService.getNftTokenURI(req.user.sub, req.body, file);
   }
 
   @Post('nfts/minting-collections')
@@ -251,5 +263,14 @@ export class NftController {
   @ApiOperation({ summary: 'Get data for Collection page' })
   async getCollectionPage(@Param() params: GetCollectionParams) {
     return this.nftService.getCollectionPage(params.address);
+  }
+
+  @Get('pages/my-nfts')
+  @UseGuards(JwtAuthGuard)
+  @ApiTags('nfts')
+  @ApiOperation({ summary: 'My NFTs page' })
+  @ApiBearerAuth()
+  async getMyNftsPage(@Req() req) {
+    return this.nftService.getMyNftsPage(req.user.sub);
   }
 }

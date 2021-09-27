@@ -12,7 +12,7 @@ import { FileSystemService } from '../../file-system/file-system.service';
 import { ArweaveService } from '../../file-storage/arweave.service';
 import { SavedNft } from '../domain/saved-nft.entity';
 import { classToPlain, plainToClass } from 'class-transformer';
-import { CreateCollectionBody, EditCollectionBody, GetNftTokenUriBody } from '../entrypoints/dto';
+import { CreateCollectionBody, EditCollectionBody, EditMintingNftBody, GetNftTokenUriBody } from '../entrypoints/dto';
 import { validateOrReject } from 'class-validator';
 import { ProcessedFile } from '../../file-processing/model/ProcessedFile';
 import { UploadResult } from '../../file-storage/model/UploadResult';
@@ -26,6 +26,7 @@ import { UsersService } from 'src/modules/users/users.service';
 import { NftCollectionNotFoundException } from './exceptions/NftCollectionNotFoundException';
 import { NftCollectionBadOwnerException } from './exceptions/NftCollectionBadOwnerException';
 import { RewardTierNft } from 'src/modules/auction/domain/reward-tier-nft.entity';
+import { MintingNft } from '../domain/minting-nft.entity';
 
 type SaveNftParams = {
   userId: number;
@@ -79,6 +80,8 @@ export class NftService {
     private mintingCollectionRepository: Repository<MintingCollection>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(MintingNft)
+    private mintingNftRepository: Repository<MintingNft>,
     @InjectRepository(RewardTierNft)
     private rewardTierNftRepository: Repository<RewardTierNft>,
     private usersService: UsersService,
@@ -170,14 +173,42 @@ export class NftService {
       imageOriginalUrl: savedNft.originalUrl,
       imagePreviewUrl: savedNft.optimizedUrl,
       imageThumbnailUrl: savedNft.thumbnailUrl,
-      royalties: savedNft.name,
+      royalties: savedNft.royalties,
     });
     savedNft.tokenUri = tokenUri;
     await this.savedNftRepository.save(savedNft);
-    return idxs.map(() => tokenUri);
+    const mintingNft = await this.createMintingNftFromSavedNft(savedNft);
+
+    return {
+      mintingNft: {
+        id: mintingNft.id,
+      },
+      tokenUris: idxs.map(() => tokenUri),
+    };
   }
 
-  public async getNftTokenURI(body, file: Express.Multer.File) {
+  private async createMintingNftFromSavedNft(savedNft: SavedNft) {
+    let mintingNft = this.mintingNftRepository.create();
+    mintingNft.collectionId = savedNft.collectionId;
+    mintingNft.userId = savedNft.userId;
+    mintingNft.savedNftId = savedNft.id;
+    mintingNft.numberOfEditions = savedNft.numberOfEditions;
+    mintingNft.tokenUri = savedNft.tokenUri;
+    mintingNft.name = savedNft.name;
+    mintingNft.description = savedNft.description;
+    mintingNft.artworkType = savedNft.artworkType;
+    mintingNft.url = savedNft.name;
+    mintingNft.originalUrl = savedNft.originalUrl;
+    mintingNft.optimizedUrl = savedNft.optimizedUrl;
+    mintingNft.thumbnailUrl = savedNft.thumbnailUrl;
+    mintingNft.properties = savedNft.properties;
+    mintingNft.royalties = savedNft.royalties;
+
+    mintingNft = await this.mintingNftRepository.save(mintingNft);
+    return mintingNft;
+  }
+
+  public async getNftTokenURI(userId: number, body, file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException({
         error: 'NoFileAttached',
@@ -199,7 +230,28 @@ export class NftService {
       imageThumbnailUrl: this.s3Service.getUrl(downsizedFile.fullFilename()),
       imageOriginalUrl: this.s3Service.getUrl(file.filename),
     });
-    return idxs.map(() => tokenUri);
+    let mintingNft = this.mintingNftRepository.create();
+    mintingNft.userId = userId;
+    mintingNft.numberOfEditions = bodyClass.numberOfEditions;
+    mintingNft.tokenUri = tokenUri;
+    mintingNft.name = bodyClass.name;
+    mintingNft.description = bodyClass.description;
+    mintingNft.artworkType = this.getExtensionFromUrl(this.s3Service.getUrl(file.filename));
+    mintingNft.url = this.s3Service.getUrl(file.filename);
+    mintingNft.originalUrl = this.s3Service.getUrl(file.filename);
+    mintingNft.optimizedUrl = this.s3Service.getUrl(optimisedFile.fullFilename());
+    mintingNft.thumbnailUrl = this.s3Service.getUrl(downsizedFile.fullFilename());
+    mintingNft.properties = bodyClass.properties;
+    mintingNft.royalties = bodyClass.royalties;
+
+    mintingNft = await this.mintingNftRepository.save(mintingNft);
+
+    return {
+      mintingNft: {
+        id: mintingNft.id,
+      },
+      tokenUris: idxs.map(() => tokenUri),
+    };
   }
 
   public async createCollection(userId: number, body: any, file: Express.Multer.File) {
@@ -344,6 +396,17 @@ export class NftService {
     return updatedEntity;
   }
 
+  public async editMintingNft(id: number, userId: number, body: EditMintingNftBody) {
+    const mintingNft = await this.mintingNftRepository.findOne({ where: { id, userId } });
+    if (!mintingNft) throw new NftNotFoundException();
+
+    mintingNft.txHash = body.txHash;
+    mintingNft.txStatus = 'pending';
+    if (mintingNft.savedNftId) {
+      await this.savedNftRepository.delete({ id: mintingNft.savedNftId });
+    }
+    await this.mintingNftRepository.save(mintingNft);
+  }
   /**
    * This function returns an array of NFTs grouped by edition.
    * The NFTs are reduced to a single object, but differentiating attributes are reduced into a new one (eg. tokenIds)
@@ -465,6 +528,19 @@ export class NftService {
     };
   }
 
+  public async getMyNftsPage(userId: number) {
+    const mintingNfts = await this.mintingNftRepository.find({
+      where: { userId, txStatus: 'pending' },
+      order: { createdAt: 'DESC' },
+    });
+    const mintedNfts = await this.reduceNftsByEdition(userId);
+
+    return {
+      nfts: mintedNfts,
+      mintingNfts: mintingNfts.map((nft) => classToPlain(nft)),
+    };
+  }
+
   private groupNftsByEdition(nfts: Nft[]): Record<string, Nft[]> {
     return nfts.reduce((acc, nft) => ({ ...acc, [nft.editionUUID]: [...(acc[nft.editionUUID] || []), nft] }), {});
   }
@@ -504,5 +580,13 @@ export class NftService {
           }
         : acc;
     }, {});
+  }
+
+  private getExtensionFromUrl(url: string) {
+    if (!url) {
+      return undefined;
+    }
+    const urlComponents = url.split(/[.]+/);
+    return urlComponents[urlComponents.length - 1];
   }
 }
