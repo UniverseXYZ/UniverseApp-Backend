@@ -69,7 +69,7 @@ The process of minting NFTs can be accomplished by the sending the metadata dire
 
 1. Get the token URI  
 1.1 Perform a `GET /api/saved-nfts/:id/token-uri` request to obtain the token URI for a Saved NFT.  
-1.2 Perform a `POST /api/nfts/token-uri` request to obtain the token URI from plain metadata
+1.2 Perform a `POST /api/nfts/token-uri` request to obtain the token URI from plain metadata  
 The response will have the following format
 ```json
 {
@@ -79,9 +79,9 @@ The response will have the following format
   "tokenUris": string[],
 }
 ```
-These 2 endpoints create a new Minting NFT instance, which represents a NFT that is the minting process.
-2. Submit transaction to Ethereum blockchain
-3. Send the transaction hash using `PATCH /api/minting-nfts/:id`
+These 2 endpoints create a new Minting NFT instance, which represents a NFT that is the minting process.  
+2. Submit transaction to Ethereum blockchain  
+3. Send the transaction hash using `PATCH /api/minting-nfts/:id`  
 ```json
 {
   "txHash": "..."
