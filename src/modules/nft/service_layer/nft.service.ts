@@ -536,7 +536,7 @@ export class NftService {
     const mintedNfts = await this.reduceNftsByEdition(userId);
 
     return {
-      nfts: mintedNfts,
+      nfts: mintedNfts.nfts,
       mintingNfts: mintingNfts.map((nft) => classToPlain(nft)),
     };
   }
