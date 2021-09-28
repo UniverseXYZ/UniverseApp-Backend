@@ -23,6 +23,7 @@ import {
   EditSavedNftBody,
   GetCollectionParams,
   GetMyNftsResponse,
+  GetNftParams,
   GetNftTokenURIParams,
   GetUserNftsParams,
   GetUserNftsResponse,
@@ -272,5 +273,12 @@ export class NftController {
   @ApiBearerAuth()
   async getMyNftsPage(@Req() req) {
     return this.nftService.getMyNftsPage(req.user.sub);
+  }
+
+  @Get('pages/nft/:collectionAddress/:tokenId')
+  @ApiTags('nfts')
+  @ApiOperation({ summary: 'Get data for NFT page' })
+  async getNFTPage(@Param() params: GetNftParams) {
+    return this.nftService.getNftPage(params.collectionAddress, params.tokenId);
   }
 }

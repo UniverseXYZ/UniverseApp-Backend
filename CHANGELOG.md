@@ -1,3 +1,10 @@
+# [1.18.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.17.2...v1.18.0) (2021-09-28)
+
+
+### Features
+
+* add single nft enpoint ([#47](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/47)) ([ab4f607](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/ab4f607b742c88de9e3728f44914c80007a2a90e))
+
 ## [1.17.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.17.1...v1.17.2) (2021-09-27)
 
 

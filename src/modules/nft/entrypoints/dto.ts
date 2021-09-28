@@ -473,3 +473,18 @@ export class EditMintingNftBody {
   })
   txHash: string;
 }
+
+export class GetNftParams {
+  @IsString()
+  @ApiProperty({
+    description: 'The address of the Collection',
+    example: '0x0000000000000000000000000',
+  })
+  collectionAddress: string;
+  @IsNumberString()
+  @ApiProperty({
+    description: 'The token id of the NFT',
+    example: '1',
+  })
+  tokenId: number;
+}
