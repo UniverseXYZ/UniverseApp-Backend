@@ -426,7 +426,7 @@ export class NftService {
         .createQueryBuilder('nft')
         .where('nft.editionUUID != :edition', { edition: nft.editionUUID })
         .andWhere('nft.collectionId = :collectionId', { collectionId: collection.id })
-        .leftJoinAndSelect(User, 'user', 'user.id = nft.userId')
+        .leftJoinAndSelect(User, 'owner', 'owner.id = nft.userId')
         .distinctOn(['nft.editionUUID'])
         .take(moreNftsCount)
         .orderBy('nft.editionUUID')
@@ -445,7 +445,6 @@ export class NftService {
   };
 
   private mapNftWithUserInfo = (nft: any, kvp1?: [string, string], kvp2?: [string, string]) => {
-
     const mappedNft = {
       nft: {
         id: nft.nft_id,
@@ -696,7 +695,7 @@ export class NftService {
       where: { userId, txStatus: 'pending' },
       order: { createdAt: 'DESC' },
     });
-    const mintedNfts = await this.reduceNftsByEdition(userId);
+    const mintedNfts = await this.reduceUserNftsByEdition(userId, false, true);
 
     return {
       nfts: mintedNfts.nfts,

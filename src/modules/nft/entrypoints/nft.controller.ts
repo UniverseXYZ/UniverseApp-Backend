@@ -274,7 +274,7 @@ export class NftController {
   async getMyNftsPage(@Req() req) {
     return this.nftService.getMyNftsPage(req.user.sub);
   }
-  
+
   @Get('pages/nft/:collectionAddress/:tokenId')
   @ApiTags('nfts')
   @ApiOperation({ summary: 'Get data for NFT page' })
