@@ -26,7 +26,7 @@ class RewardTierBodyParams {
 
 export class UpdateRewardTierParams {
   @IsNumberString()
-  id: number;
+  id: string;
 }
 
 export class UpdateRewardTierBody {

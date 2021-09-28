@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Delete,
   Query,
   Req,
   UploadedFile,
@@ -30,9 +31,8 @@ import {
 import { AuctionService } from '../service-layer/auction.service';
 import { JwtAuthGuard, OptionalJwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { auctionLandingImagesMulterOptions } from '../../nft/entrypoints/multipart';
-import { classToPlain } from 'class-transformer';
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { auctionLandingImagesMulterOptions, rewardTierImagesMulterOptions } from '../../nft/entrypoints/multipart';
 
 @Controller('api')
 export class AuctionController {
@@ -85,7 +85,22 @@ export class AuctionController {
     @Param() params: UpdateRewardTierParams,
     @Body() updateRewardTierBody: UpdateRewardTierBody,
   ) {
-    return await this.auctionService.updateRewardTier(req.user.sub, params.id, updateRewardTierBody);
+    return await this.auctionService.updateRewardTier(req.user.sub, parseInt(params.id), updateRewardTierBody);
+  }
+
+  @Patch('reward-tiers/:id/image')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('image', rewardTierImagesMulterOptions()))
+  @ApiTags('reward tiers')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Change reward tier image' })
+  @ApiConsumes('form/multi-part')
+  async changeRewardTierImage(
+    @Req() req,
+    @Param() params: UpdateRewardTierParams,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return await this.auctionService.updateRewardTierImage(req.user.sub, parseInt(params.id), file);
   }
 
   @Get('pages/my-auctions/future')
@@ -133,6 +148,14 @@ export class AuctionController {
   @ApiOperation({ summary: 'Get the public page of the auction' })
   async getAuctionPage(@Req() req, @Param() params: GetAuctionPageParams) {
     return await this.auctionService.getAuctionPage(req.user.sub, parseInt(params.id));
+  }
+
+  @Delete('auctions/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiTags('auction')
+  @ApiOperation({ summary: 'Cancel my future auction' })
+  async cancelAuction(@Req() req, @Param('id') id) {
+    return await this.auctionService.cancelFutureAuction(req.user.sub, id);
   }
 
   /**
@@ -199,7 +222,7 @@ export class AuctionController {
 
   @Get('auctions/byUser')
   @UseGuards(JwtAuthGuard)
-  async listAuctionsByUser(@Req() req, @Query('page') page: number = 0, @Query('limit') limit: number = 0) {
+  async listAuctionsByUser(@Req() req, @Query('page') page = 0, @Query('limit') limit = 0) {
     return await this.auctionService.listAuctionsByUser(req.user.sub, page, limit);
   }
 
@@ -207,9 +230,9 @@ export class AuctionController {
   @UseGuards(JwtAuthGuard)
   async listAuctionsByUserFiltered(
     @Req() req,
-    @Query('page') page: number = 0,
-    @Query('limit') limit: number = 0,
-    @Param('status') status: string = '',
+    @Query('page') page = 0,
+    @Query('limit') limit = 0,
+    @Param('status') status = '',
   ) {
     if (status !== '') return;
 
@@ -218,7 +241,7 @@ export class AuctionController {
 
   @Get('auctions')
   @UseGuards(JwtAuthGuard)
-  async listAuctions(@Req() req, @Query('page') page: number = 0, @Query('limit') limit: number = 0) {
+  async listAuctions(@Req() req, @Query('page') page = 0, @Query('limit') limit = 0) {
     return await this.auctionService.listAuctions(page, limit);
   }
 
@@ -226,9 +249,9 @@ export class AuctionController {
   @UseGuards(JwtAuthGuard)
   async listAuctionsFiltered(
     @Req() req,
-    @Query('page') page: number = 0,
-    @Query('limit') limit: number = 0,
-    @Param('status') status: string = '',
+    @Query('page') page = 0,
+    @Query('limit') limit = 0,
+    @Param('status') status = '',
   ) {
     if (status !== '') return;
 
@@ -238,7 +261,7 @@ export class AuctionController {
   //Todo: add tier info
   @Get('auction/{:id}')
   @UseGuards(JwtAuthGuard)
-  async getAuction(@Req() req, @Param('id') id: number = 0) {
+  async getAuction(@Req() req, @Param('id') id = 0) {
     return await this.auctionService.getAuction(id);
   }
 }

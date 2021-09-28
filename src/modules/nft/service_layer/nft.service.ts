@@ -1,3 +1,4 @@
+import { UserNotFoundException } from './../../users/service-layer/exceptions/UserNotFoundException';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
@@ -24,6 +25,7 @@ import { User } from '../../users/user.entity';
 import { UsersService } from 'src/modules/users/users.service';
 import { NftCollectionNotFoundException } from './exceptions/NftCollectionNotFoundException';
 import { NftCollectionBadOwnerException } from './exceptions/NftCollectionBadOwnerException';
+import { RewardTierNft } from 'src/modules/auction/domain/reward-tier-nft.entity';
 
 type SaveNftParams = {
   userId: number;
@@ -77,6 +79,8 @@ export class NftService {
     private mintingCollectionRepository: Repository<MintingCollection>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(RewardTierNft)
+    private rewardTierNftRepository: Repository<RewardTierNft>,
     private usersService: UsersService,
     private fileProcessingService: FileProcessingService,
     private s3Service: S3Service,
@@ -345,7 +349,10 @@ export class NftService {
       image_thumbnail_url: this.s3Service.getUrl(downsizedFile.fullFilename()),
       image_original_url: this.s3Service.getUrl(file.filename),
       royalties: bodyClass.royalties,
-      traits: bodyClass.properties,
+      attributes: bodyClass.properties?.map((propertyItem) => ({
+        trait_type: Object.keys(propertyItem)[0],
+        value: Object.values(propertyItem)[0],
+      })),
     });
   }
 
@@ -395,13 +402,13 @@ export class NftService {
     return updatedEntity;
   }
 
-  public async getMyNfts(userId: number) {
-    const nfts = await this.nftRepository.find({ where: { userId }, order: { createdAt: 'DESC' } });
-    const editionNFTsMap: Record<string, Nft[]> = nfts.reduce(
-      (acc, nft) => ({ ...acc, [nft.editionUUID]: [...(acc[nft.editionUUID] || []), nft] }),
-      {},
-    );
-
+  /**
+   * This function returns an array of NFTs grouped by edition.
+   * The NFTs are reduced to a single object, but differentiating attributes are reduced into a new one (eg. tokenIds)
+   */
+  private async reduceNftsByEdition(userId: number) {
+    const nfts = await this.nftRepository.find({ where: { userId: userId }, order: { createdAt: 'DESC' } });
+    const editionNFTsMap = this.groupNftsByEdition(nfts);
     const collectionIds = Object.keys(nfts.reduce((acc, nft) => ({ ...acc, [nft.collectionId]: true }), {}));
     const collections = await this.nftCollectionRepository.find({ where: { id: In(collectionIds) } });
     const collectionsMap: Record<string, NftCollection> = collections.reduce(
@@ -411,44 +418,54 @@ export class NftService {
 
     return {
       nfts: Object.values(editionNFTsMap).map((nfts) => {
-        const {
-          id,
-          name,
-          description,
-          original_url,
-          thumbnail_url,
-          optimized_url,
-          url,
-          createdAt,
-          artworkType,
-          collectionId,
-          royalties,
-          properties,
-        } = nfts[0];
         const tokenIds = nfts.map((nft) => nft.tokenId);
-        const collection = collectionsMap[collectionId] && {
-          id: collectionsMap[collectionId].id,
-          name: collectionsMap[collectionId].name,
-          symbol: collectionsMap[collectionId].symbol,
-          coverUrl: collectionsMap[collectionId].coverUrl,
-        };
+        const collection = collectionsMap[nfts[0].collectionId] && classToPlain(collectionsMap[nfts[0].collectionId]);
 
         return {
-          id,
+          ...classToPlain(nfts[0]),
           collection,
-          name,
-          description,
-          artworkType,
-          original_url,
-          optimized_url,
-          url,
-          thumbnail_url,
           tokenIds,
-          royalties,
-          properties,
-          createdAt,
         };
       }),
+    };
+  }
+
+  public async getMyNfts(userId: number) {
+    return this.reduceNftsByEdition(userId);
+  }
+
+  public async getUserNfts(username: string) {
+    const user = await this.userRepository.findOne({ where: { universePageUrl: username } });
+
+    if (!user) {
+      throw new UserNotFoundException();
+    }
+
+    return this.reduceNftsByEdition(user.id);
+  }
+
+  public async getMyNftsAvailability(userId: number) {
+    const nfts = await this.nftRepository.find({ where: { userId }, order: { createdAt: 'DESC' } });
+    const nftsIds = nfts.map((nft) => nft.id);
+    const editionNFTsMap = this.groupNftsByEdition(nfts);
+    const collectionIds = Object.keys(nfts.reduce((acc, nft) => ({ ...acc, [nft.collectionId]: true }), {}));
+    const collections = await this.nftCollectionRepository.find({ where: { id: In(collectionIds) } });
+    const collectionsMap: Record<string, NftCollection> = collections.reduce(
+      (acc, collection) => ({ ...acc, [collection.id]: collection }),
+      {},
+    );
+    const rewardTiers = await this.rewardTierNftRepository.find({ where: { nftId: In(nftsIds) } });
+    const nftRewardTierIdMap = rewardTiers.reduce((acc, rewardTier) => ({ ...acc, [rewardTier.nftId]: rewardTier.id }));
+
+    const mappedNfts = Object.values(editionNFTsMap).map((nfts) => {
+      return {
+        nfts: nfts.map((nft) => ({ ...classToPlain(nft), rewardTierId: nftRewardTierIdMap[nft.id] })),
+        collection: nfts.length > 0 && classToPlain(collectionsMap[nfts[0].collectionId]),
+      };
+    });
+
+    return {
+      nfts: mappedNfts,
     };
   }
 
@@ -479,38 +496,35 @@ export class NftService {
     return { id };
   }
 
-  public async getMyCollection(userId: number, collectionId: number) {
-    await this.usersService.getById(userId, true);
-    const collection = await this.nftCollectionRepository.findOne({ where: { id: collectionId } });
+  public async getCollectionPage(address: string) {
+    const collection = await this.nftCollectionRepository.findOne({ where: { address } });
 
     if (!collection) {
       throw new NftCollectionNotFoundException();
     }
 
-    const nfts = await this.nftRepository.find({ where: { collectionId, userId }, order: { createdAt: 'DESC' } });
-    const editionNFTsMap = nfts.reduce(
-      (acc, nft) => ({ ...acc, [nft.editionUUID]: [...(acc[nft.editionUUID] || []), nft] }),
-      {} as Record<string, Nft[]>,
-    );
-    const nftsGroupedByEdition = await this.nftRepository
-      .createQueryBuilder('nft')
-      .select('nft.editionUUID, COUNT(*)')
-      .where('nft.editionUUID IN (:...editions)', { editions: Object.keys(editionNFTsMap) })
-      .groupBy('nft.editionUUID')
-      .execute();
-    const editionsCount = nftsGroupedByEdition.reduce(
-      (acc, item) => ({ ...acc, [item.editionUUID]: parseInt(item.count) }),
-      {},
-    );
+    const nfts = await this.nftRepository.find({
+      where: { collectionId: collection.id },
+      order: { createdAt: 'DESC' },
+    });
+    const editionNFTsMap: Record<string, Nft[]> = this.groupNftsByEdition(nfts);
+    let formattedNfts = [];
+
+    if (Object.keys(editionNFTsMap).length > 0) {
+      formattedNfts = Object.values(editionNFTsMap).map((nfts) => ({
+        ...classToPlain(nfts[0]),
+        tokenIds: nfts.map((nft) => nft.tokenId),
+      }));
+    }
 
     return {
       collection: classToPlain(collection),
-      nfts: Object.values(editionNFTsMap).map((nfts) => ({
-        ...classToPlain(nfts[0]),
-        tokenIds: nfts.map((nft) => nft.tokenId),
-        numberOfEditions: editionsCount[nfts[0].editionUUID],
-      })),
+      nfts: formattedNfts,
     };
+  }
+
+  private groupNftsByEdition(nfts: Nft[]): Record<string, Nft[]> {
+    return nfts.reduce((acc, nft) => ({ ...acc, [nft.editionUUID]: [...(acc[nft.editionUUID] || []), nft] }), {});
   }
 
   private async generateTokenUrisForSavedNft(savedNft: SavedNft) {
@@ -522,7 +536,10 @@ export class NftService {
       image_thumbnail_url: this.s3Service.getUrl(savedNft.thumbnail_url),
       image_original_url: this.s3Service.getUrl(savedNft.original_url),
       royalties: savedNft.royalties,
-      traits: savedNft.properties,
+      attributes: savedNft.properties?.map((propertyItem) => ({
+        trait_type: Object.keys(propertyItem)[0],
+        value: Object.values(propertyItem)[0],
+      })),
     });
     return tokenUri;
   }

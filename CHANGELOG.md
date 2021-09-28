@@ -1,3 +1,87 @@
+## [1.17.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.17.1...v1.17.2) (2021-09-27)
+
+
+### Bug Fixes
+
+* check existing profile page url ([#50](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/50)) ([02e0f6e](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/02e0f6e698838ae1d476ff16ea5663ad78e27539))
+
+## [1.17.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.17.0...v1.17.1) (2021-09-24)
+
+
+### Bug Fixes
+
+* save profile info checks for duplicate user page url ([#48](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/48)) ([b43c95c](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/b43c95c2a4af7e94ea4f2c89165c5df2cf88d479))
+
+# [1.17.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.16.1...v1.17.0) (2021-09-22)
+
+
+### Features
+
+* make collection and user endpoint public ([0e4fb27](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/0e4fb2721409dfd1e870773b561bc9288048d821))
+
+## [1.16.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.16.0...v1.16.1) (2021-09-21)
+
+
+### Bug Fixes
+
+* modify NFT attributes to match updated OpenSea standard ([dbe6301](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/dbe630134a4bacc5d735f78fefbc0ce5f93638a7))
+
+# [1.16.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.15.1...v1.16.0) (2021-09-20)
+
+
+### Features
+
+* add endpoint for getting my nfts with availability information ([#40](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/40)) ([95804d1](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/95804d1b2293e26d8bfc5fbdb9d88da9c74148dd))
+
+## [1.15.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.15.0...v1.15.1) (2021-09-19)
+
+
+### Bug Fixes
+
+* handle editions minted in different blocks ([#43](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/43)) ([0cf059e](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/0cf059e9c75636516d1cc7bb9ee5e4a91b4ec630))
+
+# [1.15.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.14.4...v1.15.0) (2021-09-19)
+
+
+### Features
+
+* add ability to cancel future auction ([#33](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/33)) ([42404a7](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/42404a7e29f61e9a911cae602bc658fa414b9aba))
+
+## [1.14.4](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.14.3...v1.14.4) (2021-09-17)
+
+
+### Bug Fixes
+
+* get Collection which doesn't have NFTs ([0e4a943](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/0e4a9432ac4879817d5de301b32589487cba7fbd))
+
+## [1.14.3](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.14.2...v1.14.3) (2021-09-17)
+
+
+### Bug Fixes
+
+* prevent creating collections without tx hash ([f32f041](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/f32f041828ae227b65c047c698e11d11da1d75b3))
+
+## [1.14.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.14.1...v1.14.2) (2021-09-16)
+
+
+### Bug Fixes
+
+* add missing collection attribute to My NFTs response ([2c76694](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/2c766942ebc9180a54cb5d36f7e6dad207214b10))
+
+## [1.14.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.14.0...v1.14.1) (2021-09-16)
+
+
+### Bug Fixes
+
+* get my future auctions returns all auctions ([#38](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/38)) ([1b4645f](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/1b4645f7c725d1fd801792daf2b06b255f641270))
+
+# [1.14.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.13.3...v1.14.0) (2021-09-16)
+
+
+### Features
+
+* add change reward tier image endpoint and service ([#36](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/36)) ([83adf5b](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/83adf5bb44d2871398ba56671f9e635e1e0d0127))
+
 ## [1.13.3](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.13.2...v1.13.3) (2021-09-16)
 
 

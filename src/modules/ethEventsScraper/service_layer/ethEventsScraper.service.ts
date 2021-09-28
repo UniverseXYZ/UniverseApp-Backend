@@ -3,8 +3,8 @@ import { AppConfig } from '../../configuration/configuration.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { QueueService } from '../../queue/queue.service';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Nft, NftSource } from '../../nft/domain/nft.entity';
-import { CollectionSource, NftCollection } from '../../nft/domain/collection.entity';
+import { Nft } from '../../nft/domain/nft.entity';
+import { NftCollection } from '../../nft/domain/collection.entity';
 
 import { Repository } from 'typeorm';
 import { User } from '../../users/user.entity';
@@ -20,8 +20,6 @@ export class EthEventsScraperService {
   processing = false;
 
   constructor(
-    private readonly config: AppConfig,
-    private readonly queue: QueueService,
     private httpService: HttpService,
     @InjectRepository(Nft)
     private nftRepository: Repository<Nft>,
@@ -61,19 +59,19 @@ export class EthEventsScraperService {
     for (const event of events) {
       const mintingCollection = await this.mintingCollectionRepository.findOne({ where: { txHash: event.tx_hash } });
 
+      if (!mintingCollection) continue;
+
       const collection = this.nftCollectionRepository.create();
       collection.txHash = event.tx_hash;
       collection.address = event.contract_address?.toLowerCase();
       collection.owner = event.owner.toLowerCase();
+      collection.creator = event.owner.toLowerCase();
       collection.name = event.token_name;
       collection.symbol = event.token_symbol;
-
-      if (mintingCollection) {
-        collection.shortUrl = mintingCollection.shortUrl;
-        collection.coverUrl = mintingCollection.coverUrl;
-        collection.description = mintingCollection.description;
-        await this.mintingCollectionRepository.delete({ txHash: event.tx_hash });
-      }
+      collection.shortUrl = mintingCollection.shortUrl;
+      collection.coverUrl = mintingCollection.coverUrl;
+      collection.description = mintingCollection.description;
+      await this.mintingCollectionRepository.delete({ txHash: event.tx_hash });
 
       event.processed = true;
       await this.deployCollectionEventRepository.save(event);
@@ -96,13 +94,19 @@ export class EthEventsScraperService {
         const collection = await this.nftCollectionRepository.findOne({
           where: { address: event.contract_address.toLowerCase() },
         });
-
         if (user && collection) {
+          const nftByTokenUri = await this.nftRepository.findOne({
+            where: {
+              collectionId: collection.id,
+              tokenUri: event.token_uri,
+            },
+          });
+
           const nft = this.nftRepository.create();
           nft.userId = user.id;
           nft.collectionId = collection.id;
           nft.txHash = event.tx_hash;
-          nft.editionUUID = editionUUID;
+          nft.editionUUID = nftByTokenUri ? nftByTokenUri.editionUUID : editionUUID;
           nft.name = response.data.name as string;
           nft.description = response.data.description as string;
           nft.tokenId = event.token_id;
@@ -112,12 +116,40 @@ export class EthEventsScraperService {
           nft.thumbnail_url = response.data.image_thumbnail_url as string;
           nft.original_url = response.data.image_original_url as string;
           nft.tokenUri = event.token_uri;
-          nft.properties = response.data.traits;
+          nft.properties = response.data.attributes?.map((attributeObject) => ({
+            [attributeObject.trait_type]: attributeObject.value,
+          }));
           nft.royalties = response.data.royalties;
+          nft.numberOfEditions = 1;
+
+          const savedNft = await this.savedNftRepository.findOne({ where: { tokenUri, collectionId: collection.id } });
+          if (savedNft) {
+            nft.numberOfEditions = savedNft.numberOfEditions;
+          } else {
+            const nftsCountByTokenUri = await this.nftRepository.count({
+              where: {
+                collectionId: collection.id,
+                tokenUri: event.token_uri,
+              },
+            });
+            if (nftsCountByTokenUri === 0) {
+              nft.numberOfEditions = 1;
+            } else {
+              nft.numberOfEditions = nftsCountByTokenUri + 1;
+              await this.nftRepository.update(
+                {
+                  collectionId: collection.id,
+                  tokenUri: event.token_uri,
+                },
+                {
+                  numberOfEditions: nftsCountByTokenUri + 1,
+                },
+              );
+            }
+          }
 
           event.processed = true;
           await this.createNftEventRepository.save(event);
-
           await this.nftRepository.save(nft);
         }
       }
