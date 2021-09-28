@@ -19,6 +19,7 @@ import {
   EditCollectionParams,
   EditMintingCollectionBody,
   EditMintingCollectionParams,
+  EditMintingNftBody,
   EditSavedNftBody,
   GetCollectionParams,
   GetMyNftsResponse,
@@ -26,6 +27,7 @@ import {
   GetNftTokenURIParams,
   GetUserNftsParams,
   GetUserNftsResponse,
+  PatchMintingNftParams,
   PatchSavedNftParams,
   SaveCollectionBody,
   SaveNftBody,
@@ -70,6 +72,16 @@ export class NftController {
     return await this.nftService.editSavedNft(params.id, req.user.sub, classToPlain(body) as any);
   }
 
+  @Patch('/minting-nfts/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiTags('nfts')
+  @ApiParam({ name: 'id', description: 'The id of the minting NFT', example: 1, required: true })
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Edit minting NFT' })
+  async editMintingNft(@Req() req, @Param() params: PatchMintingNftParams, @Body() body: EditMintingNftBody) {
+    return await this.nftService.editMintingNft(params.id, req.user.sub, body);
+  }
+
   // @Post('/collections')
   // @UseGuards(JwtAuthGuard)
   // @ApiTags('nfts')
@@ -92,7 +104,6 @@ export class NftController {
   @Post('/saved-nfts/:id/file')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('file', nftFileMulterOptions()))
-  @UseInterceptors(ClassSerializerInterceptor)
   @ApiTags('nfts')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Upload image for nft' })
@@ -103,7 +114,7 @@ export class NftController {
     @Param() params: UploadNftMediaFileParams,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return await this.nftService.uploadMediaFile(params.id, file);
+    return await this.nftService.uploadSavedNftFile(params.id, req.user.sub, file);
   }
 
   @Get('saved-nfts/:id/token-uri')
@@ -114,7 +125,7 @@ export class NftController {
   @ApiParam({ name: 'id', description: 'The id of the nft', required: true, example: 1 })
   @ApiResponse({ status: 200, description: 'The URLs for tokens metadata', type: 'string', isArray: true })
   async getTokenURI(@Param() params: GetNftTokenURIParams) {
-    return await this.nftService.getTokenURI(params.id);
+    return await this.nftService.getSavedNftTokenURI(params.id);
   }
 
   @Post('nfts/token-uri')
@@ -125,8 +136,8 @@ export class NftController {
   @ApiOperation({ summary: 'Generate the token URI for an NFT' })
   @ApiConsumes('form/multi-part')
   @ApiResponse({ status: 200, description: 'The URLs for tokens metadata', type: 'string', isArray: true })
-  async getNftTokenURI(@Req() req: Request, @UploadedFile() file: Express.Multer.File) {
-    return await this.nftService.getNftTokenURI(req.body, file);
+  async getNftTokenURI(@Req() req: any, @UploadedFile() file: Express.Multer.File) {
+    return await this.nftService.getNftTokenURI(req.user.sub, req.body, file);
   }
 
   @Post('nfts/minting-collections')
@@ -255,6 +266,15 @@ export class NftController {
     return this.nftService.getCollectionPage(params.address);
   }
 
+  @Get('pages/my-nfts')
+  @UseGuards(JwtAuthGuard)
+  @ApiTags('nfts')
+  @ApiOperation({ summary: 'My NFTs page' })
+  @ApiBearerAuth()
+  async getMyNftsPage(@Req() req) {
+    return this.nftService.getMyNftsPage(req.user.sub);
+  }
+  
   @Get('pages/nft/:collectionAddress/:tokenId')
   @ApiTags('nfts')
   @ApiOperation({ summary: 'Get data for NFT page' })

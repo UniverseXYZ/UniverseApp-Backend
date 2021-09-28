@@ -79,13 +79,12 @@ export class SaveNftBody {
   royalties?: SaveNftRoyalty[];
 
   @IsNumber()
-  @IsOptional()
   @ApiProperty({
     example: 10,
     description: 'The id of the collection',
     required: false,
   })
-  collectionId?: number;
+  collectionId: number;
 }
 
 export class SaveNftRoyalty {
@@ -132,6 +131,11 @@ export class UploadNftMediaFileParams {
 }
 
 export class PatchSavedNftParams {
+  @IsNumberString()
+  id: number;
+}
+
+export class PatchMintingNftParams {
   @IsNumberString()
   id: number;
 }
@@ -456,6 +460,18 @@ export class GetCollectionParams {
     example: '0x0000000000000000000000000',
   })
   address: string;
+}
+
+export class EditMintingNftBody {
+  @IsString()
+  @IsOptional()
+  @Length(1, 100)
+  @ApiProperty({
+    example: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    description: 'The transaction hash associated with the Minting NFT',
+    required: false,
+  })
+  txHash: string;
 }
 
 export class GetNftParams {

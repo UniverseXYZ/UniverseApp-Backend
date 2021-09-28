@@ -13,11 +13,13 @@ import { MintingCollection } from './domain/minting-collection.entity';
 import { User } from '../users/user.entity';
 import { UsersModule } from '../users/users.module';
 import { RewardTierNft } from '../auction/domain/reward-tier-nft.entity';
+import { MintingNft } from './domain/minting-nft.entity';
+import { NftCronService } from './entrypoints/cron.service';
 
 @Module({
-  providers: [NftService],
+  providers: [NftService, NftCronService],
   imports: [
-    TypeOrmModule.forFeature([Nft, NftCollection, SavedNft, MintingCollection, User, RewardTierNft]),
+    TypeOrmModule.forFeature([Nft, NftCollection, SavedNft, MintingCollection, User, RewardTierNft, MintingNft]),
     FileProcessingModule,
     FileStorageModule,
     AppConfigModule,
