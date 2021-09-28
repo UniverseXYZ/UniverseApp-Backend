@@ -63,6 +63,13 @@ Few steps are needed in order to be able to debug:
 
 _The important variables are `"port": 9229` and ` "address": "0.0.0.0",`_
 
+- Open ```package.json``` and add this:
+
+```
+"start:debug": "nest start --debug 0.0.0.0:9229 --watch"
+```
+
+
 - Open .dev.command.sh and replace the last line:
 
 ```
