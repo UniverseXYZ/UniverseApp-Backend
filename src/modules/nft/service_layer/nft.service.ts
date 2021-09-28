@@ -12,7 +12,7 @@ import { FileSystemService } from '../../file-system/file-system.service';
 import { ArweaveService } from '../../file-storage/arweave.service';
 import { SavedNft } from '../domain/saved-nft.entity';
 import { classToPlain, plainToClass } from 'class-transformer';
-import { CreateCollectionBody, EditCollectionBody, GetNftTokenUriBody } from '../entrypoints/dto';
+import { CreateCollectionBody, EditCollectionBody, EditMintingNftBody, GetNftTokenUriBody } from '../entrypoints/dto';
 import { validateOrReject } from 'class-validator';
 import { ProcessedFile } from '../../file-processing/model/ProcessedFile';
 import { UploadResult } from '../../file-storage/model/UploadResult';
@@ -26,6 +26,7 @@ import { UsersService } from 'src/modules/users/users.service';
 import { NftCollectionNotFoundException } from './exceptions/NftCollectionNotFoundException';
 import { NftCollectionBadOwnerException } from './exceptions/NftCollectionBadOwnerException';
 import { RewardTierNft } from 'src/modules/auction/domain/reward-tier-nft.entity';
+import { MintingNft } from '../domain/minting-nft.entity';
 
 type SaveNftParams = {
   userId: number;
@@ -79,6 +80,8 @@ export class NftService {
     private mintingCollectionRepository: Repository<MintingCollection>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(MintingNft)
+    private mintingNftRepository: Repository<MintingNft>,
     @InjectRepository(RewardTierNft)
     private rewardTierNftRepository: Repository<RewardTierNft>,
     private usersService: UsersService,
@@ -100,76 +103,17 @@ export class NftService {
       collectionId: params.collectionId,
     });
     const dbSavedNft = await this.savedNftRepository.save(savedNft);
-    const serialized = {
-      id: dbSavedNft.id,
-      collection: null,
-      name: dbSavedNft.name,
-      description: dbSavedNft.description,
-      properties: dbSavedNft.properties,
-      royalties: dbSavedNft.royalties,
-      numberOfEditions: dbSavedNft.numberOfEditions,
-      createdAt: dbSavedNft.createdAt,
-    };
-
-    if (typeof params.collectionId === 'number') {
-      const collection = await this.nftCollectionRepository.findOne({ id: params.collectionId });
-
-      if (collection) {
-        serialized.collection = {
-          id: collection.id,
-          name: collection.name,
-          symbol: collection.symbol,
-          address: collection.address,
-          coverUrl: collection.coverUrl,
-        };
-      }
-    }
+    const collection = await this.nftCollectionRepository.findOne({ id: params.collectionId });
 
     return {
-      savedNft: { ...serialized },
+      savedNft: {
+        ...classToPlain(dbSavedNft),
+        collection: classToPlain(collection),
+      },
     };
   }
 
-  // public async saveCollectionForLater(params: SaveCollectionParams) {
-  //   const collectibles = params.collectibles.reduce((acc, collectible) => {
-  //     return [...acc, ...this.createCollectible(collectible)];
-  //   }, []);
-  //   const collection = this.nftCollectionRepository.create({
-  //     name: params.name,
-  //     symbol: params.symbol,
-  //     userId: params.userId,
-  //     collectibles,
-  //   });
-  //
-  //   const dbCollection = await this.nftCollectionRepository.save(collection);
-  //
-  //   return {
-  //     id: dbCollection.id,
-  //     name: dbCollection.name,
-  //     symbol: dbCollection.symbol,
-  //     collectibles: dbCollection.collectibles.map((collectible) => ({
-  //       id: collectible.id,
-  //       name: collectible.name,
-  //       description: collectible.description,
-  //       properties: collectible.properties,
-  //       createdAt: collectible.createdAt,
-  //     })),
-  //     createdAt: dbCollection.createdAt,
-  //   };
-  // }
-
-  private createCollectible(collectible: SaveCollectibleParams) {
-    const nfts = [];
-    const idxs = [...Array(collectible.numberOfEditions).keys()];
-
-    for (const idx of idxs) {
-      nfts.push(this.nftRepository.create(collectible));
-    }
-
-    return nfts;
-  }
-
-  public async uploadMediaFile(id: number, file: Express.Multer.File) {
+  public async uploadSavedNftFile(id: number, userId: number, file: Express.Multer.File) {
     try {
       const nft = await this.savedNftRepository.findOne({ where: { id } });
 
@@ -177,15 +121,19 @@ export class NftService {
         throw new NftNotFoundException();
       }
 
+      if (nft.userId !== userId) {
+        throw new SavedNftOwnerException();
+      }
+
       const { optimisedFile, downsizedFile } = await this.processUploadedFile(file);
-
-      nft.url = file.filename;
-      nft.optimized_url = optimisedFile.fullFilename();
-      nft.thumbnail_url = downsizedFile.fullFilename();
-      nft.original_url = file.filename;
+      nft.url = this.s3Service.getUrl(file.filename);
+      nft.optimizedUrl = this.s3Service.getUrl(optimisedFile.fullFilename());
+      nft.thumbnailUrl = this.s3Service.getUrl(downsizedFile.fullFilename());
+      nft.originalUrl = this.s3Service.getUrl(file.filename);
       nft.artworkType = file.mimetype.split('/')[1];
+      const dbSavedNft = await this.savedNftRepository.save(nft);
 
-      return await this.savedNftRepository.save(nft);
+      return classToPlain(dbSavedNft);
     } catch (error) {
       this.fileSystemService.removeFile(file.path).catch(() => {});
       throw error;
@@ -209,7 +157,7 @@ export class NftService {
     return { optimisedFile, downsizedFile };
   }
 
-  public async getTokenURI(id: number) {
+  public async getSavedNftTokenURI(id: number) {
     const savedNft = await this.savedNftRepository.findOne({ where: { id } });
 
     if (!savedNft) {
@@ -217,13 +165,50 @@ export class NftService {
     }
 
     const idxs = [...Array(savedNft.numberOfEditions).keys()];
-    const tokenUri = await this.generateTokenUrisForSavedNft(savedNft);
+    const tokenUri = await this.generateTokenUri({
+      name: savedNft.name,
+      description: savedNft.description,
+      attributes: savedNft.properties,
+      imageUrl: savedNft.url,
+      imageOriginalUrl: savedNft.originalUrl,
+      imagePreviewUrl: savedNft.optimizedUrl,
+      imageThumbnailUrl: savedNft.thumbnailUrl,
+      royalties: savedNft.royalties,
+    });
     savedNft.tokenUri = tokenUri;
     await this.savedNftRepository.save(savedNft);
-    return idxs.map(() => tokenUri);
+    const mintingNft = await this.createMintingNftFromSavedNft(savedNft);
+
+    return {
+      mintingNft: {
+        id: mintingNft.id,
+      },
+      tokenUris: idxs.map(() => tokenUri),
+    };
   }
 
-  public async getNftTokenURI(body, file: Express.Multer.File) {
+  private async createMintingNftFromSavedNft(savedNft: SavedNft) {
+    let mintingNft = this.mintingNftRepository.create();
+    mintingNft.collectionId = savedNft.collectionId;
+    mintingNft.userId = savedNft.userId;
+    mintingNft.savedNftId = savedNft.id;
+    mintingNft.numberOfEditions = savedNft.numberOfEditions;
+    mintingNft.tokenUri = savedNft.tokenUri;
+    mintingNft.name = savedNft.name;
+    mintingNft.description = savedNft.description;
+    mintingNft.artworkType = savedNft.artworkType;
+    mintingNft.url = savedNft.name;
+    mintingNft.originalUrl = savedNft.originalUrl;
+    mintingNft.optimizedUrl = savedNft.optimizedUrl;
+    mintingNft.thumbnailUrl = savedNft.thumbnailUrl;
+    mintingNft.properties = savedNft.properties;
+    mintingNft.royalties = savedNft.royalties;
+
+    mintingNft = await this.mintingNftRepository.save(mintingNft);
+    return mintingNft;
+  }
+
+  public async getNftTokenURI(userId: number, body, file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException({
         error: 'NoFileAttached',
@@ -235,8 +220,38 @@ export class NftService {
 
     const { optimisedFile, downsizedFile } = await this.processUploadedFile(file);
     const idxs = [...Array(bodyClass.numberOfEditions).keys()];
-    const tokenUri = await this.generateTokenUriForNftBody(bodyClass, file, optimisedFile, downsizedFile);
-    return idxs.map(() => tokenUri);
+    const tokenUri = await this.generateTokenUri({
+      name: bodyClass.name,
+      description: bodyClass.description,
+      royalties: bodyClass.royalties,
+      attributes: bodyClass.properties,
+      imageUrl: this.s3Service.getUrl(file.filename),
+      imagePreviewUrl: this.s3Service.getUrl(optimisedFile.fullFilename()),
+      imageThumbnailUrl: this.s3Service.getUrl(downsizedFile.fullFilename()),
+      imageOriginalUrl: this.s3Service.getUrl(file.filename),
+    });
+    let mintingNft = this.mintingNftRepository.create();
+    mintingNft.userId = userId;
+    mintingNft.numberOfEditions = bodyClass.numberOfEditions;
+    mintingNft.tokenUri = tokenUri;
+    mintingNft.name = bodyClass.name;
+    mintingNft.description = bodyClass.description;
+    mintingNft.artworkType = this.getExtensionFromUrl(this.s3Service.getUrl(file.filename));
+    mintingNft.url = this.s3Service.getUrl(file.filename);
+    mintingNft.originalUrl = this.s3Service.getUrl(file.filename);
+    mintingNft.optimizedUrl = this.s3Service.getUrl(optimisedFile.fullFilename());
+    mintingNft.thumbnailUrl = this.s3Service.getUrl(downsizedFile.fullFilename());
+    mintingNft.properties = bodyClass.properties;
+    mintingNft.royalties = bodyClass.royalties;
+
+    mintingNft = await this.mintingNftRepository.save(mintingNft);
+
+    return {
+      mintingNft: {
+        id: mintingNft.id,
+      },
+      tokenUris: idxs.map(() => tokenUri),
+    };
   }
 
   public async createCollection(userId: number, body: any, file: Express.Multer.File) {
@@ -335,27 +350,6 @@ export class NftService {
     return classToPlain(collection);
   }
 
-  private async generateTokenUriForNftBody(
-    bodyClass: GetNftTokenUriBody,
-    file: Express.Multer.File,
-    optimisedFile: ProcessedFile,
-    downsizedFile: ProcessedFile,
-  ) {
-    return this.arweaveService.store({
-      name: bodyClass.name,
-      description: bodyClass.description,
-      image_url: this.s3Service.getUrl(file.filename),
-      image_preview_url: this.s3Service.getUrl(optimisedFile.fullFilename()),
-      image_thumbnail_url: this.s3Service.getUrl(downsizedFile.fullFilename()),
-      image_original_url: this.s3Service.getUrl(file.filename),
-      royalties: bodyClass.royalties,
-      attributes: bodyClass.properties?.map((propertyItem) => ({
-        trait_type: Object.keys(propertyItem)[0],
-        value: Object.values(propertyItem)[0],
-      })),
-    });
-  }
-
   private async validateReqBody(body) {
     try {
       await validateOrReject(body, { validationError: { target: false } });
@@ -400,6 +394,18 @@ export class NftService {
 
     const updatedEntity = await this.savedNftRepository.save(savedNft);
     return updatedEntity;
+  }
+
+  public async editMintingNft(id: number, userId: number, body: EditMintingNftBody) {
+    const mintingNft = await this.mintingNftRepository.findOne({ where: { id, userId } });
+    if (!mintingNft) throw new NftNotFoundException();
+
+    mintingNft.txHash = body.txHash;
+    mintingNft.txStatus = 'pending';
+    if (mintingNft.savedNftId) {
+      await this.savedNftRepository.delete({ id: mintingNft.savedNftId });
+    }
+    await this.mintingNftRepository.save(mintingNft);
   }
 
   public getNftPage = async (collectionAddress: string, tokenId: number, moreNftsCount = 4) => {
@@ -604,20 +610,42 @@ export class NftService {
     };
   }
 
+  public async getMyNftsPage(userId: number) {
+    const mintingNfts = await this.mintingNftRepository.find({
+      where: { userId, txStatus: 'pending' },
+      order: { createdAt: 'DESC' },
+    });
+    const mintedNfts = await this.reduceNftsByEdition(userId);
+
+    return {
+      nfts: mintedNfts.nfts,
+      mintingNfts: mintingNfts.map((nft) => classToPlain(nft)),
+    };
+  }
+
   private groupNftsByEdition(nfts: Nft[]): Record<string, Nft[]> {
     return nfts.reduce((acc, nft) => ({ ...acc, [nft.editionUUID]: [...(acc[nft.editionUUID] || []), nft] }), {});
   }
 
-  private async generateTokenUrisForSavedNft(savedNft: SavedNft) {
+  private async generateTokenUri({
+    name,
+    description,
+    imageUrl,
+    imagePreviewUrl,
+    imageThumbnailUrl,
+    imageOriginalUrl,
+    royalties,
+    attributes,
+  }) {
     const tokenUri: string = await this.arweaveService.store({
-      name: savedNft.name,
-      description: savedNft.description,
-      image_url: this.s3Service.getUrl(savedNft.url),
-      image_preview_url: this.s3Service.getUrl(savedNft.optimized_url),
-      image_thumbnail_url: this.s3Service.getUrl(savedNft.thumbnail_url),
-      image_original_url: this.s3Service.getUrl(savedNft.original_url),
-      royalties: savedNft.royalties,
-      attributes: savedNft.properties?.map((propertyItem) => ({
+      name,
+      description,
+      image_url: imageUrl,
+      image_preview_url: imagePreviewUrl,
+      image_thumbnail_url: imageThumbnailUrl,
+      image_original_url: imageOriginalUrl,
+      royalties: royalties,
+      attributes: attributes?.map((propertyItem) => ({
         trait_type: Object.keys(propertyItem)[0],
         value: Object.values(propertyItem)[0],
       })),
@@ -634,5 +662,13 @@ export class NftService {
           }
         : acc;
     }, {});
+  }
+
+  private getExtensionFromUrl(url: string) {
+    if (!url) {
+      return undefined;
+    }
+    const urlComponents = url.split(/[.]+/);
+    return urlComponents[urlComponents.length - 1];
   }
 }

@@ -8,8 +8,8 @@ import { User } from '../users/user.entity';
 import { EthEventsScraperService } from './service_layer/ethEventsScraper.service';
 import { MintedNftEvent } from './domain/mintNftEvent.entity';
 import { DeployCollectionEvent } from './domain/deploy-collection-event.entity';
-import { SavedNft } from '../nft/domain/saved-nft.entity';
 import { MintingCollection } from '../nft/domain/minting-collection.entity';
+import { MintingNft } from '../nft/domain/minting-nft.entity';
 
 @Module({
   imports: [
@@ -22,8 +22,8 @@ import { MintingCollection } from '../nft/domain/minting-collection.entity';
       User,
       MintedNftEvent,
       DeployCollectionEvent,
-      SavedNft,
       MintingCollection,
+      MintingNft,
     ]),
   ],
   providers: [EthEventsScraperService],

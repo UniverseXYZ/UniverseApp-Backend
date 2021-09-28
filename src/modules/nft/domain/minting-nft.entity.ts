@@ -1,10 +1,12 @@
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { Exclude } from 'class-transformer';
+
+type TxStatus = 'pending' | 'failed' | 'succeded';
 
 @Entity({
   schema: 'universe-backend',
 })
-export class SavedNft {
+export class MintingNft {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -12,8 +14,12 @@ export class SavedNft {
   @Column()
   userId: number;
 
-  @Column()
+  @Column({ nullable: true })
   collectionId: number;
+
+  @Exclude()
+  @Column({ nullable: true })
+  savedNftId: number;
 
   @Column({ nullable: true })
   tokenUri: string;
@@ -52,12 +58,15 @@ export class SavedNft {
   @Column({ type: 'jsonb', nullable: true })
   royalties?: any;
 
+  @Column({ nullable: true })
+  txHash?: string;
+
+  @Column({ nullable: true, type: 'character' })
+  txStatus?: TxStatus;
+
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
-
-  @DeleteDateColumn()
-  deletedAt: Date;
 }
