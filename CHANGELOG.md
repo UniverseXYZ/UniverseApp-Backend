@@ -1,3 +1,10 @@
+# [1.19.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.18.0...v1.19.0) (2021-09-28)
+
+
+### Features
+
+* separate Saved NFTs from Minting NFTs ([#49](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/49)) ([aa754a7](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/aa754a7bae71abbf4a376c3270938e9dc7c96cb9))
+
 # [1.18.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.17.2...v1.18.0) (2021-09-28)
 
 
