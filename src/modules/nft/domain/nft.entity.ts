@@ -34,6 +34,9 @@ export class Nft {
   editionUUID: string;
 
   @Column({ nullable: true })
+  creator: string;
+
+  @Column({ nullable: true })
   name: string;
 
   @Column({ nullable: true })
