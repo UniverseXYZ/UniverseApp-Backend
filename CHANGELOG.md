@@ -1,3 +1,10 @@
+# [1.20.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.19.0...v1.20.0) (2021-09-29)
+
+
+### Features
+
+* add creator address to NFTs ([#52](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/52)) ([8e2b85e](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/8e2b85eb6c51ec162fc7e729e77c085388f4bfdf))
+
 # [1.19.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.18.0...v1.19.0) (2021-09-28)
 
 
