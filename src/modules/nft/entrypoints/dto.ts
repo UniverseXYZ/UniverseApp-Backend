@@ -471,6 +471,7 @@ export class GetCollectionParams {
   })
   address: string;
 }
+
 export class EditMintingNftBody {
   @IsString()
   @IsOptional()
@@ -496,10 +497,4 @@ export class GetNftParams {
     example: '1',
   })
   tokenId: number;
-  @IsString()
-  @ApiProperty({
-    description: 'The address of the Collection',
-    example: '0x0000000000000000000000000',
-  })
-  collectionAddress: string;
 }
