@@ -12,7 +12,13 @@ import { FileSystemService } from '../../file-system/file-system.service';
 import { ArweaveService } from '../../file-storage/arweave.service';
 import { SavedNft } from '../domain/saved-nft.entity';
 import { classToPlain, plainToClass } from 'class-transformer';
-import { CreateCollectionBody, EditCollectionBody, EditMintingCollectionBody, EditMintingNftBody, GetNftTokenUriBody } from '../entrypoints/dto';
+import {
+  CreateCollectionBody,
+  EditCollectionBody,
+  EditMintingCollectionBody,
+  EditMintingNftBody,
+  GetNftTokenUriBody,
+} from '../entrypoints/dto';
 import { validateOrReject } from 'class-validator';
 import { ProcessedFile } from '../../file-processing/model/ProcessedFile';
 import { UploadResult } from '../../file-storage/model/UploadResult';

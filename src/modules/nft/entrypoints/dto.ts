@@ -471,7 +471,6 @@ export class GetCollectionParams {
   })
   address: string;
 }
-
 export class EditMintingNftBody {
   @IsString()
   @IsOptional()
