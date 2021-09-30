@@ -530,45 +530,6 @@ export class NftService {
     return mappedNft;
   };
 
-  private mapNftWithUserInfo = (nft: any, userKey: string) => {
-    const mappedNft = {
-      nft: {
-        id: nft.nft_id,
-        collectionId: nft.nft_collectionId,
-        source: nft.nft_source,
-        txHash: nft.nft_txHash,
-        editionUUID: nft.nft_editionUUID,
-        name: nft.nft_name,
-        description: nft.nft_description,
-        tokenId: nft.nft_tokenId,
-        artworkType: nft.nft_artworkType,
-        url: nft.nft_url,
-        optimized_url: nft.nft_optimized_url,
-        thumbnail_url: nft.nft_thumbnail_url,
-        original_url: nft.nft_original_url,
-        tokenUri: nft.nft_tokenUri,
-        properties: nft.nft_properties,
-        royalties: nft.nft_royalties,
-        numberOfEditions: nft.nft_numberOfEditions,
-        refreshed: nft.nft_refreshed,
-        createdAt: nft.nft_createdAt,
-        updatedAt: nft.nft_updatedAt,
-      },
-    };
-    mappedNft[userKey] = {
-      id: nft.user_id,
-      address: nft.user_address,
-      profileImageUrl: `${this.config.values.aws.s3BaseUrl}/${nft.user_profileImageName}`,
-      logoImageName: nft.user_logoImageName,
-      displayName: nft.user_displayName,
-      universePageUrl: nft.user_universePageUrl,
-      about: nft.user_about,
-      instagramUser: nft.user_instagramUser,
-      twitterUser: nft.user_twitterUser,
-    };
-    return mappedNft;
-  };
-
   /**
    * This function returns an array of NFTs grouped by edition.
    * The NFTs are reduced to a single object, but differentiating attributes are reduced into a new one (eg. tokenIds)
@@ -790,6 +751,16 @@ export class NftService {
     const uniqueCollectionIds = new Set(collectionIds);
     const collections = await this.nftCollectionRepository.find({ where: { id: In(Array.from(uniqueCollectionIds)) } });
     const idCollectionMap = collections.reduce((acc, collection) => ({ ...acc, [collection.id]: collection }), {});
+
+    const additionalData = {
+      collection: false,
+      owner: false,
+      creator: true,
+    };
+
+    const prefetchData = { owner: null, creator: null };
+
+    const mintedNfts = await this.reduceUserNftsByEdition(userId, additionalData, prefetchData);
 
     return {
       mintingNfts: mintingNfts.map((nft) => ({
