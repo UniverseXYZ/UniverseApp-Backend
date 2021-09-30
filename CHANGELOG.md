@@ -1,3 +1,10 @@
+## [1.21.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.21.0...v1.21.1) (2021-09-30)
+
+
+### Bug Fixes
+
+* separate endpoint to get pending NFTs ([#54](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/54)) ([78a302d](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/78a302da0828c3c643e5dabdf2b15ff45796f681))
+
 # [1.21.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.20.0...v1.21.0) (2021-09-30)
 
 
