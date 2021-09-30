@@ -442,7 +442,7 @@ export class NftService {
         .getRawMany(),
     ]);
 
-    const mappedNfts = moreFromCollection.map((nft) => this.mapNftWithUserInfo(nft, 'owner'));
+    const mappedNfts = moreFromCollection.map((nft) => this.mapNftWithUserInfo(nft, ['owner', 'owner']));
 
     return {
       nft: classToPlain(nft),
@@ -453,7 +453,7 @@ export class NftService {
     };
   };
 
-  private mapNftWithUserInfo = (nft: any, userKey: string) => {
+  private mapNftWithUserInfo = (nft: any, kvp1?: [string, string], kvp2?: [string, string]) => {
     const mappedNft = {
       nft: {
         id: nft.nft_id,
@@ -478,17 +478,40 @@ export class NftService {
         updatedAt: nft.nft_updatedAt,
       },
     };
-    mappedNft[userKey] = {
-      id: nft.user_id,
-      address: nft.user_address,
-      profileImageUrl: `${this.config.values.aws.s3BaseUrl}/${nft.user_profileImageName}`,
-      logoImageName: nft.user_logoImageName,
-      displayName: nft.user_displayName,
-      universePageUrl: nft.user_universePageUrl,
-      about: nft.user_about,
-      instagramUser: nft.user_instagramUser,
-      twitterUser: nft.user_twitterUser,
-    };
+
+    if (kvp1 && kvp1.length) {
+      const userKey = kvp1[0];
+      const userValue = kvp1[1];
+
+      mappedNft[userKey] = {
+        id: nft[`${userValue}_id`],
+        address: nft[`${userValue}_address`],
+        profileImageUrl: `${this.config.values.aws.s3BaseUrl}/${nft[`${userValue}_profileImageName`]}`,
+        logoImageName: nft[`${userValue}_logoImageName`],
+        displayName: nft[`${userValue}_displayName`],
+        universePageUrl: nft[`${userValue}_universePageUrl`],
+        about: nft[`${userValue}_about`],
+        instagramUser: nft[`${userValue}_instagramUser`],
+        twitterUser: nft[`${userValue}_twitterUser`],
+      };
+    }
+
+    if (kvp2 && kvp2.length) {
+      const userKey = kvp2[0];
+      const userValue = kvp2[1];
+
+      mappedNft[userKey] = {
+        id: nft[`${userValue}_id`],
+        address: nft[`${userValue}_address`],
+        profileImageUrl: `${this.config.values.aws.s3BaseUrl}/${nft[`${userValue}_profileImageName`]}`,
+        logoImageName: nft[`${userValue}_logoImageName`],
+        displayName: nft[`${userValue}_displayName`],
+        universePageUrl: nft[`${userValue}_universePageUrl`],
+        about: nft[`${userValue}_about`],
+        instagramUser: nft[`${userValue}_instagramUser`],
+        twitterUser: nft[`${userValue}_twitterUser`],
+      };
+    }
     return mappedNft;
   };
 
@@ -535,11 +558,47 @@ export class NftService {
    * This function returns an array of NFTs grouped by edition.
    * The NFTs are reduced to a single object, but differentiating attributes are reduced into a new one (eg. tokenIds)
    */
-  private async reduceNftsByEdition(userId: number) {
-    const [nfts, owner] = await Promise.all([
-      this.nftRepository.find({ where: { userId: userId }, order: { createdAt: 'DESC' } }),
-      this.userRepository.findOne({ where: { id: userId } }),
-    ]);
+  private async reduceUserNftsByEdition(userId: number, attachOwner: boolean, attachCreator: boolean) {
+    let mappedNfts = [];
+    if (attachCreator && attachOwner) {
+      const nfts = await this.nftRepository
+        .createQueryBuilder('nft')
+        .where('nft.userId = :userId', { userId: userId })
+        .leftJoinAndSelect(User, 'owner', 'owner.id = nft.userId')
+        .leftJoinAndSelect(User, 'creator', 'creator.id = nft.userId')
+        .orderBy('nft.createdAt', 'DESC')
+        .getRawMany();
+
+      mappedNfts = nfts.map((nft) => this.mapNftWithUserInfo(nft, ['owner', 'owner'], ['creator', 'creator']));
+    } else if (attachCreator) {
+      const nfts = await this.nftRepository
+        .createQueryBuilder('nft')
+        .where('nft.userId = :userId', { userId: userId })
+        .leftJoinAndSelect(User, 'creator', 'creator.id = nft.userId')
+        .orderBy('nft.createdAt', 'DESC')
+        .getRawMany();
+
+      mappedNfts = nfts.map((nft) => this.mapNftWithUserInfo(nft, ['creator', 'creator']));
+    } else if (attachOwner) {
+      const nfts = await this.nftRepository
+        .createQueryBuilder('nft')
+        .where('nft.userId = :userId', { userId: userId })
+        .leftJoinAndSelect(User, 'owner', 'owner.id = nft.userId')
+        .orderBy('nft.createdAt', 'DESC')
+        .getRawMany();
+
+      mappedNfts = nfts.map((nft) => this.mapNftWithUserInfo(nft, ['owner', 'owner']));
+    } else {
+      const nfts = await this.nftRepository
+        .createQueryBuilder('nft')
+        .where('nft.userId != :edition', { userId: userId })
+        .orderBy('nft.createdAt', 'DESC')
+        .getRawMany();
+
+      mappedNfts = nfts;
+    }
+
+    const nfts = mappedNfts.map((map) => map.nft);
 
     const editionNFTsMap = this.groupNftsByEdition(nfts);
     const collectionIds = Object.keys(nfts.reduce((acc, nft) => ({ ...acc, [nft.collectionId]: true }), {}));
@@ -554,19 +613,41 @@ export class NftService {
       nfts: Object.values(editionNFTsMap).map((nfts) => {
         const tokenIds = nfts.map((nft) => nft.tokenId);
         const collection = collectionsMap[nfts[0].collectionId] && classToPlain(collectionsMap[nfts[0].collectionId]);
-
-        return {
+        const returnObj = {
           ...classToPlain(nfts[0]),
           collection,
           tokenIds,
-          owner: classToPlain(owner),
+          creators: [],
+          owners: [],
         };
+
+        if (attachCreator) {
+          const creators = tokenIds.map((tokenId) => {
+            const creator = mappedNfts.filter((mapped) => mapped.nft.tokenId === tokenId)[0].creator;
+            const creatorObj = {};
+            creatorObj[tokenId] = creator;
+            return creatorObj;
+          });
+          returnObj.creators = creators;
+        }
+
+        if (attachOwner) {
+          const owners = tokenIds.map((tokenId) => {
+            const owner = mappedNfts.filter((mapped) => mapped.nft.tokenId === tokenId)[0].creator;
+            const ownerObj = {};
+            ownerObj[tokenId] = owner;
+            return ownerObj;
+          });
+          returnObj.owners = owners;
+        }
+
+        return returnObj;
       }),
     };
   }
 
   public async getMyNfts(userId: number) {
-    return this.reduceNftsByEdition(userId);
+    return this.reduceUserNftsByEdition(userId, false, true);
   }
 
   public async getUserNfts(username: string) {
@@ -576,7 +657,7 @@ export class NftService {
       throw new UserNotFoundException();
     }
 
-    return this.reduceNftsByEdition(user.id);
+    return this.reduceUserNftsByEdition(user.id, true, true);
   }
 
   public async getMyNftsAvailability(userId: number) {
