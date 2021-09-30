@@ -68,6 +68,21 @@ type SaveCollectionParams = {
   collectibles: SaveCollectibleParams[];
 };
 
+type EditMintingCollectionParams = {
+  txHash?: string;
+};
+
+type NftAdditionalData = {
+  collection: boolean;
+  owner: boolean;
+  creator: boolean;
+};
+
+type NftPrefetchData = {
+  owner?: User;
+  creator?: User;
+};
+
 @Injectable()
 export class NftService {
   private logger = new Logger(NftService.name);
@@ -558,49 +573,41 @@ export class NftService {
    * This function returns an array of NFTs grouped by edition.
    * The NFTs are reduced to a single object, but differentiating attributes are reduced into a new one (eg. tokenIds)
    */
-  private async reduceUserNftsByEdition(userId: number, attachOwner: boolean, attachCreator: boolean) {
-    let mappedNfts = [];
-    if (attachCreator && attachOwner) {
-      //TODO: We are missing the creator id/address currently
-      const nfts = await this.nftRepository
+  private async reduceUserNftsByEdition(
+    userId: number,
+    additionalData: NftAdditionalData,
+    prefetchData: NftPrefetchData,
+  ) {
+    let nfts = [];
+    if (additionalData.creator && !prefetchData.creator && additionalData.owner && !prefetchData.owner) {
+      nfts = await this.nftRepository
+        .createQueryBuilder('nft')
+        .leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.id = nft.userId')
+        .leftJoinAndMapOne('nft.creator', User, 'creator', 'creator.address = nft.creator')
+        .where('nft.userId = :userId', { userId: userId })
+        .orderBy('nft.createdAt', 'DESC')
+        .getMany();
+    } else if (additionalData.creator && !prefetchData.creator) {
+      nfts = await this.nftRepository
         .createQueryBuilder('nft')
         .where('nft.userId = :userId', { userId: userId })
-        .leftJoinAndSelect(User, 'owner', 'owner.id = nft.userId')
-        .leftJoinAndSelect(User, 'creator', 'creator.id = nft.userId')
+        .leftJoinAndMapOne('nft.creator', User, 'user', 'user.address = nft.creator')
         .orderBy('nft.createdAt', 'DESC')
-        .getRawMany();
-
-      mappedNfts = nfts.map((nft) => this.mapNftWithUserInfo(nft, ['owner', 'owner'], ['creator', 'creator']));
-    } else if (attachCreator) {
-      //TODO: We are missing the creator id/address currently
-      const nfts = await this.nftRepository
+        .getMany();
+    } else if (additionalData.owner && !prefetchData.owner) {
+      nfts = await this.nftRepository
         .createQueryBuilder('nft')
         .where('nft.userId = :userId', { userId: userId })
-        .leftJoinAndSelect(User, 'creator', 'creator.id = nft.userId')
+        .leftJoinAndMapOne('nft.owner', User, 'user', 'user.id = nft.userId')
         .orderBy('nft.createdAt', 'DESC')
         .getRawMany();
-
-      mappedNfts = nfts.map((nft) => this.mapNftWithUserInfo(nft, ['creator', 'creator']));
-    } else if (attachOwner) {
-      const nfts = await this.nftRepository
-        .createQueryBuilder('nft')
-        .where('nft.userId = :userId', { userId: userId })
-        .leftJoinAndSelect(User, 'owner', 'owner.id = nft.userId')
-        .orderBy('nft.createdAt', 'DESC')
-        .getRawMany();
-
-      mappedNfts = nfts.map((nft) => this.mapNftWithUserInfo(nft, ['owner', 'owner']));
     } else {
-      const nfts = await this.nftRepository
+      nfts = await this.nftRepository
         .createQueryBuilder('nft')
         .where('nft.userId != :edition', { userId: userId })
         .orderBy('nft.createdAt', 'DESC')
-        .getRawMany();
-
-      mappedNfts = nfts;
+        .getMany();
     }
-
-    const nfts = mappedNfts.map((map) => map.nft);
 
     const editionNFTsMap = this.groupNftsByEdition(nfts);
     const collectionIds = Object.keys(nfts.reduce((acc, nft) => ({ ...acc, [nft.collectionId]: true }), {}));
@@ -619,29 +626,7 @@ export class NftService {
           ...classToPlain(nfts[0]),
           collection,
           tokenIds,
-          creators: [],
-          owners: [],
         };
-
-        if (attachCreator) {
-          const creators = tokenIds.map((tokenId) => {
-            const creator = mappedNfts.filter((mapped) => mapped.nft.tokenId === tokenId)[0].creator;
-            const creatorObj = {};
-            creatorObj[tokenId] = creator;
-            return creatorObj;
-          });
-          returnObj.creators = creators;
-        }
-
-        if (attachOwner) {
-          const owners = tokenIds.map((tokenId) => {
-            const owner = mappedNfts.filter((mapped) => mapped.nft.tokenId === tokenId)[0].creator;
-            const ownerObj = {};
-            ownerObj[tokenId] = owner;
-            return ownerObj;
-          });
-          returnObj.owners = owners;
-        }
 
         return returnObj;
       }),
@@ -649,7 +634,15 @@ export class NftService {
   }
 
   public async getMyNfts(userId: number) {
-    return this.reduceUserNftsByEdition(userId, false, true);
+    const additionalData = {
+      collection: false,
+      owner: false,
+      creator: true,
+    };
+
+    const prefetchData = { owner: null, creator: null };
+
+    return await this.reduceUserNftsByEdition(userId, additionalData, prefetchData);
   }
 
   public async getUserNfts(username: string) {
@@ -659,7 +652,15 @@ export class NftService {
       throw new UserNotFoundException();
     }
 
-    return this.reduceUserNftsByEdition(user.id, true, true);
+    const additionalData = {
+      collection: false,
+      owner: true,
+      creator: true,
+    };
+
+    const prefetchData = { owner: user, creator: null };
+
+    return await this.reduceUserNftsByEdition(user.id, additionalData, prefetchData);
   }
 
   public async getMyNftsAvailability(userId: number) {
@@ -721,12 +722,11 @@ export class NftService {
       throw new NftCollectionNotFoundException();
     }
 
-    //TODO: We are missing the creator id/address currently
     let mappedNfts = await this.nftRepository
       .createQueryBuilder('nft')
       .where('nft.collectionId = :collectionId', { collectionId: collection.id })
       .leftJoinAndSelect(User, 'owner', 'owner.id = nft.userId')
-      .leftJoinAndSelect(User, 'creator', 'creator.id = nft.userId')
+      .leftJoinAndSelect(User, 'creator', 'creator.address = nft.creator')
       .orderBy('nft.createdAt', 'DESC')
       .getRawMany();
 
