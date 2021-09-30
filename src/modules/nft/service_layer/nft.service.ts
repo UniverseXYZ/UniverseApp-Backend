@@ -478,7 +478,6 @@ export class NftService {
         updatedAt: nft.nft_updatedAt,
       },
     };
-    console.log(nft);
     mappedNft[userKey] = {
       id: nft.user_id,
       address: nft.user_address,
