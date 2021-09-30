@@ -2,6 +2,7 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  isNumber,
   IsNumber,
   IsNumberString,
   IsObject,
@@ -271,6 +272,15 @@ export class GetNftTokenUriBody {
   })
   @Transform(({ value }) => value && JSON.parse(value))
   royalties?: SaveNftRoyalty[];
+
+  @IsNumber()
+  @ApiProperty({
+    example: 1,
+    description: 'The collection id',
+    required: true,
+  })
+  @Transform(({ value }) => value && parseInt(value))
+  collectionId: number;
 }
 
 export class GetMyNftsResponse {
