@@ -435,7 +435,7 @@ export class NftService {
         .createQueryBuilder('nft')
         .where('nft.editionUUID != :edition', { edition: nft.editionUUID })
         .andWhere('nft.collectionId = :collectionId', { collectionId: collection.id })
-        .leftJoinAndSelect(User, 'user', 'user.id = nft.userId')
+        .leftJoinAndSelect(User, 'owner', 'owner.id = nft.userId')
         .distinctOn(['nft.editionUUID'])
         .take(moreNftsCount)
         .orderBy('nft.editionUUID')
