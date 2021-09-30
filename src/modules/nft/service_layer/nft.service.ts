@@ -422,7 +422,7 @@ export class NftService {
     if (!collection) {
       throw new NftCollectionNotFoundException();
     }
-    const nft = await this.nftRepository.findOne({ where: { collectionId: collection.id, id: tokenId } });
+    const nft = await this.nftRepository.findOne({ where: { collectionId: collection.id, tokenId: tokenId } });
 
     if (!nft) {
       throw new NftNotFoundException();
