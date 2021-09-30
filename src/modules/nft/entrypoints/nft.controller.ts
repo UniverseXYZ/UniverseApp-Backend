@@ -275,6 +275,15 @@ export class NftController {
     return this.nftService.getMyNftsPage(req.user.sub);
   }
 
+  @Get('pages/my-collections/pending')
+  @UseGuards(JwtAuthGuard)
+  @ApiTags('nfts')
+  @ApiOperation({ summary: 'Get data to populate the pending section of My Collections page' })
+  @ApiBearerAuth()
+  async getMyCollectionsPending(@Req() req) {
+    return this.nftService.getMyCollectionsPendingPage(req.user.sub);
+  }
+
   @Get('pages/nft/:collectionAddress/:tokenId')
   @ApiTags('nfts')
   @ApiOperation({ summary: 'Get data for NFT page' })

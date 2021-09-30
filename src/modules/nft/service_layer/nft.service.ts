@@ -12,7 +12,7 @@ import { FileSystemService } from '../../file-system/file-system.service';
 import { ArweaveService } from '../../file-storage/arweave.service';
 import { SavedNft } from '../domain/saved-nft.entity';
 import { classToPlain, plainToClass } from 'class-transformer';
-import { CreateCollectionBody, EditCollectionBody, EditMintingNftBody, GetNftTokenUriBody } from '../entrypoints/dto';
+import { CreateCollectionBody, EditCollectionBody, EditMintingCollectionBody, EditMintingNftBody, GetNftTokenUriBody } from '../entrypoints/dto';
 import { validateOrReject } from 'class-validator';
 import { ProcessedFile } from '../../file-processing/model/ProcessedFile';
 import { UploadResult } from '../../file-storage/model/UploadResult';
@@ -60,10 +60,6 @@ type SaveCollectionParams = {
   symbol: string;
   userId: number;
   collectibles: SaveCollectibleParams[];
-};
-
-type EditMintingCollectionParams = {
-  txHash?: string;
 };
 
 @Injectable()
@@ -277,7 +273,7 @@ export class NftService {
     };
   }
 
-  public async editMintingCollection(userId: number, id: number, params: EditMintingCollectionParams) {
+  public async editMintingCollection(userId: number, id: number, data: EditMintingCollectionBody) {
     const mintingCollection = await this.mintingCollectionRepository.findOne({ where: { id } });
 
     if (!mintingCollection) {
@@ -288,11 +284,17 @@ export class NftService {
       throw new MintingCollectionBadOwnerException();
     }
 
-    const filteredAttributes = this.filterObjectAttributes(params, ['txHash']);
-    for (const attribute in filteredAttributes) {
-      mintingCollection[attribute] = filteredAttributes[attribute];
+    if (data.txHash) {
+      mintingCollection.txHash = data.txHash;
+      mintingCollection.txStatus = 'pending';
     }
+
     await this.mintingCollectionRepository.save(mintingCollection);
+
+    return {
+      id: mintingCollection.id,
+      txHash: mintingCollection.txHash,
+    };
   }
 
   public async changeCollectionCoverImage(id: number, userId: number, file: Express.Multer.File) {
@@ -651,6 +653,19 @@ export class NftService {
       })),
     });
     return tokenUri;
+  }
+
+  public async getMyCollectionsPendingPage(userId: number) {
+    const mintingCollections = await this.mintingCollectionRepository.find({
+      where: { userId, txStatus: 'pending' },
+      order: { createdAt: 'DESC' },
+    });
+
+    return {
+      collections: mintingCollections.map((mintingCollection) => classToPlain(mintingCollection)),
+      // TODO: Future object which will container pagination information
+      pagination: {},
+    };
   }
 
   private filterObjectAttributes(object: any, keys: string[]) {
