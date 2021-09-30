@@ -437,7 +437,7 @@ export class NftService {
         .andWhere('nft.collectionId = :collectionId', { collectionId: collection.id })
         .leftJoinAndSelect(User, 'owner', 'owner.id = nft.userId')
         .distinctOn(['nft.editionUUID'])
-        .take(moreNftsCount)
+        .limit(moreNftsCount)
         .orderBy('nft.editionUUID')
         .getRawMany(),
     ]);
@@ -561,6 +561,7 @@ export class NftService {
   private async reduceUserNftsByEdition(userId: number, attachOwner: boolean, attachCreator: boolean) {
     let mappedNfts = [];
     if (attachCreator && attachOwner) {
+      //TODO: We are missing the creator id/address currently
       const nfts = await this.nftRepository
         .createQueryBuilder('nft')
         .where('nft.userId = :userId', { userId: userId })
@@ -571,6 +572,7 @@ export class NftService {
 
       mappedNfts = nfts.map((nft) => this.mapNftWithUserInfo(nft, ['owner', 'owner'], ['creator', 'creator']));
     } else if (attachCreator) {
+      //TODO: We are missing the creator id/address currently
       const nfts = await this.nftRepository
         .createQueryBuilder('nft')
         .where('nft.userId = :userId', { userId: userId })
@@ -719,18 +721,49 @@ export class NftService {
       throw new NftCollectionNotFoundException();
     }
 
-    const nfts = await this.nftRepository.find({
-      where: { collectionId: collection.id },
-      order: { createdAt: 'DESC' },
-    });
+    //TODO: We are missing the creator id/address currently
+    let mappedNfts = await this.nftRepository
+      .createQueryBuilder('nft')
+      .where('nft.collectionId = :collectionId', { collectionId: collection.id })
+      .leftJoinAndSelect(User, 'owner', 'owner.id = nft.userId')
+      .leftJoinAndSelect(User, 'creator', 'creator.id = nft.userId')
+      .orderBy('nft.createdAt', 'DESC')
+      .getRawMany();
+
+    mappedNfts = mappedNfts.map((nft) => this.mapNftWithUserInfo(nft, ['owner', 'owner'], ['creator', 'creator']));
+    const nfts = mappedNfts.map((mapped) => mapped.nft);
     const editionNFTsMap: Record<string, Nft[]> = this.groupNftsByEdition(nfts);
     let formattedNfts = [];
 
     if (Object.keys(editionNFTsMap).length > 0) {
-      formattedNfts = Object.values(editionNFTsMap).map((nfts) => ({
-        ...classToPlain(nfts[0]),
-        tokenIds: nfts.map((nft) => nft.tokenId),
-      }));
+      formattedNfts = Object.values(editionNFTsMap).map((nfts) => {
+        const tokenIds = nfts.map((nft) => nft.tokenId);
+
+        const returnObj = {
+          ...classToPlain(nfts[0]),
+          tokenIds,
+          creators: [],
+          owners: [],
+        };
+
+        const creators = tokenIds.map((tokenId) => {
+          const creator = mappedNfts.filter((mapped) => mapped.nft.tokenId === tokenId)[0].creator;
+          const creatorObj = {};
+          creatorObj[tokenId] = creator;
+          return creatorObj;
+        });
+        returnObj.creators = creators;
+
+        const owners = tokenIds.map((tokenId) => {
+          const owner = mappedNfts.filter((mapped) => mapped.nft.tokenId === tokenId)[0].creator;
+          const ownerObj = {};
+          ownerObj[tokenId] = owner;
+          return ownerObj;
+        });
+        returnObj.owners = owners;
+
+        return returnObj;
+      });
     }
 
     return {
