@@ -227,6 +227,7 @@ export class NftService {
       imageOriginalUrl: this.s3Service.getUrl(file.filename),
     });
     let mintingNft = this.mintingNftRepository.create();
+    mintingNft.collectionId = bodyClass.collectionId;
     mintingNft.userId = userId;
     mintingNft.numberOfEditions = bodyClass.numberOfEditions;
     mintingNft.tokenUri = tokenUri;
@@ -613,15 +614,30 @@ export class NftService {
   }
 
   public async getMyNftsPage(userId: number) {
-    const mintingNfts = await this.mintingNftRepository.find({
-      where: { userId, txStatus: 'pending' },
-      order: { createdAt: 'DESC' },
-    });
     const mintedNfts = await this.reduceNftsByEdition(userId);
 
     return {
       nfts: mintedNfts.nfts,
-      mintingNfts: mintingNfts.map((nft) => classToPlain(nft)),
+      pagination: {},
+    };
+  }
+
+  public async getMyNftsPendingPage(userId) {
+    const mintingNfts = await this.mintingNftRepository.find({
+      where: { userId, txStatus: 'pending' },
+      order: { createdAt: 'DESC' },
+    });
+    const collectionIds = mintingNfts.map((nft) => nft.collectionId);
+    const uniqueCollectionIds = new Set(collectionIds);
+    const collections = await this.nftCollectionRepository.find({ where: { id: In(Array.from(uniqueCollectionIds)) } });
+    const idCollectionMap = collections.reduce((acc, collection) => ({ ...acc, [collection.id]: collection }), {});
+
+    return {
+      mintingNfts: mintingNfts.map((nft) => ({
+        ...classToPlain(nft),
+        collection: classToPlain(idCollectionMap[nft.collectionId]),
+      })),
+      pagination: {},
     };
   }
 
