@@ -146,15 +146,17 @@ export class AuctionService {
       if (params.nftIds) {
         const rewardTierNfts = await this.rewardTierNftRepository.find({ where: { rewardTierId: id } });
         const nftIds = rewardTierNfts.map((nft) => nft.nftId);
-
         const idsToDelete = nftIds.filter((nftId) => !params.nftIds.includes(nftId));
         const idsToCreate = params.nftIds.filter((nftId) => !nftIds.includes(nftId));
-        await transactionalEntityManager
-          .createQueryBuilder()
-          .delete()
-          .from(RewardTierNft)
-          .where('nftId IN (:...idsToDelete)', { idsToDelete })
-          .execute();
+
+        if (idsToDelete.length > 0) {
+          await transactionalEntityManager
+            .createQueryBuilder()
+            .delete()
+            .from(RewardTierNft)
+            .where('nftId IN (:...idsToDelete)', { idsToDelete })
+            .execute();
+        }
 
         const newRewardTierNfts = idsToCreate.map((nftId) =>
           this.rewardTierNftRepository.create({
