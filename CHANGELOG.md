@@ -1,3 +1,10 @@
+## [1.21.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.21.1...v1.21.2) (2021-09-30)
+
+
+### Bug Fixes
+
+* don't execute DELETE query when not needed ([#55](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/55)) ([905d3d7](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/905d3d7ac91eddbaed56f27985a478273b9e47d3))
+
 ## [1.21.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.21.0...v1.21.1) (2021-09-30)
 
 
