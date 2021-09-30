@@ -422,34 +422,33 @@ export class NftService {
     if (!collection) {
       throw new NftCollectionNotFoundException();
     }
-    const nft = await this.nftRepository.findOne({ where: { collectionId: collection.id, tokenId: tokenId } });
 
-    if (!nft) {
+    let nfts = await this.nftRepository.find({ where: { collectionId: collection.id } });
+
+    nfts.filter((nft) => nft.tokenId == tokenId);
+
+    let searchedNft = null;
+
+    for (let i = 0; i < nfts.length; i++) {
+      const nft = nfts[i];
+      if (nft.tokenId === tokenId) {
+        searchedNft = nfts[i];
+        nfts = nfts.splice(i);
+        break;
+      }
+    }
+
+    if (!searchedNft) {
       throw new NftNotFoundException();
     }
 
-    const [owner, creator, moreFromCollection] = await Promise.all([
-      this.userRepository.findOne({ id: nft.userId }),
-      this.userRepository.findOne({ address: collection.creator }),
-      this.nftRepository
-        .createQueryBuilder('nft')
-        .where('nft.editionUUID != :edition', { edition: nft.editionUUID })
-        .andWhere('nft.collectionId = :collectionId', { collectionId: collection.id })
-        .leftJoinAndSelect(User, 'user', 'user.id = nft.userId')
-        .distinctOn(['nft.editionUUID'])
-        .take(moreNftsCount)
-        .orderBy('nft.editionUUID')
-        .getRawMany(),
-    ]);
-
-    const mappedNfts = moreFromCollection.map((nft) => this.mapNftWithUserInfo(nft, 'owner'));
+    const owner = await this.userRepository.findOne({ id: searchedNft.userId });
 
     return {
-      nft: classToPlain(nft),
-      collection: classToPlain(collection),
-      creator: classToPlain(creator),
-      owner: classToPlain(owner),
-      moreFromCollection: classToPlain(mappedNfts),
+      searchedNft,
+      collection,
+      owner,
+      moreNFTs: nfts,
     };
   };
 
