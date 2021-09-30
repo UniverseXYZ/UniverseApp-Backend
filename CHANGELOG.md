@@ -1,3 +1,10 @@
+# [1.21.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.20.0...v1.21.0) (2021-09-30)
+
+
+### Features
+
+* add endpoint for pending collections ([#53](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/53)) ([42d7781](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/42d7781dfa4cb16c857cf9f1a2b99b8efa98ee17))
+
 # [1.20.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.19.0...v1.20.0) (2021-09-29)
 
 
