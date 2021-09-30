@@ -1,4 +1,3 @@
-import { DuplicateUniversePageUrlException } from './../../../.history/src/modules/users/service-layer/exceptions/DuplicateUniversePageUrlExceptions_20210924095037';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { config } from 'node:process';
