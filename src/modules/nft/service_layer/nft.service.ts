@@ -464,8 +464,8 @@ export class NftService {
 
   private async reduceUserNftsByEdition(
     userId: number,
-    additionalData: NftAdditionalData,
-    prefetchData: NftPrefetchData,
+    additionalData?: NftAdditionalData,
+    prefetchData?: NftPrefetchData,
   ) {
     let nfts = [];
     if (additionalData.creator && !prefetchData?.creator && additionalData.owner && !prefetchData?.owner) {
@@ -580,9 +580,7 @@ export class NftService {
       creator: true,
     };
 
-    const prefetchData: NftPrefetchData = { owner: null, creator: null };
-
-    return await this.reduceUserNftsByEdition(userId, additionalData, prefetchData);
+    return await this.reduceUserNftsByEdition(userId, additionalData);
   }
 
   public async getUserNfts(username: string) {
@@ -694,9 +692,7 @@ export class NftService {
       owner: false,
       creator: true,
     };
-    const prefetchData = { onwer: null, creator: null };
-
-    const mintedNfts = await this.reduceUserNftsByEdition(userId, additionaData, prefetchData);
+    const mintedNfts = await this.reduceUserNftsByEdition(userId, additionaData);
 
     return {
       nfts: mintedNfts.nfts,
