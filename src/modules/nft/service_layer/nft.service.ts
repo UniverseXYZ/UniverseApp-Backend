@@ -468,35 +468,17 @@ export class NftService {
     prefetchData?: NftPrefetchData,
   ) {
     let nfts = [];
-    if (additionalData.creator && !prefetchData?.creator && additionalData.owner && !prefetchData?.owner) {
-      nfts = await this.nftRepository
-        .createQueryBuilder('nft')
-        .leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.id = nft.userId')
-        .leftJoinAndMapOne('nft.creator', User, 'creator', 'creator.address = nft.creator')
-        .where('nft.userId = :userId', { userId: userId })
-        .orderBy('nft.createdAt', 'DESC')
-        .getMany();
-    } else if (additionalData.creator && !prefetchData?.creator) {
-      nfts = await this.nftRepository
-        .createQueryBuilder('nft')
-        .where('nft.userId = :userId', { userId: userId })
-        .leftJoinAndMapOne('nft.creator', User, 'user', 'user.address = nft.creator')
-        .orderBy('nft.createdAt', 'DESC')
-        .getMany();
-    } else if (additionalData.owner && !prefetchData?.owner) {
-      nfts = await this.nftRepository
-        .createQueryBuilder('nft')
-        .where('nft.userId = :userId', { userId: userId })
-        .leftJoinAndMapOne('nft.owner', User, 'user', 'user.id = nft.userId')
-        .orderBy('nft.createdAt', 'DESC')
-        .getRawMany();
-    } else {
-      nfts = await this.nftRepository
-        .createQueryBuilder('nft')
-        .where('nft.userId != :edition', { userId: userId })
-        .orderBy('nft.createdAt', 'DESC')
-        .getMany();
+    const query = this.nftRepository.createQueryBuilder('nft');
+
+    if (additionalData?.creator && !prefetchData?.creator) {
+      query.leftJoinAndMapOne('nft.creator', User, 'creator', 'creator.address = nft.creator');
     }
+
+    if (additionalData?.owner && !prefetchData?.owner) {
+      query.leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.id = nft.userId');
+    }
+
+    nfts = await query.where('nft.userId = :userId', { userId: userId }).orderBy('nft.createdAt', 'DESC').getMany();
 
     if (prefetchData?.owner) {
       nfts = nfts.map((nft) => {
