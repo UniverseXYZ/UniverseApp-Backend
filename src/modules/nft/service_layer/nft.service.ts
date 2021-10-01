@@ -723,6 +723,18 @@ export class NftService {
     };
   }
 
+  public async getMyNftsPendingCount(userId: number) {
+    const mintingNftCount = await this.mintingNftRepository
+      .createQueryBuilder('nft')
+      .where('nft.userId = :userId', { userId: userId })
+      .andWhere('nft.txStatus = :txStatus', { txStatus: 'pending' })
+      .getCount();
+
+    return {
+      count: mintingNftCount,
+    };
+  }
+
   private groupNftsByEdition(nfts: Nft[]): Record<string, Nft[]> {
     return nfts.reduce((acc, nft) => ({ ...acc, [nft.editionUUID]: [...(acc[nft.editionUUID] || []), nft] }), {});
   }
@@ -763,6 +775,18 @@ export class NftService {
       collections: mintingCollections.map((mintingCollection) => classToPlain(mintingCollection)),
       // TODO: Future object which will container pagination information
       pagination: {},
+    };
+  }
+
+  public async getMyCollectionsPendingCount(userId: number) {
+    const mintingCollectionCount = await this.mintingCollectionRepository
+      .createQueryBuilder('collection')
+      .where('collection.userId = :userId', { userId: userId })
+      .andWhere('collection.txStatus = :txStatus', { txStatus: 'pending' })
+      .getCount();
+
+    return {
+      count: mintingCollectionCount,
     };
   }
 
