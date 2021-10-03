@@ -440,7 +440,7 @@ export class NftService {
 
     const [owner, creator, moreFromCollection] = await Promise.all([
       this.userRepository.findOne({ id: nft.userId }),
-      this.userRepository.findOne({ address: collection.creator.toLowerCase() }),
+      this.userRepository.findOne({ address: collection.creator?.toLowerCase() }),
       this.nftRepository
         .createQueryBuilder('nft')
         .where('nft.editionUUID != :edition', { edition: nft.editionUUID })
