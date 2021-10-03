@@ -1,13 +1,16 @@
 import { Exclude, Expose } from 'class-transformer';
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, Index } from 'typeorm';
 import { configValues } from '../configuration';
 
-@Entity()
+@Entity({
+  schema: 'universe-backend',
+})
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
+  @Index()
   address: string;
 
   @Exclude()
