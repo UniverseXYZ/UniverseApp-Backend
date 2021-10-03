@@ -1,3 +1,10 @@
+## [1.21.3](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.21.2...v1.21.3) (2021-10-03)
+
+
+### Bug Fixes
+
+* handle collection without creator error ([cc5f812](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/cc5f812d5eea07f6c6894dcb103df454cb1a35e8))
+
 ## [1.21.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.21.1...v1.21.2) (2021-09-30)
 
 
