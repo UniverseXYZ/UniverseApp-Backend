@@ -1,6 +1,8 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
-@Entity()
+@Entity({
+  schema: 'universe-backend',
+})
 export class LoginChallenge {
   @PrimaryGeneratedColumn()
   id: number;

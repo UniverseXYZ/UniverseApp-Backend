@@ -1,10 +1,12 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 export enum CollectionSource {
   UNIVERSE = 'universe',
   SCRAPER = 'scraper',
 }
-@Entity()
+@Entity({
+  schema: 'universe-backend',
+})
 export class NftCollection {
   @PrimaryGeneratedColumn()
   id: number;
@@ -23,9 +25,11 @@ export class NftCollection {
   address?: string;
 
   @Column({ nullable: true })
+  @Index()
   owner?: string;
 
   @Column({ nullable: true })
+  @Index()
   creator?: string;
 
   @Column()
