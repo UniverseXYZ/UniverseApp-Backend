@@ -1,3 +1,10 @@
+## [1.21.4](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.21.3...v1.21.4) (2021-10-03)
+
+
+### Bug Fixes
+
+* move tables to separate db schema ([#58](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/58)) ([8efc324](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/8efc324ef15bdf42228515ac5dee2afe2cf9ba93))
+
 ## [1.21.3](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.21.2...v1.21.3) (2021-10-03)
 
 
