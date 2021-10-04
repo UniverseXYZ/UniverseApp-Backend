@@ -2,6 +2,8 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsBoolean,
+  IsBooleanString,
   isNumber,
   IsNumber,
   IsNumberString,
@@ -497,4 +499,13 @@ export class GetNftParams {
     example: '1',
   })
   tokenId: number;
+}
+
+export class GetMyCollectionsParams {
+  @IsString()
+  @ApiProperty({
+    description: 'Whether the endpoint should return my collections or my collections + core collections',
+    example: 'true',
+  })
+  mintable: string;
 }
