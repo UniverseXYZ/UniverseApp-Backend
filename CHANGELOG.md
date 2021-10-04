@@ -1,3 +1,10 @@
+## [1.21.5](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.21.4...v1.21.5) (2021-10-04)
+
+
+### Bug Fixes
+
+* **nft page:** fix nft creator query ([3a682ff](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/3a682ffad7ca83fa14914a16c3c6700959c2c2f7))
+
 ## [1.21.4](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.21.3...v1.21.4) (2021-10-03)
 
 
