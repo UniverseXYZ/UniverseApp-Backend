@@ -1,18 +1,20 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
-import { NftCollection } from './collection.entity';
+import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { Exclude } from 'class-transformer';
 
 export enum NftSource {
   UNIVERSE = 'universe',
   SCRAPER = 'scraper',
 }
-@Entity()
+@Entity({
+  schema: 'universe-backend',
+})
 export class Nft {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Exclude()
   @Column()
+  @Index()
   userId: number;
 
   @Column()
@@ -32,6 +34,9 @@ export class Nft {
   @Exclude()
   @Column({ nullable: true })
   editionUUID: string;
+
+  @Column({ nullable: true })
+  creator: string;
 
   @Column({ nullable: true })
   name: string;

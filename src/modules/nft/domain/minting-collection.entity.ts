@@ -1,6 +1,10 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
-@Entity()
+type TxStatus = 'pending' | 'failed' | 'succeded';
+
+@Entity({
+  schema: 'universe-backend',
+})
 export class MintingCollection {
   @PrimaryGeneratedColumn()
   id: number;
@@ -25,6 +29,9 @@ export class MintingCollection {
 
   @Column({ nullable: true })
   txHash?: string;
+
+  @Column({ nullable: true, type: 'character' })
+  txStatus?: TxStatus;
 
   @CreateDateColumn()
   createdAt: Date;

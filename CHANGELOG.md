@@ -1,3 +1,66 @@
+## [1.21.5](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.21.4...v1.21.5) (2021-10-04)
+
+
+### Bug Fixes
+
+* **nft page:** fix nft creator query ([3a682ff](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/3a682ffad7ca83fa14914a16c3c6700959c2c2f7))
+
+## [1.21.4](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.21.3...v1.21.4) (2021-10-03)
+
+
+### Bug Fixes
+
+* move tables to separate db schema ([#58](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/58)) ([8efc324](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/8efc324ef15bdf42228515ac5dee2afe2cf9ba93))
+
+## [1.21.3](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.21.2...v1.21.3) (2021-10-03)
+
+
+### Bug Fixes
+
+* handle collection without creator error ([cc5f812](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/cc5f812d5eea07f6c6894dcb103df454cb1a35e8))
+
+## [1.21.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.21.1...v1.21.2) (2021-09-30)
+
+
+### Bug Fixes
+
+* don't execute DELETE query when not needed ([#55](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/55)) ([905d3d7](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/905d3d7ac91eddbaed56f27985a478273b9e47d3))
+
+## [1.21.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.21.0...v1.21.1) (2021-09-30)
+
+
+### Bug Fixes
+
+* separate endpoint to get pending NFTs ([#54](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/54)) ([78a302d](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/78a302da0828c3c643e5dabdf2b15ff45796f681))
+
+# [1.21.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.20.0...v1.21.0) (2021-09-30)
+
+
+### Features
+
+* add endpoint for pending collections ([#53](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/53)) ([42d7781](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/42d7781dfa4cb16c857cf9f1a2b99b8efa98ee17))
+
+# [1.20.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.19.0...v1.20.0) (2021-09-29)
+
+
+### Features
+
+* add creator address to NFTs ([#52](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/52)) ([8e2b85e](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/8e2b85eb6c51ec162fc7e729e77c085388f4bfdf))
+
+# [1.19.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.18.0...v1.19.0) (2021-09-28)
+
+
+### Features
+
+* separate Saved NFTs from Minting NFTs ([#49](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/49)) ([aa754a7](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/aa754a7bae71abbf4a376c3270938e9dc7c96cb9))
+
+# [1.18.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.17.2...v1.18.0) (2021-09-28)
+
+
+### Features
+
+* add single nft enpoint ([#47](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/47)) ([ab4f607](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/ab4f607b742c88de9e3728f44914c80007a2a90e))
+
 ## [1.17.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.17.1...v1.17.2) (2021-09-27)
 
 

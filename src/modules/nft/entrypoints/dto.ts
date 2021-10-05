@@ -4,7 +4,6 @@ import {
   IsArray,
   IsNumber,
   IsNumberString,
-  IsObject,
   IsOptional,
   IsString,
   Length,
@@ -79,13 +78,12 @@ export class SaveNftBody {
   royalties?: SaveNftRoyalty[];
 
   @IsNumber()
-  @IsOptional()
   @ApiProperty({
     example: 10,
     description: 'The id of the collection',
     required: false,
   })
-  collectionId?: number;
+  collectionId: number;
 }
 
 export class SaveNftRoyalty {
@@ -132,6 +130,11 @@ export class UploadNftMediaFileParams {
 }
 
 export class PatchSavedNftParams {
+  @IsNumberString()
+  id: number;
+}
+
+export class PatchMintingNftParams {
   @IsNumberString()
   id: number;
 }
@@ -267,6 +270,15 @@ export class GetNftTokenUriBody {
   })
   @Transform(({ value }) => value && JSON.parse(value))
   royalties?: SaveNftRoyalty[];
+
+  @IsNumber()
+  @ApiProperty({
+    example: 1,
+    description: 'The collection id',
+    required: true,
+  })
+  @Transform(({ value }) => value && parseInt(value))
+  collectionId: number;
 }
 
 export class GetMyNftsResponse {
@@ -456,4 +468,40 @@ export class GetCollectionParams {
     example: '0x0000000000000000000000000',
   })
   address: string;
+}
+
+export class EditMintingNftBody {
+  @IsString()
+  @IsOptional()
+  @Length(1, 100)
+  @ApiProperty({
+    example: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    description: 'The transaction hash associated with the Minting NFT',
+    required: false,
+  })
+  txHash: string;
+}
+
+export class GetNftParams {
+  @IsString()
+  @ApiProperty({
+    description: 'The address of the Collection',
+    example: '0x0000000000000000000000000',
+  })
+  collectionAddress: string;
+  @IsNumberString()
+  @ApiProperty({
+    description: 'The token id of the NFT',
+    example: '1',
+  })
+  tokenId: number;
+}
+
+export class GetMyCollectionsParams {
+  @IsString()
+  @ApiProperty({
+    description: 'Whether the endpoint should return my collections or my collections + core collections',
+    example: 'true',
+  })
+  mintable: string;
 }

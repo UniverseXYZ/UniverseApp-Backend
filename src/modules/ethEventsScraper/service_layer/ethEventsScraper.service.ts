@@ -13,6 +13,7 @@ import { MintedNftEvent } from '../domain/mintNftEvent.entity';
 import { customAlphabet } from 'nanoid';
 import { SavedNft } from '../../nft/domain/saved-nft.entity';
 import { MintingCollection } from '../../nft/domain/minting-collection.entity';
+import { MintingNft } from 'src/modules/nft/domain/minting-nft.entity';
 
 @Injectable()
 export class EthEventsScraperService {
@@ -23,8 +24,6 @@ export class EthEventsScraperService {
     private httpService: HttpService,
     @InjectRepository(Nft)
     private nftRepository: Repository<Nft>,
-    @InjectRepository(SavedNft)
-    private savedNftRepository: Repository<SavedNft>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
     @InjectRepository(NftCollection)
@@ -35,6 +34,8 @@ export class EthEventsScraperService {
     private mintingCollectionRepository: Repository<MintingCollection>,
     @InjectRepository(MintedNftEvent)
     private createNftEventRepository: Repository<MintedNftEvent>,
+    @InjectRepository(MintingNft)
+    private mintingNftRepository: Repository<MintingNft>,
   ) {}
 
   @Cron(CronExpression.EVERY_10_SECONDS)
@@ -89,72 +90,76 @@ export class EthEventsScraperService {
 
       for (const event of events) {
         const response = await this.httpService.get(event.token_uri).toPromise();
-        const artworkType = (response.data.image_url as string).split(/[.]+/);
         const user = await this.userRepository.findOne({ where: { address: event.receiver.toLowerCase() } });
         const collection = await this.nftCollectionRepository.findOne({
           where: { address: event.contract_address.toLowerCase() },
         });
-        if (user && collection) {
-          const nftByTokenUri = await this.nftRepository.findOne({
-            where: {
-              collectionId: collection.id,
-              tokenUri: event.token_uri,
-            },
-          });
 
-          const nft = this.nftRepository.create();
-          nft.userId = user.id;
-          nft.collectionId = collection.id;
-          nft.txHash = event.tx_hash;
-          nft.editionUUID = nftByTokenUri ? nftByTokenUri.editionUUID : editionUUID;
-          nft.name = response.data.name as string;
-          nft.description = response.data.description as string;
-          nft.tokenId = event.token_id;
-          nft.artworkType = artworkType[artworkType.length - 1];
-          nft.url = response.data.image_url as string;
-          nft.optimized_url = response.data.image_preview_url as string;
-          nft.thumbnail_url = response.data.image_thumbnail_url as string;
-          nft.original_url = response.data.image_original_url as string;
-          nft.tokenUri = event.token_uri;
-          nft.properties = response.data.attributes?.map((attributeObject) => ({
-            [attributeObject.trait_type]: attributeObject.value,
-          }));
-          nft.royalties = response.data.royalties;
-          nft.numberOfEditions = 1;
+        if (!user || !collection) continue;
 
-          const savedNft = await this.savedNftRepository.findOne({ where: { tokenUri, collectionId: collection.id } });
-          if (savedNft) {
-            nft.numberOfEditions = savedNft.numberOfEditions;
-          } else {
-            const nftsCountByTokenUri = await this.nftRepository.count({
-              where: {
-                collectionId: collection.id,
-                tokenUri: event.token_uri,
-              },
-            });
-            if (nftsCountByTokenUri === 0) {
-              nft.numberOfEditions = 1;
-            } else {
-              nft.numberOfEditions = nftsCountByTokenUri + 1;
-              await this.nftRepository.update(
-                {
-                  collectionId: collection.id,
-                  tokenUri: event.token_uri,
-                },
-                {
-                  numberOfEditions: nftsCountByTokenUri + 1,
-                },
-              );
-            }
-          }
+        const nft = this.nftRepository.create();
+        nft.userId = user.id;
+        nft.collectionId = collection.id;
+        await this.attachNftEdition(collection, event, nft, editionUUID);
+        this.attachNftDataFromEvent(nft, event);
+        this.attachNftDataFromTokenUri(nft, response);
+        await this.attachNftNumberOfEditions(nft, tokenUri, collection.id);
 
-          event.processed = true;
-          await this.createNftEventRepository.save(event);
-          await this.nftRepository.save(nft);
-        }
+        event.processed = true;
+        await this.createNftEventRepository.save(event);
+        await this.nftRepository.save(nft);
       }
-      await this.savedNftRepository.softDelete({ tokenUri });
+      await this.mintingNftRepository.delete({ tokenUri });
     }
+  }
+
+  private async attachNftNumberOfEditions(nft: Nft, tokenUri: string, collectionId: number) {
+    nft.numberOfEditions = 1;
+
+    // This applies only for Saved NFTs. It can be removed, but saves the COUNT query below
+    const mintingNft = await this.mintingNftRepository.findOne({
+      where: { tokenUri, collectionId },
+    });
+
+    if (mintingNft) {
+      nft.numberOfEditions = mintingNft.numberOfEditions;
+    } else {
+      const nftsCountByTokenUri = await this.nftRepository.count({
+        where: { collectionId, tokenUri },
+      });
+      if (nftsCountByTokenUri !== 0) {
+        nft.numberOfEditions = nftsCountByTokenUri + 1;
+        await this.nftRepository.update({ collectionId, tokenUri }, { numberOfEditions: nftsCountByTokenUri + 1 });
+      }
+    }
+  }
+
+  private async attachNftEdition(collection: NftCollection, event: MintedNftEvent, nft: Nft, editionUUID: string) {
+    const nftByTokenUri = await this.nftRepository.findOne({
+      where: { collectionId: collection.id, tokenUri: event.token_uri },
+    });
+    nft.editionUUID = nftByTokenUri ? nftByTokenUri.editionUUID : editionUUID;
+  }
+
+  private attachNftDataFromTokenUri(nft: Nft, response) {
+    nft.name = response.data.name as string;
+    nft.description = response.data.description as string;
+    nft.artworkType = this.getExtensionFromUrl(response.data.image_url);
+    nft.url = response.data.image_url as string;
+    nft.optimized_url = response.data.image_preview_url as string;
+    nft.thumbnail_url = response.data.image_thumbnail_url as string;
+    nft.original_url = response.data.image_original_url as string;
+    nft.properties = response.data.attributes?.map((attributeObject) => ({
+      [attributeObject.trait_type]: attributeObject.value,
+    }));
+    nft.royalties = response.data.royalties;
+  }
+
+  private attachNftDataFromEvent(nft: Nft, event: MintedNftEvent) {
+    nft.txHash = event.tx_hash;
+    nft.tokenId = event.token_id;
+    nft.tokenUri = event.token_uri;
+    nft.creator = event.receiver?.toLowerCase();
   }
 
   private mapTokenUriToEvents(events: MintedNftEvent[]) {
@@ -166,6 +171,14 @@ export class EthEventsScraperService {
       };
     }, {} as Record<string, MintedNftEvent[]>);
     return tokenUriEventsMap;
+  }
+
+  private getExtensionFromUrl(url: string) {
+    if (!url) {
+      return undefined;
+    }
+    const urlComponents = url.split(/[.]+/);
+    return urlComponents[urlComponents.length - 1];
   }
 
   //Todo: search for auctions with txHash and onChain flag false

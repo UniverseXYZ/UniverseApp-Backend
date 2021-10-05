@@ -127,3 +127,28 @@ The process of minting new collection requires multiple steps:
 2. Call the `deployUniverseERC721()` method of UniverseERC721Factory contract and keep the txHash in memory
 
 3. PATCH `/api/nfts/minting-collections/{id}`. Use this endpoint to send the txHash to backend
+## Mint NFTs
+
+The process of minting NFTs can be accomplished by the sending the metadata directly to the backend or using an existent Saved NFT
+
+1. Get the token URI  
+1.1 Perform a `GET /api/saved-nfts/:id/token-uri` request to obtain the token URI for a Saved NFT.  
+1.2 Perform a `POST /api/nfts/token-uri` request to obtain the token URI from plain metadata  
+The response will have the following format
+```json
+{
+  "mintingNft": {
+    "id": number,
+  },
+  "tokenUris": string[],
+}
+```
+These 2 endpoints create a new Minting NFT instance, which represents a NFT that is the minting process.  
+2. Submit transaction to Ethereum blockchain  
+3. Send the transaction hash using `PATCH /api/minting-nfts/:id`  
+```json
+{
+  "txHash": "..."
+}
+```
+4. Get My NFTs page by calling the `GET /api/pages/my-nfts` endpoint

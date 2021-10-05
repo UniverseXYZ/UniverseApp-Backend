@@ -1,7 +1,9 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { Exclude } from 'class-transformer';
 
-@Entity()
+@Entity({
+  schema: 'universe-backend',
+})
 export class Auction {
   @PrimaryGeneratedColumn()
   id: number;
