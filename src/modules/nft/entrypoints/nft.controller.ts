@@ -12,6 +12,7 @@ import {
   ClassSerializerInterceptor,
   Patch,
   Delete,
+  Query,
 } from '@nestjs/common';
 import {
   DeleteSavedNftParams,
@@ -22,6 +23,7 @@ import {
   EditMintingNftBody,
   EditSavedNftBody,
   GetCollectionParams,
+  GetMyCollectionsParams,
   GetMyNftsResponse,
   GetNftParams,
   GetNftTokenURIParams,
@@ -246,8 +248,11 @@ export class NftController {
   @ApiTags('nfts')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get the list of all my collections' })
-  async getMyCollections(@Req() req) {
-    return await this.nftService.getMyCollections(req.user.sub);
+  async getMyCollections(@Req() req, @Query() params: GetMyCollectionsParams) {
+    if (params.mintable === 'true') {
+      return await this.nftService.getMyMintableCollections(req.user.sub);
+    }
+    return await this.nftService.getMyOwnedCollections(req.user.sub);
   }
 
   @Delete('saved-nfts/:id')

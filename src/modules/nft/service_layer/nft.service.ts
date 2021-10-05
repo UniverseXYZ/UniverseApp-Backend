@@ -610,10 +610,21 @@ export class NftService {
     };
   }
 
-  public async getMyCollections(userId: number) {
+  public async getMyOwnedCollections(userId: number) {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     const collections = await this.nftCollectionRepository.find({
       where: { owner: user.address },
+    });
+
+    return {
+      collections: collections.map((collection) => classToPlain(collection)),
+    };
+  }
+
+  public async getMyMintableCollections(userId: number) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const collections = await this.nftCollectionRepository.find({
+      where: [{ owner: user.address }, { publicCollection: true }],
     });
 
     return {
