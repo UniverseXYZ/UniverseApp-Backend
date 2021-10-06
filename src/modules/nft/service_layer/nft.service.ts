@@ -438,7 +438,7 @@ export class NftService {
       throw new NftNotFoundException();
     }
 
-    const [owner, creator, moreFromCollection] = await Promise.all([
+    const [owner, creator, moreFromCollection, tokenIds] = await Promise.all([
       this.userRepository.findOne({ id: nft.userId }),
       this.userRepository.findOne({ address: nft.creator?.toLowerCase() }),
       this.nftRepository
@@ -451,6 +451,11 @@ export class NftService {
         .take(moreNftsCount)
         .orderBy('nft.editionUUID')
         .getMany(),
+      this.nftRepository.find({
+        where: { collectionId: collection.id },
+        select: ['tokenId'],
+        order: { tokenId: 'ASC' },
+      }),
     ]);
 
     return {
@@ -459,6 +464,7 @@ export class NftService {
       creator: classToPlain(creator),
       owner: classToPlain(owner),
       moreFromCollection: classToPlain(moreFromCollection),
+      tokenIds: tokenIds.map((obj) => obj.tokenId),
     };
   };
 
