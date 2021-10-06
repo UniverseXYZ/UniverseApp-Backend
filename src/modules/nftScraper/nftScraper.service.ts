@@ -12,13 +12,9 @@ import { CollectionSource, NftCollection } from '../nft/domain/collection.entity
 import { Repository } from 'typeorm';
 import { User } from '../users/user.entity';
 
-const MORALIS_APPLICATION_ID = process.env['MORALIS_APPLICATION_ID'] || 'jlvmvCLbkVYZdgOMeKvYCuK8awZLCQARSLRsVb5o';
-const MORALIS_SERVER_URL = process.env['MORALIS_SERVER_URL'] || 'https://sv8erjsrz4wg.bigmoralis.com:2053/server';
-const MORALIS_MASTER_KEY = process.env['MORALIS_MASTER_KEY'] || 'SXFHQTYXbcYWX1JnkHrTHfb0vN1RwfNxTSeNnjm3';
-
-Moralis.serverURL = MORALIS_SERVER_URL;
-Moralis.masterKey = MORALIS_MASTER_KEY;
-Moralis.initialize(MORALIS_APPLICATION_ID);
+Moralis.serverURL = 'https://sv8erjsrz4wg.bigmoralis.com:2053/server';
+Moralis.masterKey = 'SXFHQTYXbcYWX1JnkHrTHfb0vN1RwfNxTSeNnjm3';
+Moralis.initialize('jlvmvCLbkVYZdgOMeKvYCuK8awZLCQARSLRsVb5o');
 
 @Injectable()
 export class NftScraperService {
@@ -39,21 +35,42 @@ export class NftScraperService {
     console.log(`The module has been initialized.`);
 
     const users = await this.userRepository.find({ where: { isActive: true } });
-    for (const user of users) {
-      this.addUserToWatchEthEvent(user.address); 
+    
+    // for (const user of users) {
+    //  // this.addUserToWatchEthEvent(user.address);
+    // }
+  
+    for (let i = 0; i < users.length; i ++) {
+      const user = users[i];
+      this.addUserToWatchEthEvent(user.address);
     }
     const data = await this.getUserNFTs('0x9B6134Fe036F1C22D9Fe76c15AC81B7bC31212eB');
-    console.log({ data });
+    const formattedData = await this.transformResponse(data);
+    console.log(formattedData);
   }
 
-  transformResponse = async (data) => {
-  }
+  /**
+   * @summary Transform Data into DB Format
+   * @param {Array} response: token array from the moralis sdk
+   */
+  private transformResponse = async (data) => {
+    console.log(data);
+    return data;
+  };
 
-  getUserNFTs = async (userAddress: string) => {
+  /**
+   * @summary Gets the NFTs owned by a given address
+   * @param {string} address The owner address
+   */
+  private getUserNFTs = async (userAddress: string) => {
     return Moralis.Cloud.run('getUserNFTs', { userAddress });
   };
 
-  addUserToWatchEthEvent = async (address: string) => {
+  /**
+   * @summary Add new user to watchEthEvent Table
+   * @param {string} address The owner address
+   */
+  private addUserToWatchEthEvent = async (address: string) => {
     return Moralis.Cloud.run('watchEthAddress', { address, sync_historical: true });
   };
 
