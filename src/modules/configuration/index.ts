@@ -36,6 +36,11 @@ export const configValues = {
   arweave: {
     wallet: process.env.AIRWEAVE_WALLET,
   },
+  moralis: {
+    applicationID: process.env.MORALIS_APPLICATION_ID,
+    serverURL: process.env.MORALIS_SERVER_URL,
+    masterKey: process.env.MORALIS_MASTER_KEY,
+  }
 };
 
 export default registerAs('config', () => {
