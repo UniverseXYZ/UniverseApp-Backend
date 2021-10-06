@@ -1,3 +1,10 @@
+# [1.22.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.21.5...v1.22.0) (2021-10-06)
+
+
+### Features
+
+* store file on Arweave ([#68](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/68)) ([bbcb2f7](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/bbcb2f708be125e0f4ec773e43b0f003c807db8a))
+
 ## [1.21.5](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.21.4...v1.21.5) (2021-10-04)
 
 
