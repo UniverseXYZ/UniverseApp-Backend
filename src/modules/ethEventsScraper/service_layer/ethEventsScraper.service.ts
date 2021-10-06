@@ -145,10 +145,10 @@ export class EthEventsScraperService {
     nft.name = response.data.name as string;
     nft.description = response.data.description as string;
     nft.artworkType = this.getExtensionFromUrl(response.data.image_url);
-    nft.url = response.data.image_url as string;
+    nft.url = response.data.image_original_url as string;
     nft.optimized_url = response.data.image_preview_url as string;
     nft.thumbnail_url = response.data.image_thumbnail_url as string;
-    nft.original_url = response.data.image_original_url as string;
+    nft.original_url = response.data.image_url as string;
     nft.properties = response.data.attributes?.map((attributeObject) => ({
       [attributeObject.trait_type]: attributeObject.value,
     }));
