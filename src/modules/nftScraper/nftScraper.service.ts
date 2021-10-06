@@ -40,21 +40,26 @@ export class NftScraperService {
 
     const users = await this.userRepository.find({ where: { isActive: true } });
     for (const user of users) {
-      this.addUserToWatchEthEvent(user.address);
+      this.addUserToWatchEthEvent(user.address); 
     }
+    const data = await this.getUserNFTs('0x9B6134Fe036F1C22D9Fe76c15AC81B7bC31212eB');
+    console.log({ data });
+  }
+
+  transformResponse = async (data) => {
   }
 
   getUserNFTs = async (userAddress: string) => {
     return Moralis.Cloud.run('getUserNFTs', { userAddress });
   };
 
-  addUserToWatchEthEvent = async (userAddress: string) => {
-    return Moralis.Cloud.run('watchEthAddress', { address: userAddress });
+  addUserToWatchEthEvent = async (address: string) => {
+    return Moralis.Cloud.run('watchEthAddress', { address, sync_historical: true });
   };
 
   nftScraperHandler = async (input: any, cb: any) => {
     cb(null, true);
-  }
+  };
 
   // nftScraperHandler = async (input: any, cb: any) => {
   //   const { address, page } = input;
