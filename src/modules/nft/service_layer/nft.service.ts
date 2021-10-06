@@ -32,6 +32,7 @@ import { NftCollectionNotFoundException } from './exceptions/NftCollectionNotFou
 import { NftCollectionBadOwnerException } from './exceptions/NftCollectionBadOwnerException';
 import { RewardTierNft } from 'src/modules/auction/domain/reward-tier-nft.entity';
 import { MintingNft } from '../domain/minting-nft.entity';
+import { promises as fs } from 'fs';
 
 type SaveNftParams = {
   userId: number;
@@ -137,11 +138,11 @@ export class NftService {
         throw new SavedNftOwnerException();
       }
 
-      const { optimisedFile, downsizedFile } = await this.processUploadedFile(file);
+      const { optimisedFile, downsizedFile, arweaveUrl } = await this.processUploadedFile(file);
       nft.url = this.s3Service.getUrl(file.filename);
       nft.optimizedUrl = this.s3Service.getUrl(optimisedFile.fullFilename());
       nft.thumbnailUrl = this.s3Service.getUrl(downsizedFile.fullFilename());
-      nft.originalUrl = this.s3Service.getUrl(file.filename);
+      nft.originalUrl = arweaveUrl;
       nft.artworkType = file.mimetype.split('/')[1];
       const dbSavedNft = await this.savedNftRepository.save(nft);
 
@@ -161,12 +162,14 @@ export class NftService {
       this.s3Service.uploadDocument(file.path, `${file.filename}`),
       ...uniqueFiles.map((fileItem) => this.s3Service.uploadDocument(fileItem.path, `${fileItem.fullFilename()}`)),
     ]);
+    const data = await fs.readFile(file.path);
+    const arweaveUrl = await this.arweaveService.storeData(data, file.mimetype);
 
     await Promise.all(
       [file.path, ...uniqueFiles.map((file) => file.path)].map((path) => this.fileSystemService.removeFile(path)),
     );
 
-    return { optimisedFile, downsizedFile };
+    return { optimisedFile, downsizedFile, arweaveUrl };
   }
 
   public async getSavedNftTokenURI(id: number) {
@@ -181,8 +184,8 @@ export class NftService {
       name: savedNft.name,
       description: savedNft.description,
       attributes: savedNft.properties,
-      imageUrl: savedNft.url,
-      imageOriginalUrl: savedNft.originalUrl,
+      imageUrl: savedNft.originalUrl,
+      imageOriginalUrl: savedNft.url,
       imagePreviewUrl: savedNft.optimizedUrl,
       imageThumbnailUrl: savedNft.thumbnailUrl,
       royalties: savedNft.royalties,
@@ -230,14 +233,14 @@ export class NftService {
     const bodyClass = plainToClass(GetNftTokenUriBody, { ...body });
     await this.validateReqBody(bodyClass);
 
-    const { optimisedFile, downsizedFile } = await this.processUploadedFile(file);
+    const { optimisedFile, downsizedFile, arweaveUrl } = await this.processUploadedFile(file);
     const idxs = [...Array(bodyClass.numberOfEditions).keys()];
     const tokenUri = await this.generateTokenUri({
       name: bodyClass.name,
       description: bodyClass.description,
       royalties: bodyClass.royalties,
       attributes: bodyClass.properties,
-      imageUrl: this.s3Service.getUrl(file.filename),
+      imageUrl: arweaveUrl,
       imagePreviewUrl: this.s3Service.getUrl(optimisedFile.fullFilename()),
       imageThumbnailUrl: this.s3Service.getUrl(downsizedFile.fullFilename()),
       imageOriginalUrl: this.s3Service.getUrl(file.filename),
@@ -251,7 +254,7 @@ export class NftService {
     mintingNft.description = bodyClass.description;
     mintingNft.artworkType = this.getExtensionFromUrl(this.s3Service.getUrl(file.filename));
     mintingNft.url = this.s3Service.getUrl(file.filename);
-    mintingNft.originalUrl = this.s3Service.getUrl(file.filename);
+    mintingNft.originalUrl = arweaveUrl;
     mintingNft.optimizedUrl = this.s3Service.getUrl(optimisedFile.fullFilename());
     mintingNft.thumbnailUrl = this.s3Service.getUrl(downsizedFile.fullFilename());
     mintingNft.properties = bodyClass.properties;
