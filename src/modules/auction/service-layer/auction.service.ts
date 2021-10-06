@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { getManager, In, LessThan, MoreThan, Repository, Transaction, TransactionRepository } from 'typeorm';
+import { getManager, In, LessThan, MoreThan, Not, Repository, Transaction, TransactionRepository } from 'typeorm';
 import { RewardTier } from '../domain/reward-tier.entity';
 import { RewardTierNft } from '../domain/reward-tier-nft.entity';
 import { Auction } from '../domain/auction.entity';
@@ -60,6 +60,11 @@ export class AuctionService {
     );
     const artist = await this.usersService.getById(auction.userId, false);
 
+    const now = new Date().toISOString();
+    const moreArtistActiveAuctions = await this.auctionRepository.find({
+      where: { userId: auction.userId, id: Not(auction.id), startDate: LessThan(now), endDate: MoreThan(now) },
+    });
+
     return {
       auction: classToPlain(auction),
       rewardTiers: rewardTiers.map((rewardTier) => ({
@@ -68,6 +73,7 @@ export class AuctionService {
       })),
       bids: [],
       artist: classToPlain(artist),
+      moreActiveAuctions: moreArtistActiveAuctions.map((auction) => classToPlain(auction)),
     };
   }
 
