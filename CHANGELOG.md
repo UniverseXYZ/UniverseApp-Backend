@@ -1,3 +1,10 @@
+## [1.22.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.22.0...v1.22.1) (2021-10-07)
+
+
+### Bug Fixes
+
+* **nft-page-tokenids:** wrong query ([4b49bef](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/4b49bef36bc99c7f97682ce519ce8d996a01c27e))
+
 # [1.22.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.21.5...v1.22.0) (2021-10-06)
 
 
