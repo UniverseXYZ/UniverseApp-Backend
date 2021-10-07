@@ -572,7 +572,7 @@ export class NftService {
   }
 
   public async getUserNfts(username: string) {
-    const user = await this.userRepository.findOne({ where: { universePageUrl: username } });
+    const user = await this.userRepository.findOne({ where: [{ universePageUrl: username }, { address: username }] });
 
     if (!user) {
       throw new UserNotFoundException();
