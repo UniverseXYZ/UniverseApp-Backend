@@ -455,7 +455,7 @@ export class NftService {
         .orderBy('nft.editionUUID')
         .getMany(),
       this.nftRepository.find({
-        where: { collectionId: collection.id },
+        where: { editionUUID: nft.editionUUID },
         select: ['tokenId'],
         order: { tokenId: 'ASC' },
       }),
