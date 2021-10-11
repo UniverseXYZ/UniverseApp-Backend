@@ -97,29 +97,34 @@ export class EthEventsScraperService {
 
         if (!user || !collection) continue;
 
+        const mintingNft = await this.mintingNftRepository.findOne({
+          where: { tokenUri, collectionId: collection.id },
+        });
+
         const nft = this.nftRepository.create();
         nft.userId = user.id;
         nft.collectionId = collection.id;
         await this.attachNftEdition(collection, event, nft, editionUUID);
         this.attachNftDataFromEvent(nft, event);
         this.attachNftDataFromTokenUri(nft, response);
-        await this.attachNftNumberOfEditions(nft, tokenUri, collection.id);
+        await this.attachNftNumberOfEditions(nft, tokenUri, collection.id, mintingNft);
 
         event.processed = true;
         await this.createNftEventRepository.save(event);
         await this.nftRepository.save(nft);
+
+        mintingNft.mintedEditions = mintingNft.mintedEditions + 1;
+        if (mintingNft.mintedEditions === mintingNft.numberOfEditions) {
+          await this.mintingNftRepository.delete({ tokenUri });
+        } else {
+          await this.mintingNftRepository.save(mintingNft);
+        }
       }
-      await this.mintingNftRepository.delete({ tokenUri });
     }
   }
 
-  private async attachNftNumberOfEditions(nft: Nft, tokenUri: string, collectionId: number) {
+  private async attachNftNumberOfEditions(nft: Nft, tokenUri: string, collectionId: number, mintingNft: MintingNft) {
     nft.numberOfEditions = 1;
-
-    // This applies only for Saved NFTs. It can be removed, but saves the COUNT query below
-    const mintingNft = await this.mintingNftRepository.findOne({
-      where: { tokenUri, collectionId },
-    });
 
     if (mintingNft) {
       nft.numberOfEditions = mintingNft.numberOfEditions;

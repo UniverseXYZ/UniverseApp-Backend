@@ -33,6 +33,9 @@ export class MintingNft {
   @Column()
   numberOfEditions: number;
 
+  @Column({ default: 0 })
+  mintedEditions: number;
+
   @Column({ nullable: true })
   artworkType?: string;
 
