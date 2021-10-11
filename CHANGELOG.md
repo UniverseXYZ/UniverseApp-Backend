@@ -1,3 +1,10 @@
+## [1.22.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.22.1...v1.22.2) (2021-10-11)
+
+
+### Performance Improvements
+
+* keep track of the number of minting NFTs ([#71](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/71)) ([5c4b347](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/5c4b347c2da9eb167e1cad5ab27c07d4e15f4352))
+
 ## [1.22.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.22.0...v1.22.1) (2021-10-07)
 
 
