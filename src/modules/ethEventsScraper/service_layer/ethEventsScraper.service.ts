@@ -94,11 +94,12 @@ export class EthEventsScraperService {
         const collection = await this.nftCollectionRepository.findOne({
           where: { address: event.contract_address.toLowerCase() },
         });
+
+        if (!user || !collection) continue;
+
         const mintingNft = await this.mintingNftRepository.findOne({
           where: { tokenUri, collectionId: collection.id },
         });
-
-        if (!user || !collection) continue;
 
         const nft = this.nftRepository.create();
         nft.userId = user.id;
