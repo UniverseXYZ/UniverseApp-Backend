@@ -113,9 +113,10 @@ export class EthEventsScraperService {
         await this.nftRepository.save(nft);
 
         mintingNft.mintedEditions = mintingNft.mintedEditions + 1;
-        mintingNft = await this.mintingNftRepository.save(mintingNft);
         if (mintingNft.mintedEditions === mintingNft.numberOfEditions) {
           await this.mintingNftRepository.delete({ tokenUri });
+        } else {
+          await this.mintingNftRepository.save(mintingNft);
         }
       }
     }
