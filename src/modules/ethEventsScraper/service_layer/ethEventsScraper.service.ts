@@ -94,7 +94,7 @@ export class EthEventsScraperService {
         const collection = await this.nftCollectionRepository.findOne({
           where: { address: event.contract_address.toLowerCase() },
         });
-        let mintingNft = await this.mintingNftRepository.findOne({
+        const mintingNft = await this.mintingNftRepository.findOne({
           where: { tokenUri, collectionId: collection.id },
         });
 
