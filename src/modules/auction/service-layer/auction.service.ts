@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { getManager, In, LessThan, MoreThan, Not, Repository, Transaction, TransactionRepository } from 'typeorm';
+import { getManager, In, LessThan, MoreThan, Repository, Transaction, TransactionRepository } from 'typeorm';
 import { RewardTier } from '../domain/reward-tier.entity';
 import { RewardTierNft } from '../domain/reward-tier-nft.entity';
 import { Auction } from '../domain/auction.entity';
@@ -17,6 +17,7 @@ import { RewardTierBadOwnerException } from './exceptions/RewardTierBadOwnerExce
 import { UsersService } from '../../users/users.service';
 import { classToPlain } from 'class-transformer';
 import { UploadResult } from 'src/modules/file-storage/model/UploadResult';
+import { NftCollection } from 'src/modules/nft/domain/collection.entity';
 
 @Injectable()
 export class AuctionService {
@@ -28,6 +29,8 @@ export class AuctionService {
     private rewardTierNftRepository: Repository<RewardTierNft>,
     @InjectRepository(Auction)
     private auctionRepository: Repository<Auction>,
+    @InjectRepository(NftCollection)
+    private nftCollectionRepository: Repository<NftCollection>,
     @InjectRepository(Nft)
     private nftRepository: Repository<Nft>,
     private s3Service: S3Service,
@@ -41,7 +44,7 @@ export class AuctionService {
     if (!auction) {
       throw new AuctionNotFoundException();
     }
-
+    // TODO: Add collection info for each nft
     const rewardTiers = await this.rewardTierRepository.find({ where: { auctionId } });
     const rewardTierNfts = await this.rewardTierNftRepository.find({
       where: { rewardTierId: In(rewardTiers.map((rewardTier) => rewardTier.id)) },
@@ -60,11 +63,6 @@ export class AuctionService {
     );
     const artist = await this.usersService.getById(auction.userId, false);
 
-    const now = new Date().toISOString();
-    const moreArtistActiveAuctions = await this.auctionRepository.find({
-      where: { userId: auction.userId, startDate: LessThan(now), endDate: MoreThan(now) },
-    });
-
     return {
       auction: classToPlain(auction),
       rewardTiers: rewardTiers.map((rewardTier) => ({
@@ -73,7 +71,6 @@ export class AuctionService {
       })),
       bids: [],
       artist: classToPlain(artist),
-      moreActiveAuctions: moreArtistActiveAuctions.map((auction) => classToPlain(auction)),
     };
   }
 
@@ -130,7 +127,8 @@ export class AuctionService {
       if (tier.userId !== userId) {
         throw new RewardTierBadOwnerException();
       }
-
+      //TODO: Add validation(ex: numberOfWinners should eq tier.nftSlots.length)
+      //TODO: Add validation(ex: nftsPerWinnder should eq tier.nftSlots.nftIds.length)
       tier.name = params.name ? params.name : tier.name;
       tier.numberOfWinners = params.numberOfWinners ? params.numberOfWinners : tier.numberOfWinners;
       tier.nftsPerWinner = params.nftsPerWinner ? params.nftsPerWinner : tier.nftsPerWinner;
@@ -234,6 +232,7 @@ export class AuctionService {
     @TransactionRepository(RewardTierNft) rewardTierNftRepository?: Repository<RewardTierNft>,
     @TransactionRepository(Auction) auctionRepository?: Repository<Auction>,
   ) {
+    // TODO: Add checks to verify all auctions params are ok
     let auction = auctionRepository.create({
       userId,
       name: createAuctionBody.name,
@@ -448,9 +447,15 @@ export class AuctionService {
     const rewardTierNfts = await this.rewardTierNftRepository.find({
       where: { rewardTierId: In(rewardTiers.map((rewardTier) => rewardTier.id)) },
     });
+
     const nfts = await this.nftRepository.find({
       where: { id: In(rewardTierNfts.map((rewardTierNft) => rewardTierNft.nftId)) },
     });
+
+    const collections = await this.nftCollectionRepository.find({
+      where: { id: In(nfts.map((nft) => nft.collectionId)) },
+    });
+
     const idNftMap = nfts.reduce((acc, nft) => ({ ...acc, [nft.id]: nft }), {} as Record<string, Nft>);
     const rewardTierNftsMap = rewardTierNfts.reduce(
       (acc, rewardTierNft) => ({
@@ -460,13 +465,22 @@ export class AuctionService {
       {} as Record<string, Nft[]>,
     );
 
-    return auctions.map((auction) => ({
-      ...classToPlain(auction),
-      rewardTiers: auctionRewardTiersMap[auction.id].map((rewardTier) => ({
-        ...classToPlain(rewardTier),
-        nfts: rewardTierNftsMap[rewardTier.id].map((nft) => classToPlain(nft)),
-      })),
-    }));
+    return auctions.map((auction) => {
+      const rewardTiers = [];
+      let nfts = [];
+      auctionRewardTiersMap[auction.id].forEach((rewardTier) => {
+        nfts = rewardTierNftsMap[rewardTier.id].map((nft) => classToPlain(nft));
+        rewardTiers.push({ ...classToPlain(rewardTier), nfts: nfts });
+      });
+
+      const auctionCollections = collections.filter((coll) => nfts.map((nft) => nft.collectionId).includes(coll.id));
+
+      return {
+        ...classToPlain(auction),
+        rewardTiers: rewardTiers,
+        collections: auctionCollections,
+      };
+    });
   }
 
   async updateAuctionExtraData(
