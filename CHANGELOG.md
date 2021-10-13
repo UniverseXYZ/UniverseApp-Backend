@@ -1,3 +1,10 @@
+## [1.22.3](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.22.2...v1.22.3) (2021-10-13)
+
+
+### Bug Fixes
+
+* process scraper events only for existing MintingNFTs ([f2e318a](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/f2e318af2dbd610c9da24583830c37524daf5f55))
+
 ## [1.22.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.22.1...v1.22.2) (2021-10-11)
 
 
