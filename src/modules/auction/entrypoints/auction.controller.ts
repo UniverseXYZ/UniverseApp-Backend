@@ -27,6 +27,7 @@ import {
   UpdateRewardTierExtraBody,
   UpdateRewardTierParams,
   UploaductionLandingImagesParams,
+  DeployAuctionBody,
 } from './dto';
 import { AuctionService } from '../service-layer/auction.service';
 import { JwtAuthGuard, OptionalJwtAuthGuard } from '../../auth/jwt-auth.guard';
@@ -44,6 +45,14 @@ export class AuctionController {
   @ApiOperation({ summary: 'Create new auction' })
   async createAuction(@Req() req, @Body() createAuctionBody: CreateAuctionBody) {
     return await this.auctionService.createAuction(req.user.sub, createAuctionBody);
+  }
+
+  @Post('/auctions/deploy')
+  @ApiTags('auction')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Set on chain properies of auction' })
+  async deployAuction(@Req() req, @Body() deployAuctionBody: DeployAuctionBody) {
+    return await this.auctionService.deployAuction(req.user.sub, deployAuctionBody);
   }
 
   @Patch('auctions/:id')

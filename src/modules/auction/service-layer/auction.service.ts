@@ -7,7 +7,7 @@ import { S3Service } from '../../file-storage/s3.service';
 import { AppConfig } from 'src/modules/configuration/configuration.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuctionStatus } from '../domain/types';
-import { CreateAuctionBody, EditAuctionBody, UpdateRewardTierBody } from '../entrypoints/dto';
+import { CreateAuctionBody, DeployAuctionBody, EditAuctionBody, UpdateRewardTierBody } from '../entrypoints/dto';
 import { Nft } from 'src/modules/nft/domain/nft.entity';
 import { AuctionNotFoundException } from './exceptions/AuctionNotFoundException';
 import { AuctionBadOwnerException } from './exceptions/AuctionBadOwnerException';
@@ -267,6 +267,21 @@ export class AuctionService {
 
     return {
       id: auction.id,
+    };
+  }
+
+  public async deployAuction(userId: number, deployBody: DeployAuctionBody) {
+    // TODO: This is a temporary endpoint to create auction. In the future the scraper should fill in these fields
+    const auction = await this.validateAuctionPermissions(userId, deployBody.auctionId);
+    //TODO: We need some kind of validation that this on chain id really exists
+    const deployedAuction = await this.auctionRepository.update(auction.id, {
+      onChain: true,
+      onChainId: deployBody.onChainId,
+      txHash: deployBody.txHash,
+    });
+
+    return {
+      auction: classToPlain(deployedAuction),
     };
   }
 
