@@ -20,7 +20,7 @@ export class NftCronService {
     const date = new Date();
     date.setHours(date.getHours() - this.TIME_LIMT);
     const result = await this.mintingNftRepository.delete({
-      txHash: null,
+      txHashes: null,
       createdAt: LessThanOrEqual(date),
     });
     this.logger.log(`deleted ${result.affected} records`);
