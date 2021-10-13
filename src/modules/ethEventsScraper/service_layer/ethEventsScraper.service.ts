@@ -100,6 +100,7 @@ export class EthEventsScraperService {
         const mintingNft = await this.mintingNftRepository.findOne({
           where: { tokenUri, collectionId: collection.id },
         });
+        if (!mintingNft) continue;
 
         const nft = this.nftRepository.create();
         nft.userId = user.id;
