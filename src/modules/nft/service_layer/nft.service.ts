@@ -422,7 +422,11 @@ export class NftService {
     const mintingNft = await this.mintingNftRepository.findOne({ where: { id, userId } });
     if (!mintingNft) throw new NftNotFoundException();
 
-    mintingNft.txHash = body.txHash;
+    if (Array.isArray(mintingNft.txHashes)) {
+      mintingNft.txHashes = [...mintingNft.txHashes, body.txHash];
+    } else {
+      mintingNft.txHashes = [body.txHash];
+    }
     mintingNft.txStatus = 'pending';
     if (mintingNft.savedNftId) {
       await this.savedNftRepository.delete({ id: mintingNft.savedNftId });
