@@ -464,7 +464,7 @@ export class NftService {
         order: { tokenId: 'ASC' },
       }),
     ]);
-
+    //TODO: Add tokenIds[] with all other nft tokenIds -> so we can redirect
     return {
       nft: classToPlain(nft),
       collection: classToPlain(collection),
@@ -599,6 +599,9 @@ export class NftService {
   }
 
   public async getMyNftsAvailability(userId: number) {
+    //TODO: Make response similar to my nfts
+    // Group by edition UUID
+    // Return nftId + tokenId
     const nfts = await this.nftRepository.find({ where: { userId }, order: { createdAt: 'DESC' } });
     const nftsIds = nfts.map((nft) => nft.id);
     const editionNFTsMap = this.groupNftsByEdition(nfts);

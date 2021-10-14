@@ -143,25 +143,26 @@ export class AuctionService {
 
       await transactionalEntityManager.save(tier);
 
-      if (params.nftIds) {
+      if (params.nftSlots) {
         const rewardTierNfts = await this.rewardTierNftRepository.find({ where: { rewardTierId: id } });
         const nftIds = rewardTierNfts.map((nft) => nft.nftId);
-        const idsToDelete = nftIds.filter((nftId) => !params.nftIds.includes(nftId));
-        const idsToCreate = params.nftIds.filter((nftId) => !nftIds.includes(nftId));
+        const nftSlotsToDelete = nftIds.filter((nftId) => !params.nftSlots.map((slot) => slot.nftId).includes(nftId));
+        const nftSlotsToCreate = params.nftSlots.filter((slot) => !nftIds.includes(slot.nftId));
 
-        if (idsToDelete.length > 0) {
+        if (nftSlotsToDelete.length > 0) {
           await transactionalEntityManager
             .createQueryBuilder()
             .delete()
             .from(RewardTierNft)
-            .where('nftId IN (:...idsToDelete)', { idsToDelete })
+            .where('nftId IN (:...idsToDelete)', { idsToDelete: nftSlotsToDelete })
             .execute();
         }
 
-        const newRewardTierNfts = idsToCreate.map((nftId) =>
+        const newRewardTierNfts = nftSlotsToCreate.map((nftSlot) =>
           this.rewardTierNftRepository.create({
             rewardTierId: tier.id,
-            nftId: nftId,
+            nftId: nftSlot.nftId,
+            slot: nftSlot.slot,
           }),
         );
 
@@ -252,9 +253,10 @@ export class AuctionService {
       rewardTier.tierPosition = index;
       await rewardTierRepository.save(rewardTier);
 
-      for (const id of rewardTierBody.nftIds) {
+      for (const nftSlot of rewardTierBody.nftSlots) {
         const rewardTierNft = rewardTierNftRepository.create();
-        rewardTierNft.nftId = id;
+        rewardTierNft.nftId = nftSlot.nftId;
+        rewardTierNft.slot = nftSlot.slot;
         rewardTierNft.rewardTierId = rewardTier.id;
         await rewardTierNftRepository.save(rewardTierNft);
       }

@@ -16,6 +16,11 @@ import {
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
+export class NftSlots {
+  nftId: number;
+  slot: number;
+}
+
 class RewardTierBodyParams {
   name: string;
   numberOfWinners: number;
@@ -83,14 +88,17 @@ export class UpdateRewardTierBody {
   minimumBid: number;
 
   @ApiProperty({
-    description: 'The nft ids of the reward tier',
-    example: [1, 2, 3],
+    description: 'The nft slot configuration',
+    example: [
+      { nftId: 1, slot: 1 },
+      { nftId: 2, slot: 2 },
+      { nftId: 3, slot: 3 },
+    ],
   })
   @IsArray()
   @ArrayMinSize(1)
-  @IsNumber({}, { each: true })
   @IsOptional()
-  nftIds: number[];
+  nftSlots: NftSlots[];
 }
 
 export class UpdateRewardTierExtraBody {
@@ -306,13 +314,16 @@ export class CreateRewardTierBody {
   minimumBid: number;
 
   @ApiProperty({
-    description: 'The nft ids of the reward tier',
-    example: [1, 2, 3],
+    description: 'The nft slot configuration',
+    example: [
+      { nftId: 1, slot: 1 },
+      { nftId: 2, slot: 2 },
+      { nftId: 3, slot: 3 },
+    ],
   })
   @IsArray()
   @ArrayMinSize(1)
-  @IsNumber({}, { each: true })
-  nftIds: number[];
+  nftSlots: NftSlots[];
 }
 
 export class CreateAuctionRoyaltySplitBody {
