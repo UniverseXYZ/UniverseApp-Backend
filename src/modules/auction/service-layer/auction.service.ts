@@ -503,11 +503,10 @@ export class AuctionService {
     );
 
     return auctions.map((auction) => {
-      const rewardTiers = [];
       let nfts = [];
-      auctionRewardTiersMap[auction.id].forEach((rewardTier) => {
+      const rewardTiers = auctionRewardTiersMap[auction.id].map((rewardTier) => {
         nfts = rewardTierNftsMap[rewardTier.id].map((nft) => classToPlain(nft));
-        rewardTiers.push({ ...classToPlain(rewardTier), nfts: nfts });
+        return { ...classToPlain(rewardTier), nfts: nfts };
       });
 
       const auctionCollections = collections.filter((coll) => nfts.map((nft) => nft.collectionId).includes(coll.id));
