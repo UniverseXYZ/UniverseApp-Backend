@@ -25,7 +25,14 @@ Moralis.Cloud.define('getUserNFTs', async function (request) {
     },
     {
       project: {
+        contract_type: 1,
+        name: 1,
+        symbol: 1,
         token_id: 1,
+        block_number: 1,
+        amount: 1,
+        updatedAt: 1,
+        createdAt: 1,
         token_address: 1,
         token_uri: 1,
         owner_of: 1,
@@ -35,12 +42,5 @@ Moralis.Cloud.define('getUserNFTs', async function (request) {
   ];
   const queryResults = await query.aggregate(pipeline);
 
-  const res = [];
-  for (let i = 0; i < queryResults.length; i++) {
-    res.push({
-      ...queryResults[i].attributes,
-    });
-  }
-
-  return res;
+  return queryResults;
 });

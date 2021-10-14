@@ -1,12 +1,14 @@
 Moralis.Cloud.job('addMetadata', async (request) => {
   logger.info('Running addMetadata job');
   const query = new Moralis.Query('EthNFTOwners');
-  query.doesNotExist('isScraped'); // only check those that have not been scraped before
+  //query.doesNotExist('isScraped'); // only check those that have not been scraped before
   const items = await query.find({ useMasterKey: true });
+
   for (let i = 0; i < items.length; ++i) {
     const token_uri = items[i].get('token_uri');
     if (token_uri && token_uri.length) {
       // get token_uri data
+
       const result = await Moralis.Cloud.httpRequest({
         url: token_uri,
         headers: {

@@ -12,10 +12,18 @@ import { CollectionSource, NftCollection } from '../nft/domain/collection.entity
 import { Repository } from 'typeorm';
 import { User } from '../users/user.entity';
 
-Moralis.serverURL = 'https://hvycejshzgpl.grandmoralis.com:2053/server';
-Moralis.masterKey = 'xI5yKj7ZkR0tmxJTKEGJoyXBHqB1kOlymcFzQmCQ';
-Moralis.initialize('PRy8GGFFj6DMeI6soQvoubHuJzzxOEXQ6VU7Jw2L');
+Moralis.serverURL = 'https://f6s1k3vrfvhu.grandmoralis.com:2053/server';
+Moralis.masterKey = 'eIMbWXlD4nMfK8kTxqx5nx0RSvPpE9NxOsp2NWTJ';
+Moralis.initialize('1gWgJDOdHSgs0yHhdWg9Z0588YT7ZdK0JU0pZ4Jy');
+const ETH_ENV = 'rinkeby';
 
+const fixURL = (url) => {
+  if (url.startsWith('ipfs')) {
+    return 'https://ipfs.moralis.io:2053/ipfs/' + url.split('ipfs://ipfs/')[1];
+  } else {
+    return url + '?format=json';
+  }
+};
 @Injectable()
 export class NftScraperService {
   constructor(
@@ -34,20 +42,55 @@ export class NftScraperService {
     this.queue.initQueue('nftScraper', this.nftScraperHandler, 3);
     console.log(`The module has been initialized.`);
 
+    this.addAllUsersToWatchList();
+  }
+
+  addAllUsersToWatchList = async () => {
     const users = await this.userRepository.find({ where: { isActive: true } });
 
-    // for (let i = 0; i < users.length; i++) {
-    //   const user = users[i];
-    //   try {
-    //     this.addUserToWatchEthEvent(user.address);
-    //   } catch (error) {
-    //     console.log('error: onModuleInit', error);
-    //   }
-    // }
-    const response = await this.getUserNFTs(users[0].address);
-    const ohyesok = await this.transformResponse(response);
-    //console.log(formattedData);
-  }
+    for (let i = 0; i < 1; i++) {
+      const user = users[i];
+      try {
+        this.addNewAddress(user.address);
+      } catch (error) {
+        console.log('error: onModuleInit', error);
+      }
+    }
+  };
+
+  addNewAddress = async (address) => {
+    await this.addUserToWatchEthEvent(address);
+    const res = await this.getUserNFTs(address);
+    //console.log({res});
+  };
+
+  // Load 20 nfts for the first time
+  getNFTs = async (chain, address) => {
+    // get polygon NFTs for address
+    const options = { chain: chain, address: address };
+
+    try {
+      let maxnr = 20;
+      const nftCount = await Moralis.Web3.getNFTsCount(options);
+      if (nftCount > 0) {
+        const allNFTs = await Moralis.Web3.getNFTs(options);
+        console.log(allNFTs);
+
+        allNFTs.forEach((nft) => {
+          if (maxnr > 0) {
+            fetch(fixURL(nft.token_uri))
+              .then((response) => response.json())
+              .then((data) => {
+                console.log({ data });
+              });
+          }
+          maxnr--;
+        });
+      }
+    } catch (err) {
+      console.log('getNFTs: ', err);
+    }
+  };
 
   /**
    * @summary Transform Data into DB Format
@@ -77,7 +120,8 @@ export class NftScraperService {
     console.log(address);
     return Moralis.Cloud.run('watchEthAddress', {
       address: address.toLowerCase(),
-      chainId: '0x4',
+      chainId: ETH_ENV == 'rinkeby' ? '0x4' : '0x1',
+      sync_historical: true,
     });
   };
 

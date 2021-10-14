@@ -1,6 +1,7 @@
 // set Metadata after NFT is created
 Moralis.Cloud.beforeSave('EthNFTOwners', async (request) => {
   // add new Metadata item if not scraped already
+
   if (!request.object.get('isScraped')) {
     const token_uri = request.object.get('token_uri');
     if (token_uri && token_uri.length) {
