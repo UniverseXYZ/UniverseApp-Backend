@@ -170,11 +170,9 @@ export class NftScraperService {
     this.queue.pushToQueue('nftScraper', { address, page: 0 });
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_10PM)
+  @Cron(CronExpression.EVERY_30_MINUTES)
   async getNftsForUsers() {
-    const users = await this.userRepository.find({ where: { isActive: true } });
-    for (const user of users) {
-      this.startNftScraperForAddress(user.address);
-    }
+    const updatedNFTs = Moralis.Cloud.run('getUpdatedNFTs', {});
+    console.log(updatedNFTs);
   }
 }
