@@ -12,9 +12,9 @@ import { CollectionSource, NftCollection } from '../nft/domain/collection.entity
 import { Repository } from 'typeorm';
 import { User } from '../users/user.entity';
 
-Moralis.serverURL = 'https://sv8erjsrz4wg.bigmoralis.com:2053/server';
-Moralis.masterKey = 'SXFHQTYXbcYWX1JnkHrTHfb0vN1RwfNxTSeNnjm3';
-Moralis.initialize('jlvmvCLbkVYZdgOMeKvYCuK8awZLCQARSLRsVb5o');
+Moralis.serverURL = 'https://hvycejshzgpl.grandmoralis.com:2053/server';
+Moralis.masterKey = 'xI5yKj7ZkR0tmxJTKEGJoyXBHqB1kOlymcFzQmCQ';
+Moralis.initialize('PRy8GGFFj6DMeI6soQvoubHuJzzxOEXQ6VU7Jw2L');
 
 @Injectable()
 export class NftScraperService {
@@ -35,27 +35,30 @@ export class NftScraperService {
     console.log(`The module has been initialized.`);
 
     const users = await this.userRepository.find({ where: { isActive: true } });
-    
-    // for (const user of users) {
-    //  // this.addUserToWatchEthEvent(user.address);
+
+    // for (let i = 0; i < users.length; i++) {
+    //   const user = users[i];
+    //   try {
+    //     this.addUserToWatchEthEvent(user.address);
+    //   } catch (error) {
+    //     console.log('error: onModuleInit', error);
+    //   }
     // }
-  
-    for (let i = 0; i < users.length; i ++) {
-      const user = users[i];
-      this.addUserToWatchEthEvent(user.address);
-    }
-    const data = await this.getUserNFTs('0x9B6134Fe036F1C22D9Fe76c15AC81B7bC31212eB');
-    const formattedData = await this.transformResponse(data);
-    console.log(formattedData);
+    const response = await this.getUserNFTs(users[0].address);
+    const ohyesok = await this.transformResponse(response);
+    //console.log(formattedData);
   }
 
   /**
    * @summary Transform Data into DB Format
    * @param {Array} response: token array from the moralis sdk
    */
-  private transformResponse = async (data) => {
-    console.log(data);
-    return data;
+  private transformResponse = async (response) => {
+    for (let i = 0; i < response.length; i++) {
+      const data = response[i];
+      console.log('data++++++++++', data);
+    }
+    return response;
   };
 
   /**
@@ -63,7 +66,7 @@ export class NftScraperService {
    * @param {string} address The owner address
    */
   private getUserNFTs = async (userAddress: string) => {
-    return Moralis.Cloud.run('getUserNFTs', { userAddress });
+    return Moralis.Cloud.run('getUserNFTs', { userAddress: userAddress.toLowerCase() });
   };
 
   /**
@@ -71,7 +74,11 @@ export class NftScraperService {
    * @param {string} address The owner address
    */
   private addUserToWatchEthEvent = async (address: string) => {
-    return Moralis.Cloud.run('watchEthAddress', { address, sync_historical: true });
+    console.log(address);
+    return Moralis.Cloud.run('watchEthAddress', {
+      address: address.toLowerCase(),
+      chainId: '0x4',
+    });
   };
 
   nftScraperHandler = async (input: any, cb: any) => {
