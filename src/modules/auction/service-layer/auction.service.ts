@@ -124,7 +124,8 @@ export class AuctionService {
       if (tier.userId !== userId) {
         throw new RewardTierBadOwnerException();
       }
-
+      //TODO: Add validation(ex: numberOfWinners should eq tier.nftSlots.length)
+      //TODO: Add validation(ex: nftsPerWinnder should eq tier.nftSlots.nftIds.length)
       tier.name = params.name ? params.name : tier.name;
       tier.numberOfWinners = params.numberOfWinners ? params.numberOfWinners : tier.numberOfWinners;
       tier.nftsPerWinner = params.nftsPerWinner ? params.nftsPerWinner : tier.nftsPerWinner;
@@ -151,9 +152,27 @@ export class AuctionService {
         );
 
         const nftSlotsToDelete = nftIds.filter((nftId) => !reducedNftIds.nftIds.includes(nftId));
-        const nftSlotsToCreate = params.nftSlots.filter((slot) => {
-          slot.nftIds.forEach((slotNftId) => {
-            return nftIds.includes(slotNftId);
+        const nftSlotsToCreate = [];
+        const nftSlotsToChange = [];
+
+        params.nftSlots.forEach((nftSlot) => {
+          nftSlot.nftIds.forEach((slotNftId) => {
+            if (!nftIds.includes(slotNftId)) {
+              nftSlotsToCreate.push({
+                nftIds: [slotNftId],
+                slot: nftSlot.slot,
+              });
+              return;
+            }
+
+            const toChangeRewardTier = rewardTierNfts.find((rwt) => rwt.nftId == slotNftId);
+            if (toChangeRewardTier?.slot !== nftSlot.slot) {
+              nftSlotsToChange.push({
+                id: toChangeRewardTier.id,
+                slot: nftSlot.slot,
+              });
+              return;
+            }
           });
         });
 
@@ -177,6 +196,11 @@ export class AuctionService {
         });
 
         await Promise.all(newRewardTierNfts.map((rewardTierNft) => this.rewardTierNftRepository.save(rewardTierNft)));
+
+        for (let i = 0; i < nftSlotsToChange.length; i++) {
+          const toUpdateSlot = nftSlotsToChange[i];
+          await this.rewardTierNftRepository.update(toUpdateSlot.id, { slot: toUpdateSlot.slot });
+        }
       }
 
       const rewardTierNfts = await this.rewardTierNftRepository.find({ where: { rewardTierId: id } });
