@@ -598,9 +598,6 @@ export class NftService {
   }
 
   public async getMyNftsAvailability(userId: number) {
-    //TODO: Make response similar to my nfts
-    // Group by edition UUID
-    // Return nftId + tokenId
     const nfts = await this.nftRepository.find({ where: { userId }, order: { createdAt: 'DESC' } });
     const nftsIds = nfts.map((nft) => nft.id);
     const editionNFTsMap = this.groupNftsByEdition(nfts);
@@ -611,17 +608,32 @@ export class NftService {
       {},
     );
     const rewardTiers = await this.rewardTierNftRepository.find({ where: { nftId: In(nftsIds) } });
-    const nftRewardTierIdMap = rewardTiers.reduce((acc, rewardTier) => ({ ...acc, [rewardTier.nftId]: rewardTier.id }));
+    const nftRewardTierIdMap = [];
+    if (rewardTiers.length) {
+      rewardTiers.reduce((acc, rewardTier) => ({ ...acc, [rewardTier.nftId]: rewardTier.id }));
+    }
 
     const mappedNfts = Object.values(editionNFTsMap).map((nfts) => {
+      const rewardAndTokenIds = [];
+      nfts.forEach((nft) => {
+        rewardAndTokenIds.push({
+          tokenId: nft.tokenId,
+          rewardTierId: nftRewardTierIdMap[nft.id],
+        });
+      });
+
       return {
-        nfts: nfts.map((nft) => ({ ...classToPlain(nft), rewardTierId: nftRewardTierIdMap[nft.id] })),
+        nfts: { ...classToPlain(nfts[0]), rewardAndTokenIds },
         collection: nfts.length > 0 && classToPlain(collectionsMap[nfts[0].collectionId]),
       };
     });
 
     return {
       nfts: mappedNfts,
+      // TODO: Future object which will container pagination information
+      // How are we going to paginate as it's hard to specify the exact number of nfts we want
+      // as they all have different number of editions
+      pagination: {},
     };
   }
 
