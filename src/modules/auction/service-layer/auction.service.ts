@@ -62,7 +62,7 @@ export class AuctionService {
 
     const now = new Date().toISOString();
     const moreArtistActiveAuctions = await this.auctionRepository.find({
-      where: { userId: auction.userId, id: Not(auction.id), startDate: LessThan(now), endDate: MoreThan(now) },
+      where: { userId: auction.userId, startDate: LessThan(now), endDate: MoreThan(now) },
     });
 
     return {
