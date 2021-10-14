@@ -618,6 +618,7 @@ export class NftService {
       nfts.forEach((nft) => {
         rewardAndTokenIds.push({
           tokenId: nft.tokenId,
+          id: nft.id,
           rewardTierId: nftRewardTierIdMap[nft.id],
         });
       });
