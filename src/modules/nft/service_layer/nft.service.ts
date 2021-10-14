@@ -597,8 +597,19 @@ export class NftService {
     return this.reduceUserNftsByEdition(user.id, additionalData, prefetchData);
   }
 
-  public async getMyNftsAvailability(userId: number) {
-    const nfts = await this.nftRepository.find({ where: { userId }, order: { createdAt: 'DESC' } });
+  public async getMyNftsAvailability(userId: number, start: number = 0, limit: number = 8) {
+    const editionsCount = parseInt((await this.nftRepository.query(
+      'SELECT COUNT(DISTINCT "editionUUID") FROM "universe-backend"."nft"'
+    ))[0].count);
+
+    const nfts = await this.nftRepository
+      .createQueryBuilder('nft')
+      .where('nft.userId = :userId', { userId: userId})
+      .andWhere('nft.editionUUID IN (SELECT DISTINCT("nft"."editionUUID") FROM (SELECT "editionUUID", "id" FROM "universe-backend"."nft" ORDER BY "nft"."id" DESC) AS "nft" LIMIT :limit OFFSET :offset)', {limit: limit, offset: start})
+      .groupBy('nft.editionUUID, nft.id')
+      .orderBy('nft.createdAt', 'DESC')
+      .getMany();
+
     const nftsIds = nfts.map((nft) => nft.id);
     const editionNFTsMap = this.groupNftsByEdition(nfts);
     const collectionIds = Object.keys(nfts.reduce((acc, nft) => ({ ...acc, [nft.collectionId]: true }), {}));
@@ -634,10 +645,11 @@ export class NftService {
 
     return {
       nfts: mappedNfts,
-      // TODO: Future object which will container pagination information
-      // How are we going to paginate as it's hard to specify the exact number of nfts we want
-      // as they all have different number of editions
-      pagination: {},
+      pagination: {
+        "page": start === 0 ? 1 : Math.ceil((start / limit) + 1),
+        "hasNextPage": editionsCount > start + limit,
+        "totalPages": Math.ceil(editionsCount / limit),
+      },
     };
   }
 
