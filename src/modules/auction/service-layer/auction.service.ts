@@ -146,8 +146,16 @@ export class AuctionService {
       if (params.nftSlots) {
         const rewardTierNfts = await this.rewardTierNftRepository.find({ where: { rewardTierId: id } });
         const nftIds = rewardTierNfts.map((nft) => nft.nftId);
-        const nftSlotsToDelete = nftIds.filter((nftId) => !params.nftSlots.map((slot) => slot.nftId).includes(nftId));
-        const nftSlotsToCreate = params.nftSlots.filter((slot) => !nftIds.includes(slot.nftId));
+        const reducedNftIds = params.nftSlots.reduce(
+          (acc, slot) => (acc = { ...acc, nftIds: [...acc.nftIds, ...slot.nftIds] }),
+        );
+
+        const nftSlotsToDelete = nftIds.filter((nftId) => !reducedNftIds.nftIds.includes(nftId));
+        const nftSlotsToCreate = params.nftSlots.filter((slot) => {
+          slot.nftIds.forEach((slotNftId) => {
+            return nftIds.includes(slotNftId);
+          });
+        });
 
         if (nftSlotsToDelete.length > 0) {
           await transactionalEntityManager
@@ -158,13 +166,15 @@ export class AuctionService {
             .execute();
         }
 
-        const newRewardTierNfts = nftSlotsToCreate.map((nftSlot) =>
-          this.rewardTierNftRepository.create({
-            rewardTierId: tier.id,
-            nftId: nftSlot.nftId,
-            slot: nftSlot.slot,
-          }),
-        );
+        const newRewardTierNfts = nftSlotsToCreate.map((nftSlot) => {
+          for (const nftId of nftSlot.nftIds) {
+            return this.rewardTierNftRepository.create({
+              rewardTierId: tier.id,
+              nftId: nftId,
+              slot: nftSlot.slot,
+            });
+          }
+        });
 
         await Promise.all(newRewardTierNfts.map((rewardTierNft) => this.rewardTierNftRepository.save(rewardTierNft)));
       }
@@ -254,11 +264,13 @@ export class AuctionService {
       await rewardTierRepository.save(rewardTier);
 
       for (const nftSlot of rewardTierBody.nftSlots) {
-        const rewardTierNft = rewardTierNftRepository.create();
-        rewardTierNft.nftId = nftSlot.nftId;
-        rewardTierNft.slot = nftSlot.slot;
-        rewardTierNft.rewardTierId = rewardTier.id;
-        await rewardTierNftRepository.save(rewardTierNft);
+        for (const nftId of nftSlot.nftIds) {
+          const rewardTierNft = rewardTierNftRepository.create();
+          rewardTierNft.nftId = nftId;
+          rewardTierNft.slot = nftSlot.slot;
+          rewardTierNft.rewardTierId = rewardTier.id;
+          await rewardTierNftRepository.save(rewardTierNft);
+        }
       }
     }
 
