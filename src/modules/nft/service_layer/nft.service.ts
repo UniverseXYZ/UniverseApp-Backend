@@ -464,7 +464,6 @@ export class NftService {
         order: { tokenId: 'ASC' },
       }),
     ]);
-    //TODO: Add tokenIds[] with all other nft tokenIds -> so we can redirect
     return {
       nft: classToPlain(nft),
       collection: classToPlain(collection),

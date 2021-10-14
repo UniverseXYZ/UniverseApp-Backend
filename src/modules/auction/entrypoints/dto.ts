@@ -17,7 +17,7 @@ import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class NftSlots {
-  nftId: number;
+  nftIds: number[];
   slot: number;
 }
 
@@ -90,9 +90,9 @@ export class UpdateRewardTierBody {
   @ApiProperty({
     description: 'The nft slot configuration',
     example: [
-      { nftId: 1, slot: 1 },
-      { nftId: 2, slot: 2 },
-      { nftId: 3, slot: 3 },
+      { nftIds: [1, 4], slot: 1 },
+      { nftIds: [2, 5], slot: 2 },
+      { nftIds: [3, 6], slot: 3 },
     ],
   })
   @IsArray()
@@ -316,9 +316,9 @@ export class CreateRewardTierBody {
   @ApiProperty({
     description: 'The nft slot configuration',
     example: [
-      { nftId: 1, slot: 1 },
-      { nftId: 2, slot: 2 },
-      { nftId: 3, slot: 3 },
+      { nftIds: [1, 4], slot: 1 },
+      { nftIds: [2, 5], slot: 2 },
+      { nftIds: [3, 6], slot: 3 },
     ],
   })
   @IsArray()
