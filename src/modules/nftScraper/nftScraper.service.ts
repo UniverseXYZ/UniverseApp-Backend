@@ -173,6 +173,6 @@ export class NftScraperService {
   @Cron(CronExpression.EVERY_30_MINUTES)
   async getNftsForUsers() {
     const updatedNFTs = Moralis.Cloud.run('getUpdatedNFTs', {});
-    console.log(updatedNFTs);
+    console.log("updated Tokens in 30 minutes", updatedNFTs);
   }
 }
