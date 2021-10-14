@@ -70,7 +70,7 @@ export class NftScraperService {
     const options = { chain: chain, address: address };
 
     try {
-      let maxnr = 20;
+      let maxnr = 50;
       const nftCount = await Moralis.Web3.getNFTsCount(options);
       if (nftCount > 0) {
         const allNFTs = await Moralis.Web3.getNFTs(options);
@@ -90,18 +90,6 @@ export class NftScraperService {
     } catch (err) {
       console.log('getNFTs: ', err);
     }
-  };
-
-  /**
-   * @summary Transform Data into DB Format
-   * @param {Array} response: token array from the moralis sdk
-   */
-  private transformResponse = async (response) => {
-    for (let i = 0; i < response.length; i++) {
-      const data = response[i];
-      console.log('data++++++++++', data);
-    }
-    return response;
   };
 
   /**
