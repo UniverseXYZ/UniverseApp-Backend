@@ -239,6 +239,7 @@ export class AuctionService {
     @TransactionRepository(RewardTierNft) rewardTierNftRepository?: Repository<RewardTierNft>,
     @TransactionRepository(Auction) auctionRepository?: Repository<Auction>,
   ) {
+    // TODO: Add checks to verify all auctions params are ok
     let auction = auctionRepository.create({
       userId,
       name: createAuctionBody.name,

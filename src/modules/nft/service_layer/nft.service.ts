@@ -608,9 +608,11 @@ export class NftService {
       {},
     );
     const rewardTiers = await this.rewardTierNftRepository.find({ where: { nftId: In(nftsIds) } });
-    const nftRewardTierIdMap = [];
+    const nftRewardTierMapping = [];
     if (rewardTiers.length) {
-      rewardTiers.reduce((acc, rewardTier) => ({ ...acc, [rewardTier.nftId]: rewardTier.id }));
+      rewardTiers.forEach((tier) => {
+        nftRewardTierMapping[tier.nftId] = { id: tier.rewardTierId, slot: tier.slot };
+      });
     }
 
     const mappedNfts = Object.values(editionNFTsMap).map((nfts) => {
@@ -619,7 +621,8 @@ export class NftService {
         rewardAndTokenIds.push({
           tokenId: nft.tokenId,
           id: nft.id,
-          rewardTierId: nftRewardTierIdMap[nft.id],
+          rewardTierId: nftRewardTierMapping[nft.id]?.id,
+          slot: nftRewardTierMapping[nft.id]?.slot,
         });
       });
 
