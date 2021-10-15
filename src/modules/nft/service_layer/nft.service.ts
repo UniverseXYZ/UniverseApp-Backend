@@ -661,28 +661,33 @@ export class NftService {
     return { id };
   }
 
-  public async getCollectionPage(address: string, start: number = 0, limit: number = 8) {
+  public async getCollectionPage(address: string, start = 0, limit = 8) {
     const collection = await this.nftCollectionRepository.findOne({ where: { address } });
-    const editionsCount = parseInt((await this.nftRepository.query(
-      'SELECT COUNT(DISTINCT "editionUUID") FROM "universe-backend"."nft" WHERE "nft"."collectionId" = $1',
-      [collection.id]
-      ))[0].count);
+    const editionsCount = parseInt(
+      (
+        await this.nftRepository.query(
+          'SELECT COUNT(DISTINCT "editionUUID") FROM "universe-backend"."nft" WHERE "nft"."collectionId" = $1',
+          [collection.id],
+        )
+      )[0].count,
+    );
 
     if (!collection) {
       throw new NftCollectionNotFoundException();
     }
 
-    const conditions = 
+    const conditions =
       'nft.editionUUID IN (' +
-        'SELECT DISTINCT("nft"."editionUUID") FROM (' +
-          'SELECT "editionUUID", "id" FROM "universe-backend"."nft" as "nft" WHERE "nft"."collectionId" = :collectionId ORDER BY "nft"."id" DESC' +
-        ') AS "nft" LIMIT :limit OFFSET :offset)';
+      'SELECT DISTINCT("nft"."editionUUID") FROM (' +
+      'SELECT "editionUUID", "id" FROM "universe-backend"."nft" as "nft" WHERE "nft"."collectionId" = :collectionId ORDER BY "nft"."id" DESC' +
+      ') AS "nft" LIMIT :limit OFFSET :offset' +
+      ')';
 
     const nfts = await this.nftRepository
       .createQueryBuilder('nft')
       .leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.id = nft.userId')
       .leftJoinAndMapOne('nft.creator', User, 'creator', 'creator.address = nft.creator')
-      .where(conditions, {collectionId: collection.id, limit: limit, offset: start})
+      .where(conditions, { collectionId: collection.id, limit: limit, offset: start })
       .orderBy('nft.createdAt', 'DESC')
       .getMany();
 
@@ -700,9 +705,9 @@ export class NftService {
       collection: classToPlain(collection),
       nfts: formattedNfts,
       pagination: {
-        "page": start === 0 ? 1 : Math.ceil((start / limit) + 1),
-        "hasNextPage": editionsCount > start + limit,
-        "totalPages": Math.ceil(editionsCount / limit),
+        page: start === 0 ? 1 : Math.ceil(start / limit + 1),
+        hasNextPage: editionsCount > start + limit,
+        totalPages: Math.ceil(editionsCount / limit),
       },
     };
   }
