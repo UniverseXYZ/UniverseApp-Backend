@@ -20,7 +20,7 @@ export class AppController {
 
   @Get('util/triggerNftScraper')
   async triggerNftScraper() {
-    this.nftScraperService.getNftsForUsers();
+    //this.nftScraperService.getNftsForUsers();
   }
 
   @Get('api/auth/devSignChallenge')
