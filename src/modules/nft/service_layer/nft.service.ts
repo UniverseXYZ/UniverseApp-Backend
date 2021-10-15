@@ -661,8 +661,13 @@ export class NftService {
     return { id };
   }
 
-  public async getCollectionPage(address: string, start = 0, limit = 8) {
+  public async getCollectionPage(address: string, name = '', offset = 0, limit = 8) {
     const collection = await this.nftCollectionRepository.findOne({ where: { address } });
+
+    if (!collection) {
+      throw new NftCollectionNotFoundException();
+    }
+
     const editionsCount = parseInt(
       (
         await this.nftRepository.query(
@@ -672,10 +677,6 @@ export class NftService {
       )[0].count,
     );
 
-    if (!collection) {
-      throw new NftCollectionNotFoundException();
-    }
-
     const conditions =
       'nft.editionUUID IN (' +
       'SELECT DISTINCT("nft"."editionUUID") FROM (' +
@@ -683,13 +684,18 @@ export class NftService {
       ') AS "nft" LIMIT :limit OFFSET :offset' +
       ')';
 
-    const nfts = await this.nftRepository
-      .createQueryBuilder('nft')
-      .leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.id = nft.userId')
-      .leftJoinAndMapOne('nft.creator', User, 'creator', 'creator.address = nft.creator')
-      .where(conditions, { collectionId: collection.id, limit: limit, offset: start })
-      .orderBy('nft.createdAt', 'DESC')
-      .getMany();
+    const query = this.nftRepository
+    .createQueryBuilder('nft')
+    .leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.id = nft.userId')
+    .leftJoinAndMapOne('nft.creator', User, 'creator', 'creator.address = nft.creator')
+    .where(conditions, { collectionId: collection.id, limit: limit, offset: offset })
+    .orderBy('nft.createdAt', 'DESC');
+
+    if (name) {
+      query.andWhere('LOWER("nft"."name") LIKE :name', {name: `%${name}%`});
+    }
+
+    const nfts = await query.getMany();
 
     const editionNFTsMap: Record<string, Nft[]> = this.groupNftsByEdition(nfts);
     let formattedNfts = [];
@@ -705,8 +711,9 @@ export class NftService {
       collection: classToPlain(collection),
       nfts: formattedNfts,
       pagination: {
-        page: start === 0 ? 1 : Math.ceil(start / limit + 1),
-        hasNextPage: editionsCount > start + limit,
+        totalCount: editionsCount,
+        page: Math.ceil(offset / limit + 1),
+        hasNextPage: editionsCount > offset + limit,
         totalPages: Math.ceil(editionsCount / limit),
       },
     };
