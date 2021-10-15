@@ -505,3 +505,30 @@ export class GetMyCollectionsParams {
   })
   mintable: string;
 }
+
+export class GetCollectionQueryParams {
+  @IsString()
+  @IsOptional()
+  @Length(1, 32)
+  @ApiProperty({
+    example: 'Single NFT name',
+    description: 'The name of the NFT',
+  })
+  name: string;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The offset for getting nfts',
+    example: '8',
+  })
+  offset: number;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The amount of editions to get',
+    example: '1',
+  })
+  limit: number;
+}

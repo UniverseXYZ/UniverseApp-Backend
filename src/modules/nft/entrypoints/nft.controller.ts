@@ -34,6 +34,7 @@ import {
   SaveCollectionBody,
   SaveNftBody,
   UploadNftMediaFileParams,
+  GetCollectionQueryParams,
 } from './dto';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { NftService } from '../service_layer/nft.service';
@@ -267,8 +268,8 @@ export class NftController {
   @Get('pages/collection/:address')
   @ApiTags('nfts')
   @ApiOperation({ summary: 'Get data for Collection page' })
-  async getCollectionPage(@Param() params: GetCollectionParams) {
-    return this.nftService.getCollectionPage(params.address);
+  async getCollectionPage(@Param() params: GetCollectionParams, @Query() query: GetCollectionQueryParams) {
+    return this.nftService.getCollectionPage(params.address, query.name, query.offset, query.limit);
   }
 
   @Get('pages/my-nfts')

@@ -661,20 +661,41 @@ export class NftService {
     return { id };
   }
 
-  public async getCollectionPage(address: string) {
+  public async getCollectionPage(address: string, name = '', offset = 0, limit = 8) {
     const collection = await this.nftCollectionRepository.findOne({ where: { address } });
 
     if (!collection) {
       throw new NftCollectionNotFoundException();
     }
 
-    const nfts = await this.nftRepository
+    const editionsCount = parseInt(
+      (
+        await this.nftRepository.query(
+          'SELECT COUNT(DISTINCT "editionUUID") FROM "universe-backend"."nft" WHERE "nft"."collectionId" = $1',
+          [collection.id],
+        )
+      )[0].count,
+    );
+
+    const conditions =
+      'nft.editionUUID IN (' +
+      'SELECT DISTINCT("nft"."editionUUID") FROM (' +
+      'SELECT "editionUUID", "id" FROM "universe-backend"."nft" as "nft" WHERE "nft"."collectionId" = :collectionId ORDER BY "nft"."id" DESC' +
+      ') AS "nft" LIMIT :limit OFFSET :offset' +
+      ')';
+
+    const query = this.nftRepository
       .createQueryBuilder('nft')
       .leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.id = nft.userId')
       .leftJoinAndMapOne('nft.creator', User, 'creator', 'creator.address = nft.creator')
-      .where('nft.collectionId = :collectionId', { collectionId: collection.id })
-      .orderBy('nft.createdAt', 'DESC')
-      .getMany();
+      .where(conditions, { collectionId: collection.id, limit: limit, offset: offset })
+      .orderBy('nft.createdAt', 'DESC');
+
+    if (name) {
+      query.andWhere('LOWER("nft"."name") LIKE :name', { name: `%${name}%` });
+    }
+
+    const nfts = await query.getMany();
 
     const editionNFTsMap: Record<string, Nft[]> = this.groupNftsByEdition(nfts);
     let formattedNfts = [];
@@ -689,6 +710,12 @@ export class NftService {
     return {
       collection: classToPlain(collection),
       nfts: formattedNfts,
+      pagination: {
+        totalCount: editionsCount,
+        page: Math.ceil(offset / limit + 1),
+        hasNextPage: editionsCount > offset + limit,
+        totalPages: Math.ceil(editionsCount / limit),
+      },
     };
   }
 
