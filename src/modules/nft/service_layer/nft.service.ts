@@ -597,15 +597,16 @@ export class NftService {
     return this.reduceUserNftsByEdition(user.id, additionalData, prefetchData);
   }
 
-  public async getMyNftsAvailability(userId: number, start: number = 0, limit: number = 8) {
+  public async getMyNftsAvailability(userId: number, start: number = 0, limit: number = 8, size: number = 0) {
     const editionsCount = parseInt((await this.nftRepository.query(
-      'SELECT COUNT(DISTINCT "editionUUID") FROM "universe-backend"."nft"'
+      'WITH editions AS ' +
+      '(SELECT "editionUUID" FROM "universe-backend"."nft" WHERE "userId" = $1 GROUP BY "editionUUID" HAVING COUNT(*) >= $2)' +
+      'SELECT count(*) FROM editions', [userId, size]
     ))[0].count);
 
     const nfts = await this.nftRepository
       .createQueryBuilder('nft')
-      .where('nft.userId = :userId', { userId: userId})
-      .andWhere('nft.editionUUID IN (SELECT DISTINCT("nft"."editionUUID") FROM (SELECT "editionUUID", "id" FROM "universe-backend"."nft" ORDER BY "nft"."id" DESC) AS "nft" LIMIT :limit OFFSET :offset)', {limit: limit, offset: start})
+      .where('nft.editionUUID IN (SELECT "editionUUID" FROM "universe-backend"."nft" WHERE "userId" = :userId GROUP BY "editionUUID" HAVING COUNT(*) > :size LIMIT :limit OFFSET :offset)', { userId: userId, size: size, limit: limit, offset: start })
       .groupBy('nft.editionUUID, nft.id')
       .orderBy('nft.createdAt', 'DESC')
       .getMany();
