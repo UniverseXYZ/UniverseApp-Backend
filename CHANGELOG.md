@@ -1,3 +1,10 @@
+## [1.22.5](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.22.4...v1.22.5) (2021-10-15)
+
+
+### Bug Fixes
+
+* optimise cron calls ([#93](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/93)) ([3b4fdef](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/3b4fdef6b69edbb2822e26b06fadac0ebaa12565))
+
 ## [1.22.4](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.22.3...v1.22.4) (2021-10-15)
 
 
