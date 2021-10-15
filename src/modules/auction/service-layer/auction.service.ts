@@ -517,7 +517,7 @@ export class AuctionService {
           ...acc,
           [rewardTierNft.rewardTierId]: [
             ...(acc[rewardTierNft.rewardTierId] || []),
-            { ...idNftMap[rewardTierNft.rewardTierId], slot: rewardTierNft.slot },
+            { ...idNftMap[rewardTierNft.nftId], slot: rewardTierNft.slot },
           ],
         };
       }, {} as Record<string, any[]>);
