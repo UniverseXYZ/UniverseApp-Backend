@@ -509,13 +509,18 @@ export class AuctionService {
     });
 
     const idNftMap = nfts.reduce((acc, nft) => ({ ...acc, [nft.id]: nft }), {} as Record<string, Nft>);
-    const rewardTierNftsMap = rewardTierNfts.reduce(
-      (acc, rewardTierNft) => ({
-        ...acc,
-        [rewardTierNft.rewardTierId]: [...(acc[rewardTierNft.rewardTierId] || []), idNftMap[rewardTierNft.nftId]],
-      }),
-      {} as Record<string, Nft[]>,
-    );
+
+    const rewardTierNftsMap = rewardTierNfts
+      .sort((a, b) => (a.rewardTierId !== b.rewardTierId ? a.rewardTierId - b.rewardTierId : a.slot - b.slot))
+      .reduce(function (acc, rewardTierNft) {
+        return {
+          ...acc,
+          [rewardTierNft.rewardTierId]: [
+            ...(acc[rewardTierNft.rewardTierId] || []),
+            { ...idNftMap[rewardTierNft.rewardTierId], slot: rewardTierNft.slot },
+          ],
+        };
+      }, {} as Record<string, any[]>);
 
     return auctions.map((auction) => {
       let nfts = [];
