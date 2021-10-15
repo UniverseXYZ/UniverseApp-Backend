@@ -685,14 +685,14 @@ export class NftService {
       ')';
 
     const query = this.nftRepository
-    .createQueryBuilder('nft')
-    .leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.id = nft.userId')
-    .leftJoinAndMapOne('nft.creator', User, 'creator', 'creator.address = nft.creator')
-    .where(conditions, { collectionId: collection.id, limit: limit, offset: offset })
-    .orderBy('nft.createdAt', 'DESC');
+      .createQueryBuilder('nft')
+      .leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.id = nft.userId')
+      .leftJoinAndMapOne('nft.creator', User, 'creator', 'creator.address = nft.creator')
+      .where(conditions, { collectionId: collection.id, limit: limit, offset: offset })
+      .orderBy('nft.createdAt', 'DESC');
 
     if (name) {
-      query.andWhere('LOWER("nft"."name") LIKE :name', {name: `%${name}%`});
+      query.andWhere('LOWER("nft"."name") LIKE :name', { name: `%${name}%` });
     }
 
     const nfts = await query.getMany();
