@@ -6,11 +6,19 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Nft, NftSource } from '../nft/domain/nft.entity';
 import { CollectionSource, NftCollection } from '../nft/domain/collection.entity';
 
-import { Repository } from 'typeorm';
+import { Repository, ILike } from 'typeorm';
 import { User } from '../users/user.entity';
 import Moralis from 'moralis/node';
 
 const MORALIS_NEW_NFT_QUEUE = 'MORALIS_NEW_NFT_QUEUE';
+
+function fixURL(url) {
+  if (url.startsWith('ipfs')) {
+    return 'https://ipfs.moralis.io:2053/ipfs/' + url.split('ipfs://ipfs/').slice(-1)[0];
+  } else {
+    return url + '?format=json';
+  }
+}
 
 @Injectable()
 export class MoralisService {
@@ -29,18 +37,16 @@ export class MoralisService {
   async onModuleInit() {
     this.queue.initQueue(MORALIS_NEW_NFT_QUEUE, this.moralisNewNFTOwnerHandler, 3);
     this.addNewNFT({
-      token: {
-        name: 'Non Fungible Universe Core',
-        symbol: 'NFUC',
-        token_uri: 'https://arweave.net/zMTulcMuluxkaT4e6I5myCmKqOeLDlRg0AQn-R84MlU',
-        token_id: '6370',
-        token_address: '0xd3ccbb9f3e5b9678c5f4fef91055704df81a104c',
-        owner_of: '0x72523054c174a6c8e961bd14a2cab9f059e507e8',
-        block_number: 9423437,
-        amount: '1',
-        contract_type: 'ERC721',
-        className: 'EthNFTOwners',
-      },
+      name: 'Non Fungible Universe Core',
+      symbol: 'NFUC',
+      token_uri: 'https://arweave.net/zMTulcMuluxkaT4e6I5myCmKqOeLDlRg0AQn-R84MlU',
+      token_id: '6370',
+      token_address: '0xd3ccbb9f3e5b9678c5f4fef91055704df81a104c',
+      owner_of: '0x72523054c174a6c8e961bd14a2cab9f059e507e8',
+      block_number: 9423437,
+      amount: '1',
+      contract_type: 'ERC721',
+      className: 'EthNFTOwners',
     });
     console.log(`The module has been initialized.`);
   }
@@ -58,15 +64,36 @@ export class MoralisService {
 
     //--- fetch metadata
 
-    if (token.token_uri) {
-      token.metaData = await this.httpService.get(token.token_uri).toPromise();
-    } else {
-      token.metaData = {};
-    }
+    // if (token.token_uri) {
+    //   const response = await this.httpService.get(fixURL(token.token_uri)).toPromise();
+    //   token.metaData = response.data ? response.data : {};
+    // } else {
+    //   token.metaData = {};
+    // }
+
+    const foundToken = await this.nftRepository.findOne({ where: { tokenId: token.token_id } });
+    const user = await this.userRepository.findOne({ where: { address: token.owner_of } }); // Just need to ignore case-sensitive
+
+    if (foundToken && !user) {
+      await this.nftRepository.remove(foundToken);
+      return;
+    } else if (foundToken && user) {
+      foundToken.userId = user.id;
+      return;
+    } else if (!user) return;
+
+    const newRow = new Nft();
+
+    newRow.userId = user.id;
+    newRow.tokenId = token.token_id;
+    newRow.name = token.name;
+    newRow.tokenUri = token.token_uri;
+    newRow.collectionId = 1;
+
+    console.log('New NFT Token:', newRow.tokenId);
+    await this.nftRepository.save(newRow);
 
     // const newRow = new Nft();
-    // const user = await this.userRepository.findOne({ where: { address: token.owner_of } });  // Just need to ignore case-sensitive
-    // if (!user) return;
 
     // newRow.userId = user.id;
     // newRow.tokenId = token.token_id;
