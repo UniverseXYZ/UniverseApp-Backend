@@ -1,3 +1,10 @@
+## [1.22.4](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.22.3...v1.22.4) (2021-10-15)
+
+
+### Bug Fixes
+
+* **collection-page:** Small fixes + added search by name ([6da1f2a](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/6da1f2afd9a2f05db311f95b3cd540ef4bdbeacc))
+
 ## [1.22.3](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.22.2...v1.22.3) (2021-10-13)
 
 
