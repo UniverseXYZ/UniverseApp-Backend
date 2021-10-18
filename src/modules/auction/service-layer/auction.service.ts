@@ -44,22 +44,32 @@ export class AuctionService {
     private readonly config: AppConfig,
   ) {}
 
-  async getAuctionPage(userId: number, auctionId: number) {
-    const auction = await this.auctionRepository.findOne({ where: { id: auctionId } });
+  async getAuctionPage(username: string, auctionName: string) {
+    const artist = await this.usersService.getByUsername(username);
+    const link = `universe.xyz/${username}/${auctionName}`;
+
+    //TODO: add a check if the auction has started
+    const auction = await this.auctionRepository.findOne({ link: link });
 
     if (!auction) {
       throw new AuctionNotFoundException();
     }
+
     // TODO: Add collection info for each nft
-    const rewardTiers = await this.rewardTierRepository.find({ where: { auctionId } });
+    const rewardTiers = await this.rewardTierRepository.find({ where: { auctionId: auction.id } });
     const rewardTierNfts = await this.rewardTierNftRepository.find({
       where: { rewardTierId: In(rewardTiers.map((rewardTier) => rewardTier.id)) },
     });
+
     const nftIds = rewardTierNfts.map((rewardTierNft) => rewardTierNft.nftId);
-    console.log(nftIds);
+    // console.log(nftIds);
+
     const nfts = await this.nftRepository.find({ where: { id: In(nftIds) } });
+    const nftCollectionids = nfts.map((nft) => nft.collectionId);
+
+    const collections = await this.nftCollectionRepository.find({ id: In(nftCollectionids) });
     const idNftMap = nfts.reduce((acc, nft) => ({ ...acc, [nft.id]: nft }), {} as Record<string, Nft>);
-    console.log(idNftMap);
+    // console.log(idNftMap);
     const rewardTierNftsMap = rewardTierNfts.reduce(
       (acc, rewardTierNft) => ({
         ...acc,
@@ -67,16 +77,17 @@ export class AuctionService {
       }),
       {} as Record<string, Nft[]>,
     );
-    const artist = await this.usersService.getById(auction.userId, false);
 
     return {
       auction: classToPlain(auction),
+      artist: classToPlain(artist),
+      collections: classToPlain(collections),
       rewardTiers: rewardTiers.map((rewardTier) => ({
         ...classToPlain(rewardTier),
         nfts: rewardTierNftsMap[rewardTier.id].map((nft) => classToPlain(nft)),
       })),
       bids: [],
-      artist: classToPlain(artist),
+      moreActiveAuctions: [],
     };
   }
 
