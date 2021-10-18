@@ -55,7 +55,6 @@ export class MoralisService {
     const { token } = input;
 
     //--- fetch metadata
-
     if (token.token_uri) {
       const response = await this.httpService.get(fixURL(token.token_uri)).toPromise();
       token.metaData = response.data ? response.data : {};
