@@ -10,7 +10,6 @@ import { DatabaseModule } from './modules/database/database.module';
 import { TypeOrmDefaultConfigService } from './modules/database/database.providers';
 import { EthersModule } from './modules/ethers/ethers.module';
 import { HealthModule } from './modules/health/health.module';
-import { NftScraperModule } from './modules/nftScraper/nftScraper.model';
 import { QueueModel } from './modules/queue/queue.model';
 import { UsersModule } from './modules/users/users.module';
 import { NftModule } from './modules/nft/nft.module';
@@ -37,7 +36,6 @@ import { MoralisModule } from './modules/moralis/moralis.module';
     UsersModule,
     EthersModule,
     QueueModel,
-    NftScraperModule,
     NftModule,
     AuthModule,
     AuctionModule,
