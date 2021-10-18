@@ -513,6 +513,14 @@ export class GetMyNftsAvailabilityParams {
     example: '1',
   })
   limit: number;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The minimum required editions of a nft',
+    example: '3',
+  })
+  size: number;
 }
 
 export class GetMyCollectionsParams {
