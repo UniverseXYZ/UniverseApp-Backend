@@ -1,3 +1,10 @@
+## [1.23.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.23.1...v1.23.2) (2021-10-18)
+
+
+### Bug Fixes
+
+* **reward-tier-nft:** add db migration ([0eaaa43](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/0eaaa4307d61a22720b29f7253828d7805db1803))
+
 ## [1.23.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.23.0...v1.23.1) (2021-10-18)
 
 
