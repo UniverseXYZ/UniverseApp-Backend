@@ -1,11 +1,11 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
-export class RewardTierNft1634550122972 implements MigrationInterface {
-    name = 'RewardTierNft1634550122972'
+export class RewardTierNft1634551425762 implements MigrationInterface {
+    name = 'RewardTierNft1634551425762'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         // await queryRunner.query(`DROP INDEX "universe-backend"."IDX_user_address"`);
-        await queryRunner.query(`ALTER TABLE "universe-backend"."reward_tier_nft" ALTER COLUMN "slot" DROP NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "universe-backend"."reward_tier_nft" ADD "slot" integer`);
         // await queryRunner.query(`ALTER TABLE "universe" DROP COLUMN "tx_hash"`);
         // await queryRunner.query(`ALTER TABLE "universe" ADD "tx_hash" character varying NOT NULL`);
         // await queryRunner.query(`ALTER TABLE "universe" DROP COLUMN "token_name"`);
@@ -87,7 +87,7 @@ export class RewardTierNft1634550122972 implements MigrationInterface {
         // await queryRunner.query(`ALTER TABLE "universe" ADD "token_name" text NOT NULL`);
         // await queryRunner.query(`ALTER TABLE "universe" DROP COLUMN "tx_hash"`);
         // await queryRunner.query(`ALTER TABLE "universe" ADD "tx_hash" text NOT NULL`);
-        await queryRunner.query(`ALTER TABLE "universe-backend"."reward_tier_nft" ALTER COLUMN "slot" SET NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "universe-backend"."reward_tier_nft" DROP COLUMN "slot"`);
         // await queryRunner.query(`CREATE INDEX "IDX_user_address" ON "universe-backend"."user" ("address") `);
     }
 
