@@ -1,3 +1,10 @@
+## [1.23.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.23.0...v1.23.1) (2021-10-18)
+
+
+### Bug Fixes
+
+* **reward-tier-nft-entity:** allow slot field to be null ([a51ef27](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/a51ef27162b560de65970c801c854d9b09867366))
+
 # [1.23.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.22.5...v1.23.0) (2021-10-18)
 
 
