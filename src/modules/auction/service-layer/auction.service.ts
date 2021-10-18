@@ -7,7 +7,13 @@ import { S3Service } from '../../file-storage/s3.service';
 import { AppConfig } from 'src/modules/configuration/configuration.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuctionStatus } from '../domain/types';
-import { CreateAuctionBody, DeployAuctionBody, EditAuctionBody, UpdateRewardTierBody } from '../entrypoints/dto';
+import {
+  CreateAuctionBody,
+  DeployAuctionBody,
+  EditAuctionBody,
+  UpdateRewardTierBody,
+  DepositNftsBody,
+} from '../entrypoints/dto';
 import { Nft } from 'src/modules/nft/domain/nft.entity';
 import { AuctionNotFoundException } from './exceptions/AuctionNotFoundException';
 import { AuctionBadOwnerException } from './exceptions/AuctionBadOwnerException';
@@ -322,6 +328,34 @@ export class AuctionService {
     };
   }
 
+  public async depositNfts(userId: number, depositNftsBody: DepositNftsBody) {
+    // TODO: This is a temporary endpoint to deposit nfts. In the future the scraper should fill in these fields
+    await this.validateAuctionPermissions(userId, depositNftsBody.auctionId);
+    //TODO: We need some kind of validation that this on chain id really exists
+    const depositResult = await this.rewardTierNftRepository.update(
+      { nftId: In(depositNftsBody.nftIds) },
+      { deposited: true },
+    );
+
+    return {
+      depositedNfts: depositResult.affected,
+    };
+  }
+
+  public async withdrawNfts(userId: number, withdrawNftsBody: DepositNftsBody) {
+    // TODO: This is a temporary endpoint to withdraw nfts. In the future the scraper should fill in these fields
+    await this.validateAuctionPermissions(userId, withdrawNftsBody.auctionId);
+    //TODO: We need some kind of validation that this on chain id really exists
+    const withdrawResult = await this.rewardTierNftRepository.update(
+      { nftId: In(withdrawNftsBody.nftIds) },
+      { deposited: false },
+    );
+
+    return {
+      withdrawnNfts: withdrawResult.affected,
+    };
+  }
+
   private async validateAuctionPermissions(userId: number, auctionId: number) {
     const auction = await this.auctionRepository.findOne({ where: { id: auctionId } });
 
@@ -532,7 +566,7 @@ export class AuctionService {
       const auctionCollections = collections.filter((coll) => nfts.map((nft) => nft.collectionId).includes(coll.id));
 
       return {
-        ...classToPlain(auction),
+        ...auction,
         rewardTiers: rewardTiers,
         collections: auctionCollections,
       };

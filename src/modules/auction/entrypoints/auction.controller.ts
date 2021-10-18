@@ -28,6 +28,8 @@ import {
   UpdateRewardTierParams,
   UploaductionLandingImagesParams,
   DeployAuctionBody,
+  WithdrawNftsBody,
+  DepositNftsBody,
 } from './dto';
 import { AuctionService } from '../service-layer/auction.service';
 import { JwtAuthGuard, OptionalJwtAuthGuard } from '../../auth/jwt-auth.guard';
@@ -53,6 +55,22 @@ export class AuctionController {
   @ApiOperation({ summary: 'Set on chain properies of auction' })
   async deployAuction(@Req() req, @Body() deployAuctionBody: DeployAuctionBody) {
     return await this.auctionService.deployAuction(req.user.sub, deployAuctionBody);
+  }
+
+  @Post('/auctions/depositNfts')
+  @ApiTags('auction')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Set nfts as deposited' })
+  async depositNfts(@Req() req, @Body() deployNftsBody: DepositNftsBody) {
+    return await this.auctionService.depositNfts(req.user.sub, deployNftsBody);
+  }
+
+  @Post('/auctions/withdrawNfts')
+  @ApiTags('auction')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Set nfts as withdrawn' })
+  async withdrawNfts(@Req() req, @Body() withdrawNftsBody: WithdrawNftsBody) {
+    return await this.auctionService.withdrawNfts(req.user.sub, withdrawNftsBody);
   }
 
   @Patch('auctions/:id')

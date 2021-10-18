@@ -305,6 +305,40 @@ export class DeployAuctionBody {
   txHash: string;
 }
 
+export class DepositNftsBody {
+  @ApiProperty({
+    description: `The auction's id from the back end`,
+    example: 1,
+  })
+  @IsNumber()
+  auctionId: number;
+
+  @ApiProperty({
+    description: `The nft ids that have been deposited`,
+    example: [1, 2, 3, 4],
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  nftIds: number[];
+}
+
+export class WithdrawNftsBody {
+  @ApiProperty({
+    description: `The auction's id from the back end`,
+    example: 1,
+  })
+  @IsNumber()
+  auctionId: number;
+
+  @ApiProperty({
+    description: `The nft ids that have been withdrawn`,
+    example: [1, 2, 3, 4],
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  nftIds: number[];
+}
+
 export class CreateRewardTierBody {
   @ApiProperty({
     description: 'The name of reward tier',
