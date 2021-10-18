@@ -46,7 +46,7 @@ export class MoralisService {
   addNewUserToWatchAddress = async (address: string) => {
     Moralis.Cloud.run('watchEthAddress', {
       address,
-      chainId: '0x04',
+      chainId: process.env.NODE_ENV === 'development' ? '0x4' : '0x1',
       sync_historical: true,
     });
   };
