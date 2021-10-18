@@ -12,6 +12,10 @@ import Moralis from 'moralis/node';
 
 const MORALIS_NEW_NFT_QUEUE = 'MORALIS_NEW_NFT_QUEUE';
 
+Moralis.serverURL = process.env.MORALIS_SERVERURL;
+Moralis.masterKey = process.env.MORALIS_MASTER_KEY;
+Moralis.initialize(process.env.MORALIS_APPLICATION_ID);
+
 function fixURL(url) {
   if (url.startsWith('ipfs')) {
     return 'https://ipfs.moralis.io:2053/ipfs/' + url.split('ipfs://ipfs/').slice(-1)[0];
@@ -36,11 +40,6 @@ export class MoralisService {
 
   async onModuleInit() {
     this.queue.initQueue(MORALIS_NEW_NFT_QUEUE, this.moralisNewNFTOwnerHandler, 3);
-
-    Moralis.serverURL = process.env.MORALIS_SERVERURL;
-    Moralis.masterKey = process.env.MORALIS_MASTER_KEY;
-    Moralis.initialize(process.env.MORALIS_APPLICATION_ID);
-
     console.log(`The module has been initialized.`);
   }
 
