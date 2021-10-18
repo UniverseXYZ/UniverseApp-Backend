@@ -26,6 +26,7 @@ import {
   GetMyCollectionsParams,
   GetMyNftsResponse,
   GetNftParams,
+  GetMyNftsAvailabilityParams,
   GetNftTokenURIParams,
   GetUserNftsParams,
   GetUserNftsResponse,
@@ -240,8 +241,8 @@ export class NftController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get my nfts with availability information' })
   @ApiResponse({ type: GetMyNftsResponse, status: 200, isArray: true })
-  async getMyNftsAvailability(@Req() req) {
-    return await this.nftService.getMyNftsAvailability(req.user.sub);
+  async getMyNftsAvailability(@Req() req, @Query() params: GetMyNftsAvailabilityParams) {
+    return await this.nftService.getMyNftsAvailability(req.user.sub, params.start, params.limit, params.size);
   }
 
   @Get('nfts/collections/my-collections')

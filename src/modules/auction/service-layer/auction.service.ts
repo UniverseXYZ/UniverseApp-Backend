@@ -7,7 +7,13 @@ import { S3Service } from '../../file-storage/s3.service';
 import { AppConfig } from 'src/modules/configuration/configuration.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuctionStatus } from '../domain/types';
-import { CreateAuctionBody, EditAuctionBody, UpdateRewardTierBody } from '../entrypoints/dto';
+import {
+  CreateAuctionBody,
+  DeployAuctionBody,
+  EditAuctionBody,
+  UpdateRewardTierBody,
+  DepositNftsBody,
+} from '../entrypoints/dto';
 import { Nft } from 'src/modules/nft/domain/nft.entity';
 import { AuctionNotFoundException } from './exceptions/AuctionNotFoundException';
 import { AuctionBadOwnerException } from './exceptions/AuctionBadOwnerException';
@@ -17,6 +23,7 @@ import { RewardTierBadOwnerException } from './exceptions/RewardTierBadOwnerExce
 import { UsersService } from '../../users/users.service';
 import { classToPlain } from 'class-transformer';
 import { UploadResult } from 'src/modules/file-storage/model/UploadResult';
+import { NftCollection } from 'src/modules/nft/domain/collection.entity';
 
 @Injectable()
 export class AuctionService {
@@ -28,6 +35,8 @@ export class AuctionService {
     private rewardTierNftRepository: Repository<RewardTierNft>,
     @InjectRepository(Auction)
     private auctionRepository: Repository<Auction>,
+    @InjectRepository(NftCollection)
+    private nftCollectionRepository: Repository<NftCollection>,
     @InjectRepository(Nft)
     private nftRepository: Repository<Nft>,
     private s3Service: S3Service,
@@ -41,7 +50,7 @@ export class AuctionService {
     if (!auction) {
       throw new AuctionNotFoundException();
     }
-
+    // TODO: Add collection info for each nft
     const rewardTiers = await this.rewardTierRepository.find({ where: { auctionId } });
     const rewardTierNfts = await this.rewardTierNftRepository.find({
       where: { rewardTierId: In(rewardTiers.map((rewardTier) => rewardTier.id)) },
@@ -124,7 +133,8 @@ export class AuctionService {
       if (tier.userId !== userId) {
         throw new RewardTierBadOwnerException();
       }
-
+      //TODO: Add validation(ex: numberOfWinners should eq tier.nftSlots.length)
+      //TODO: Add validation(ex: nftsPerWinnder should eq tier.nftSlots.nftIds.length)
       tier.name = params.name ? params.name : tier.name;
       tier.numberOfWinners = params.numberOfWinners ? params.numberOfWinners : tier.numberOfWinners;
       tier.nftsPerWinner = params.nftsPerWinner ? params.nftsPerWinner : tier.nftsPerWinner;
@@ -143,29 +153,63 @@ export class AuctionService {
 
       await transactionalEntityManager.save(tier);
 
-      if (params.nftIds) {
+      if (params.nftSlots) {
         const rewardTierNfts = await this.rewardTierNftRepository.find({ where: { rewardTierId: id } });
         const nftIds = rewardTierNfts.map((nft) => nft.nftId);
-        const idsToDelete = nftIds.filter((nftId) => !params.nftIds.includes(nftId));
-        const idsToCreate = params.nftIds.filter((nftId) => !nftIds.includes(nftId));
+        const reducedNftIds = params.nftSlots.reduce(
+          (acc, slot) => (acc = { ...acc, nftIds: [...acc.nftIds, ...slot.nftIds] }),
+        );
 
-        if (idsToDelete.length > 0) {
+        const nftSlotsToDelete = nftIds.filter((nftId) => !reducedNftIds.nftIds.includes(nftId));
+        const nftSlotsToCreate = [];
+        const nftSlotsToChange = [];
+
+        params.nftSlots.forEach((nftSlot) => {
+          nftSlot.nftIds.forEach((slotNftId) => {
+            if (!nftIds.includes(slotNftId)) {
+              nftSlotsToCreate.push({
+                nftIds: [slotNftId],
+                slot: nftSlot.slot,
+              });
+              return;
+            }
+
+            const toChangeRewardTier = rewardTierNfts.find((rwt) => rwt.nftId == slotNftId);
+            if (toChangeRewardTier?.slot !== nftSlot.slot) {
+              nftSlotsToChange.push({
+                id: toChangeRewardTier.id,
+                slot: nftSlot.slot,
+              });
+              return;
+            }
+          });
+        });
+
+        if (nftSlotsToDelete.length > 0) {
           await transactionalEntityManager
             .createQueryBuilder()
             .delete()
             .from(RewardTierNft)
-            .where('nftId IN (:...idsToDelete)', { idsToDelete })
+            .where('nftId IN (:...idsToDelete)', { idsToDelete: nftSlotsToDelete })
             .execute();
         }
 
-        const newRewardTierNfts = idsToCreate.map((nftId) =>
-          this.rewardTierNftRepository.create({
-            rewardTierId: tier.id,
-            nftId: nftId,
-          }),
-        );
+        const newRewardTierNfts = nftSlotsToCreate.map((nftSlot) => {
+          for (const nftId of nftSlot.nftIds) {
+            return this.rewardTierNftRepository.create({
+              rewardTierId: tier.id,
+              nftId: nftId,
+              slot: nftSlot.slot,
+            });
+          }
+        });
 
         await Promise.all(newRewardTierNfts.map((rewardTierNft) => this.rewardTierNftRepository.save(rewardTierNft)));
+
+        for (let i = 0; i < nftSlotsToChange.length; i++) {
+          const toUpdateSlot = nftSlotsToChange[i];
+          await this.rewardTierNftRepository.update(toUpdateSlot.id, { slot: toUpdateSlot.slot });
+        }
       }
 
       const rewardTierNfts = await this.rewardTierNftRepository.find({ where: { rewardTierId: id } });
@@ -228,6 +272,7 @@ export class AuctionService {
     @TransactionRepository(RewardTierNft) rewardTierNftRepository?: Repository<RewardTierNft>,
     @TransactionRepository(Auction) auctionRepository?: Repository<Auction>,
   ) {
+    // TODO: Add checks to verify all auctions params are ok
     let auction = auctionRepository.create({
       userId,
       name: createAuctionBody.name,
@@ -252,16 +297,62 @@ export class AuctionService {
       rewardTier.tierPosition = index;
       await rewardTierRepository.save(rewardTier);
 
-      for (const id of rewardTierBody.nftIds) {
-        const rewardTierNft = rewardTierNftRepository.create();
-        rewardTierNft.nftId = id;
-        rewardTierNft.rewardTierId = rewardTier.id;
-        await rewardTierNftRepository.save(rewardTierNft);
+      for (const nftSlot of rewardTierBody.nftSlots) {
+        for (const nftId of nftSlot.nftIds) {
+          const rewardTierNft = rewardTierNftRepository.create();
+          rewardTierNft.nftId = nftId;
+          rewardTierNft.slot = nftSlot.slot;
+          rewardTierNft.rewardTierId = rewardTier.id;
+          await rewardTierNftRepository.save(rewardTierNft);
+        }
       }
     }
 
     return {
       id: auction.id,
+    };
+  }
+
+  public async deployAuction(userId: number, deployBody: DeployAuctionBody) {
+    // TODO: This is a temporary endpoint to create auction. In the future the scraper should fill in these fields
+    const auction = await this.validateAuctionPermissions(userId, deployBody.auctionId);
+    //TODO: We need some kind of validation that this on chain id really exists
+    const deployedAuction = await this.auctionRepository.update(auction.id, {
+      onChain: true,
+      onChainId: deployBody.onChainId,
+      txHash: deployBody.txHash,
+    });
+
+    return {
+      auction: classToPlain(deployedAuction),
+    };
+  }
+
+  public async depositNfts(userId: number, depositNftsBody: DepositNftsBody) {
+    // TODO: This is a temporary endpoint to deposit nfts. In the future the scraper should fill in these fields
+    await this.validateAuctionPermissions(userId, depositNftsBody.auctionId);
+    //TODO: We need some kind of validation that this on chain id really exists
+    const depositResult = await this.rewardTierNftRepository.update(
+      { nftId: In(depositNftsBody.nftIds) },
+      { deposited: true },
+    );
+
+    return {
+      depositedNfts: depositResult.affected,
+    };
+  }
+
+  public async withdrawNfts(userId: number, withdrawNftsBody: DepositNftsBody) {
+    // TODO: This is a temporary endpoint to withdraw nfts. In the future the scraper should fill in these fields
+    await this.validateAuctionPermissions(userId, withdrawNftsBody.auctionId);
+    //TODO: We need some kind of validation that this on chain id really exists
+    const withdrawResult = await this.rewardTierNftRepository.update(
+      { nftId: In(withdrawNftsBody.nftIds) },
+      { deposited: false },
+    );
+
+    return {
+      withdrawnNfts: withdrawResult.affected,
     };
   }
 
@@ -442,25 +533,44 @@ export class AuctionService {
     const rewardTierNfts = await this.rewardTierNftRepository.find({
       where: { rewardTierId: In(rewardTiers.map((rewardTier) => rewardTier.id)) },
     });
+
     const nfts = await this.nftRepository.find({
       where: { id: In(rewardTierNfts.map((rewardTierNft) => rewardTierNft.nftId)) },
     });
-    const idNftMap = nfts.reduce((acc, nft) => ({ ...acc, [nft.id]: nft }), {} as Record<string, Nft>);
-    const rewardTierNftsMap = rewardTierNfts.reduce(
-      (acc, rewardTierNft) => ({
-        ...acc,
-        [rewardTierNft.rewardTierId]: [...(acc[rewardTierNft.rewardTierId] || []), idNftMap[rewardTierNft.nftId]],
-      }),
-      {} as Record<string, Nft[]>,
-    );
 
-    return auctions.map((auction) => ({
-      ...classToPlain(auction),
-      rewardTiers: auctionRewardTiersMap[auction.id].map((rewardTier) => ({
-        ...classToPlain(rewardTier),
-        nfts: rewardTierNftsMap[rewardTier.id].map((nft) => classToPlain(nft)),
-      })),
-    }));
+    const collections = await this.nftCollectionRepository.find({
+      where: { id: In(nfts.map((nft) => nft.collectionId)) },
+    });
+
+    const idNftMap = nfts.reduce((acc, nft) => ({ ...acc, [nft.id]: nft }), {} as Record<string, Nft>);
+
+    const rewardTierNftsMap = rewardTierNfts
+      .sort((a, b) => (a.rewardTierId !== b.rewardTierId ? a.rewardTierId - b.rewardTierId : a.slot - b.slot))
+      .reduce(function (acc, rewardTierNft) {
+        return {
+          ...acc,
+          [rewardTierNft.rewardTierId]: [
+            ...(acc[rewardTierNft.rewardTierId] || []),
+            { ...idNftMap[rewardTierNft.nftId], slot: rewardTierNft.slot },
+          ],
+        };
+      }, {} as Record<string, any[]>);
+
+    return auctions.map((auction) => {
+      let nfts = [];
+      const rewardTiers = auctionRewardTiersMap[auction.id].map((rewardTier) => {
+        nfts = rewardTierNftsMap[rewardTier.id].map((nft) => classToPlain(nft));
+        return { ...classToPlain(rewardTier), nfts: nfts };
+      });
+
+      const auctionCollections = collections.filter((coll) => nfts.map((nft) => nft.collectionId).includes(coll.id));
+
+      return {
+        ...auction,
+        rewardTiers: rewardTiers,
+        collections: auctionCollections,
+      };
+    });
   }
 
   async updateAuctionExtraData(

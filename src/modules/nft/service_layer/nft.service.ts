@@ -464,7 +464,6 @@ export class NftService {
         order: { tokenId: 'ASC' },
       }),
     ]);
-
     return {
       nft: classToPlain(nft),
       collection: classToPlain(collection),
@@ -598,8 +597,20 @@ export class NftService {
     return this.reduceUserNftsByEdition(user.id, additionalData, prefetchData);
   }
 
-  public async getMyNftsAvailability(userId: number) {
-    const nfts = await this.nftRepository.find({ where: { userId }, order: { createdAt: 'DESC' } });
+  public async getMyNftsAvailability(userId: number, start: number = 0, limit: number = 8, size: number = 0) {
+    const editionsCount = parseInt((await this.nftRepository.query(
+      'WITH editions AS ' +
+      '(SELECT "editionUUID" FROM "universe-backend"."nft" WHERE "userId" = $1 GROUP BY "editionUUID" HAVING COUNT(*) >= $2)' +
+      'SELECT count(*) FROM editions', [userId, size]
+    ))[0].count);
+
+    const nfts = await this.nftRepository
+      .createQueryBuilder('nft')
+      .where('nft.editionUUID IN (SELECT "editionUUID" FROM "universe-backend"."nft" WHERE "userId" = :userId GROUP BY "editionUUID" HAVING COUNT(*) > :size LIMIT :limit OFFSET :offset)', { userId: userId, size: size, limit: limit, offset: start })
+      .groupBy('nft.editionUUID, nft.id')
+      .orderBy('nft.createdAt', 'DESC')
+      .getMany();
+
     const nftsIds = nfts.map((nft) => nft.id);
     const editionNFTsMap = this.groupNftsByEdition(nfts);
     const collectionIds = Object.keys(nfts.reduce((acc, nft) => ({ ...acc, [nft.collectionId]: true }), {}));
@@ -609,17 +620,37 @@ export class NftService {
       {},
     );
     const rewardTiers = await this.rewardTierNftRepository.find({ where: { nftId: In(nftsIds) } });
-    const nftRewardTierIdMap = rewardTiers.reduce((acc, rewardTier) => ({ ...acc, [rewardTier.nftId]: rewardTier.id }));
+    const nftRewardTierMapping = [];
+    if (rewardTiers.length) {
+      rewardTiers.forEach((tier) => {
+        nftRewardTierMapping[tier.nftId] = { id: tier.rewardTierId, slot: tier.slot };
+      });
+    }
 
     const mappedNfts = Object.values(editionNFTsMap).map((nfts) => {
+      const rewardAndTokenIds = [];
+      nfts.forEach((nft) => {
+        rewardAndTokenIds.push({
+          tokenId: nft.tokenId,
+          id: nft.id,
+          rewardTierId: nftRewardTierMapping[nft.id]?.id,
+          slot: nftRewardTierMapping[nft.id]?.slot,
+        });
+      });
+
       return {
-        nfts: nfts.map((nft) => ({ ...classToPlain(nft), rewardTierId: nftRewardTierIdMap[nft.id] })),
+        nfts: { ...classToPlain(nfts[0]), rewardAndTokenIds },
         collection: nfts.length > 0 && classToPlain(collectionsMap[nfts[0].collectionId]),
       };
     });
 
     return {
       nfts: mappedNfts,
+      pagination: {
+        "page": start === 0 ? 1 : Math.ceil((start / limit) + 1),
+        "hasNextPage": editionsCount > start + limit,
+        "totalPages": Math.ceil(editionsCount / limit),
+      },
     };
   }
 

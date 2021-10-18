@@ -497,6 +497,32 @@ export class GetNftParams {
   tokenId: number;
 }
 
+export class GetMyNftsAvailabilityParams {
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The offset for getting nfts',
+    example: '8',
+  })
+  start: number;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The amount of editions to get',
+    example: '1',
+  })
+  limit: number;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The minimum required editions of a nft',
+    example: '3',
+  })
+  size: number;
+}
+
 export class GetMyCollectionsParams {
   @IsString()
   @ApiProperty({
