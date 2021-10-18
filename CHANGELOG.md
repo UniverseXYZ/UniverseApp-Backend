@@ -1,3 +1,22 @@
+# [1.23.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.22.5...v1.23.0) (2021-10-18)
+
+
+### Bug Fixes
+
+* **active-auction:** we need current auction according to desgin ([fa0caa7](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/fa0caa77af9b196e84aed24d283355eb6ecd3b6d))
+* **deploy-auction:** add temporary endpoint for populating deployed auction info ([21e5def](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/21e5defb5da97fecee9779e932375384a457525e))
+* **nft-availability:** add slot, tokenId to response ([be2ed88](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/be2ed882e666ef5199063598be9a8b134da643cd))
+* **nft-availability:** make response smaller and return tokenId and rewardTierId ([2ca6b87](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/2ca6b87bdb84c784e4b9862dc66a5b119c296615))
+* **nft-availablity:** add nft id to response ([91b50d5](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/91b50d51e2eec7c36fab9a84535ac3b2b08f336b))
+* **save-reward-tier:** reward tiers params accept nftIds[] ([8ec353e](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/8ec353e42c407b9fe61848c33992ceb0d77d5ac3))
+* **update-reward-tiers:** handle create,delete,change cases ([ee163ae](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/ee163aee337930cbfcb2ac41c11cf2f8417eb580))
+* wrong mapping search ([3bcd7a0](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/3bcd7a0ff6e84188a5fa5bb38da7e98ec4bb7257))
+
+
+### Features
+
+* **finalize-auction:** add deposit and withdraw nfts temp endpoints ([df66bbd](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/df66bbd3e79370ba57870bbc04bbd862582d679b))
+
 ## [1.22.5](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.22.4...v1.22.5) (2021-10-15)
 
 
