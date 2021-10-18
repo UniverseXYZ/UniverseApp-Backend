@@ -647,9 +647,16 @@ export class GetMyAuctionsResponse {
 
 export class GetAuctionPageParams {
   @ApiProperty({
-    example: '1',
-    description: 'The id of the auction to be fetched',
+    example: 'username1',
+    description: 'The username of the artist',
   })
-  @IsNumberString()
-  id: string;
+  @IsString()
+  username: string;
+
+  @ApiProperty({
+    example: 'auctionName1',
+    description: 'The unique name of the auction',
+  })
+  @IsString()
+  auctionName: string;
 }
