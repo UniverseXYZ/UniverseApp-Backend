@@ -422,7 +422,11 @@ export class NftService {
     const mintingNft = await this.mintingNftRepository.findOne({ where: { id, userId } });
     if (!mintingNft) throw new NftNotFoundException();
 
-    mintingNft.txHash = body.txHash;
+    if (Array.isArray(mintingNft.txHashes)) {
+      mintingNft.txHashes = [...mintingNft.txHashes, body.txHash];
+    } else {
+      mintingNft.txHashes = [body.txHash];
+    }
     mintingNft.txStatus = 'pending';
     if (mintingNft.savedNftId) {
       await this.savedNftRepository.delete({ id: mintingNft.savedNftId });
@@ -460,7 +464,6 @@ export class NftService {
         order: { tokenId: 'ASC' },
       }),
     ]);
-
     return {
       nft: classToPlain(nft),
       collection: classToPlain(collection),
@@ -594,8 +597,20 @@ export class NftService {
     return this.reduceUserNftsByEdition(user.id, additionalData, prefetchData);
   }
 
-  public async getMyNftsAvailability(userId: number) {
-    const nfts = await this.nftRepository.find({ where: { userId }, order: { createdAt: 'DESC' } });
+  public async getMyNftsAvailability(userId: number, start: number = 0, limit: number = 8, size: number = 0) {
+    const editionsCount = parseInt((await this.nftRepository.query(
+      'WITH editions AS ' +
+      '(SELECT "editionUUID" FROM "universe-backend"."nft" WHERE "userId" = $1 GROUP BY "editionUUID" HAVING COUNT(*) >= $2)' +
+      'SELECT count(*) FROM editions', [userId, size]
+    ))[0].count);
+
+    const nfts = await this.nftRepository
+      .createQueryBuilder('nft')
+      .where('nft.editionUUID IN (SELECT "editionUUID" FROM "universe-backend"."nft" WHERE "userId" = :userId GROUP BY "editionUUID" HAVING COUNT(*) > :size LIMIT :limit OFFSET :offset)', { userId: userId, size: size, limit: limit, offset: start })
+      .groupBy('nft.editionUUID, nft.id')
+      .orderBy('nft.createdAt', 'DESC')
+      .getMany();
+
     const nftsIds = nfts.map((nft) => nft.id);
     const editionNFTsMap = this.groupNftsByEdition(nfts);
     const collectionIds = Object.keys(nfts.reduce((acc, nft) => ({ ...acc, [nft.collectionId]: true }), {}));
@@ -605,17 +620,37 @@ export class NftService {
       {},
     );
     const rewardTiers = await this.rewardTierNftRepository.find({ where: { nftId: In(nftsIds) } });
-    const nftRewardTierIdMap = rewardTiers.reduce((acc, rewardTier) => ({ ...acc, [rewardTier.nftId]: rewardTier.id }));
+    const nftRewardTierMapping = [];
+    if (rewardTiers.length) {
+      rewardTiers.forEach((tier) => {
+        nftRewardTierMapping[tier.nftId] = { id: tier.rewardTierId, slot: tier.slot };
+      });
+    }
 
     const mappedNfts = Object.values(editionNFTsMap).map((nfts) => {
+      const rewardAndTokenIds = [];
+      nfts.forEach((nft) => {
+        rewardAndTokenIds.push({
+          tokenId: nft.tokenId,
+          id: nft.id,
+          rewardTierId: nftRewardTierMapping[nft.id]?.id,
+          slot: nftRewardTierMapping[nft.id]?.slot,
+        });
+      });
+
       return {
-        nfts: nfts.map((nft) => ({ ...classToPlain(nft), rewardTierId: nftRewardTierIdMap[nft.id] })),
+        nfts: { ...classToPlain(nfts[0]), rewardAndTokenIds },
         collection: nfts.length > 0 && classToPlain(collectionsMap[nfts[0].collectionId]),
       };
     });
 
     return {
       nfts: mappedNfts,
+      pagination: {
+        "page": start === 0 ? 1 : Math.ceil((start / limit) + 1),
+        "hasNextPage": editionsCount > start + limit,
+        "totalPages": Math.ceil(editionsCount / limit),
+      },
     };
   }
 
@@ -657,20 +692,41 @@ export class NftService {
     return { id };
   }
 
-  public async getCollectionPage(address: string) {
+  public async getCollectionPage(address: string, name = '', offset = 0, limit = 8) {
     const collection = await this.nftCollectionRepository.findOne({ where: { address } });
 
     if (!collection) {
       throw new NftCollectionNotFoundException();
     }
 
-    const nfts = await this.nftRepository
+    const editionsCount = parseInt(
+      (
+        await this.nftRepository.query(
+          'SELECT COUNT(DISTINCT "editionUUID") FROM "universe-backend"."nft" WHERE "nft"."collectionId" = $1',
+          [collection.id],
+        )
+      )[0].count,
+    );
+
+    const conditions =
+      'nft.editionUUID IN (' +
+      'SELECT DISTINCT("nft"."editionUUID") FROM (' +
+      'SELECT "editionUUID", "id" FROM "universe-backend"."nft" as "nft" WHERE "nft"."collectionId" = :collectionId ORDER BY "nft"."id" DESC' +
+      ') AS "nft" LIMIT :limit OFFSET :offset' +
+      ')';
+
+    const query = this.nftRepository
       .createQueryBuilder('nft')
       .leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.id = nft.userId')
       .leftJoinAndMapOne('nft.creator', User, 'creator', 'creator.address = nft.creator')
-      .where('nft.collectionId = :collectionId', { collectionId: collection.id })
-      .orderBy('nft.createdAt', 'DESC')
-      .getMany();
+      .where(conditions, { collectionId: collection.id, limit: limit, offset: offset })
+      .orderBy('nft.createdAt', 'DESC');
+
+    if (name) {
+      query.andWhere('LOWER("nft"."name") LIKE :name', { name: `%${name}%` });
+    }
+
+    const nfts = await query.getMany();
 
     const editionNFTsMap: Record<string, Nft[]> = this.groupNftsByEdition(nfts);
     let formattedNfts = [];
@@ -685,6 +741,12 @@ export class NftService {
     return {
       collection: classToPlain(collection),
       nfts: formattedNfts,
+      pagination: {
+        totalCount: editionsCount,
+        page: Math.ceil(offset / limit + 1),
+        hasNextPage: editionsCount > offset + limit,
+        totalPages: Math.ceil(editionsCount / limit),
+      },
     };
   }
 

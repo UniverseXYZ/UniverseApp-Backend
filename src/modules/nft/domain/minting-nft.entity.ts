@@ -61,8 +61,11 @@ export class MintingNft {
   @Column({ type: 'jsonb', nullable: true })
   royalties?: any;
 
-  @Column({ nullable: true })
-  txHash?: string;
+  // @Column({ nullable: true })
+  // txHash?: string;
+
+  @Column({ type: 'jsonb', nullable: true })
+  txHashes?: string[];
 
   @Column({ nullable: true, type: 'character' })
   txStatus?: TxStatus;

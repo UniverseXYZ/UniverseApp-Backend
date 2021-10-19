@@ -16,6 +16,11 @@ import {
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
+export class NftSlots {
+  nftIds: number[];
+  slot: number;
+}
+
 class RewardTierBodyParams {
   name: string;
   numberOfWinners: number;
@@ -83,14 +88,17 @@ export class UpdateRewardTierBody {
   minimumBid: number;
 
   @ApiProperty({
-    description: 'The nft ids of the reward tier',
-    example: [1, 2, 3],
+    description: 'The nft slot configuration',
+    example: [
+      { nftIds: [1, 4], slot: 1 },
+      { nftIds: [2, 5], slot: 2 },
+      { nftIds: [3, 6], slot: 3 },
+    ],
   })
   @IsArray()
   @ArrayMinSize(1)
-  @IsNumber({}, { each: true })
   @IsOptional()
-  nftIds: number[];
+  nftSlots: NftSlots[];
 }
 
 export class UpdateRewardTierExtraBody {
@@ -274,6 +282,63 @@ export class EditAuctionBody {
   onChainId: number;
 }
 
+export class DeployAuctionBody {
+  @ApiProperty({
+    description: `The auction's id from the back end`,
+    example: 1,
+  })
+  @IsNumber()
+  auctionId: number;
+
+  @ApiProperty({
+    description: `The auction's id from the smart contract`,
+    example: 1,
+  })
+  @IsNumber()
+  onChainId: number;
+
+  @ApiProperty({
+    description: `The tx hash of the create auction contract call`,
+    example: '0xb4bc263278d3ф82a652a8d73a6bfd8ec0ba1a63923bbb4f38147fb8a943da26d',
+  })
+  @IsString()
+  txHash: string;
+}
+
+export class DepositNftsBody {
+  @ApiProperty({
+    description: `The auction's id from the back end`,
+    example: 1,
+  })
+  @IsNumber()
+  auctionId: number;
+
+  @ApiProperty({
+    description: `The nft ids that have been deposited`,
+    example: [1, 2, 3, 4],
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  nftIds: number[];
+}
+
+export class WithdrawNftsBody {
+  @ApiProperty({
+    description: `The auction's id from the back end`,
+    example: 1,
+  })
+  @IsNumber()
+  auctionId: number;
+
+  @ApiProperty({
+    description: `The nft ids that have been withdrawn`,
+    example: [1, 2, 3, 4],
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  nftIds: number[];
+}
+
 export class CreateRewardTierBody {
   @ApiProperty({
     description: 'The name of reward tier',
@@ -306,13 +371,16 @@ export class CreateRewardTierBody {
   minimumBid: number;
 
   @ApiProperty({
-    description: 'The nft ids of the reward tier',
-    example: [1, 2, 3],
+    description: 'The nft slot configuration',
+    example: [
+      { nftIds: [1, 4], slot: 1 },
+      { nftIds: [2, 5], slot: 2 },
+      { nftIds: [3, 6], slot: 3 },
+    ],
   })
   @IsArray()
   @ArrayMinSize(1)
-  @IsNumber({}, { each: true })
-  nftIds: number[];
+  nftSlots: NftSlots[];
 }
 
 export class CreateAuctionRoyaltySplitBody {
@@ -579,9 +647,16 @@ export class GetMyAuctionsResponse {
 
 export class GetAuctionPageParams {
   @ApiProperty({
-    example: '1',
-    description: 'The id of the auction to be fetched',
+    example: 'username1',
+    description: 'The username of the artist',
   })
-  @IsNumberString()
-  id: string;
+  @IsString()
+  username: string;
+
+  @ApiProperty({
+    example: 'auctionName1',
+    description: 'The unique name of the auction',
+  })
+  @IsString()
+  auctionName: string;
 }

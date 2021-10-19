@@ -27,6 +27,9 @@ import {
   UpdateRewardTierExtraBody,
   UpdateRewardTierParams,
   UploaductionLandingImagesParams,
+  DeployAuctionBody,
+  WithdrawNftsBody,
+  DepositNftsBody,
 } from './dto';
 import { AuctionService } from '../service-layer/auction.service';
 import { JwtAuthGuard, OptionalJwtAuthGuard } from '../../auth/jwt-auth.guard';
@@ -44,6 +47,30 @@ export class AuctionController {
   @ApiOperation({ summary: 'Create new auction' })
   async createAuction(@Req() req, @Body() createAuctionBody: CreateAuctionBody) {
     return await this.auctionService.createAuction(req.user.sub, createAuctionBody);
+  }
+
+  @Post('/auctions/deploy')
+  @ApiTags('auction')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Set on chain properies of auction' })
+  async deployAuction(@Req() req, @Body() deployAuctionBody: DeployAuctionBody) {
+    return await this.auctionService.deployAuction(req.user.sub, deployAuctionBody);
+  }
+
+  @Post('/auctions/depositNfts')
+  @ApiTags('auction')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Set nfts as deposited' })
+  async depositNfts(@Req() req, @Body() deployNftsBody: DepositNftsBody) {
+    return await this.auctionService.depositNfts(req.user.sub, deployNftsBody);
+  }
+
+  @Post('/auctions/withdrawNfts')
+  @ApiTags('auction')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Set nfts as withdrawn' })
+  async withdrawNfts(@Req() req, @Body() withdrawNftsBody: WithdrawNftsBody) {
+    return await this.auctionService.withdrawNfts(req.user.sub, withdrawNftsBody);
   }
 
   @Patch('auctions/:id')
@@ -129,7 +156,7 @@ export class AuctionController {
     );
   }
 
-  @Get('pages/my-auctions/past')
+  @Get('/pages/my-auctions/past')
   @UseGuards(JwtAuthGuard)
   @ApiTags('auction')
   @ApiOperation({ summary: 'Get my past auctions' })
@@ -142,12 +169,11 @@ export class AuctionController {
     );
   }
 
-  @Get('pages/auctions/:id')
-  @UseGuards(OptionalJwtAuthGuard)
+  @Get('pages/auctions/:username/:auctionName')
   @ApiTags('auction')
   @ApiOperation({ summary: 'Get the public page of the auction' })
   async getAuctionPage(@Req() req, @Param() params: GetAuctionPageParams) {
-    return await this.auctionService.getAuctionPage(req.user.sub, parseInt(params.id));
+    return await this.auctionService.getAuctionPage(params.username, params.auctionName);
   }
 
   @Delete('auctions/:id')

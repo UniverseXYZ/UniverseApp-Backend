@@ -83,13 +83,20 @@ export class EthEventsScraperService {
   private async syncMintNftEvents() {
     const events = await this.createNftEventRepository.find({ where: { processed: false } });
     const tokenUriEventsMap = this.mapTokenUriToEvents(events);
+    const tokenUris = Object.keys(tokenUriEventsMap);
+    this.logger.log(`found ${tokenUris.length} token URIs`);
 
-    for (const tokenUri of Object.keys(tokenUriEventsMap)) {
+    for (const tokenUri of tokenUris) {
+      await this.processTokenUri(tokenUri, tokenUriEventsMap[tokenUri]);
+    }
+  }
+
+  private async processTokenUri(tokenUri: string, events: MintedNftEvent[]) {
+    try {
       const editionUUID = customAlphabet('1234567890abcdefghijklmnopqrstuvwxyz', 10)();
-      const events = tokenUriEventsMap[tokenUri];
+      const response = await this.httpService.get(tokenUri).toPromise();
 
       for (const event of events) {
-        const response = await this.httpService.get(event.token_uri).toPromise();
         const user = await this.userRepository.findOne({ where: { address: event.receiver.toLowerCase() } });
         const collection = await this.nftCollectionRepository.findOne({
           where: { address: event.contract_address.toLowerCase() },
@@ -100,6 +107,7 @@ export class EthEventsScraperService {
         const mintingNft = await this.mintingNftRepository.findOne({
           where: { tokenUri, collectionId: collection.id },
         });
+        if (!mintingNft) continue;
 
         const nft = this.nftRepository.create();
         nft.userId = user.id;
@@ -120,6 +128,8 @@ export class EthEventsScraperService {
           await this.mintingNftRepository.save(mintingNft);
         }
       }
+    } catch (error) {
+      this.logger.error(`processTokenUri ${tokenUri} ${JSON.stringify(error, undefined, '  ')}`);
     }
   }
 
