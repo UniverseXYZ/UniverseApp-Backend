@@ -26,6 +26,7 @@ import { classToPlain } from 'class-transformer';
 import { UploadResult } from 'src/modules/file-storage/model/UploadResult';
 import { NftCollection } from 'src/modules/nft/domain/collection.entity';
 import { AuctionBid } from '../domain/auction.bid.entity';
+import { User } from 'src/modules/users/user.entity';
 
 @Injectable()
 export class AuctionService {
@@ -82,16 +83,27 @@ export class AuctionService {
       {} as Record<string, Nft[]>,
     );
 
+    //TODO: Filter to return only active auctions
+    const moreActiveAuctions = await this.auctionRepository.find({ where: { userId: artist.id, id: Not(auction.id) } });
+
+    // const bids = await this.auctionBidRepository.find({ where: { auctionId: auction.id } });
+    const bids = await this.auctionBidRepository
+      .createQueryBuilder('bid')
+      .leftJoinAndMapOne('bid.user', User, 'bidder', 'bidder.id = bid.userId')
+      .where({ auctionId: auction.id })
+      .orderBy('bid.amount', 'DESC')
+      .getMany();
+
     return {
-      auction: classToPlain(auction),
+      auction: auction,
       artist: classToPlain(artist),
       collections: classToPlain(collections),
       rewardTiers: rewardTiers.map((rewardTier) => ({
         ...classToPlain(rewardTier),
         nfts: rewardTierNftsMap[rewardTier.id].map((nft) => classToPlain(nft)),
       })),
-      bids: [],
-      moreActiveAuctions: [],
+      moreActiveAuctions: moreActiveAuctions.map((a) => classToPlain(a)),
+      bids: bids,
     };
   }
 
@@ -739,6 +751,27 @@ export class AuctionService {
 
     return {
       bids: bids.map((bid) => classToPlain(bid)),
+    };
+  }
+
+  public async placeAuctionBid(userId: number, placeBidBody: PlaceBidBody) {
+    //TODO: This is a temporartu endpoint until the scraper functionality is finished
+    const bidder = await this.usersService.getById(userId);
+    const auction = await this.auctionRepository.findOne(placeBidBody.auctionId);
+
+    if (!auction) {
+      throw new AuctionNotFoundException();
+    }
+
+    const bid = await this.auctionBidRepository.save({
+      userId: userId,
+      amount: placeBidBody.amount,
+      auctionId: placeBidBody.auctionId,
+    });
+
+    const response = { ...bid, user: bidder };
+    return {
+      bid: response,
     };
   }
 

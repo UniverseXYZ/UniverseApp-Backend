@@ -16,13 +16,8 @@ export class AuctionBid {
   @Exclude()
   auctionId: number;
 
-  @Column()
-  //TODO: Possible floating number errors
+  @Column({ type: 'decimal' })
   amount: number;
-
-  @Column()
-  //TODO: Could be a FK to currency entity
-  currency: string;
 
   @CreateDateColumn()
   createdAt: Date;

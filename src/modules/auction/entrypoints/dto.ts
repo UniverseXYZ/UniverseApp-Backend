@@ -673,13 +673,13 @@ export class PlaceBidBody {
     example: '0.1',
     description: 'Amount of crypto the user is bidding',
   })
-  @IsString()
-  amount: string;
+  @IsNumber()
+  amount: number;
 
-  @ApiProperty({
-    example: '0.1',
-    description: 'The crypto currency the user is bidding',
-  })
-  @IsString()
-  currency: string;
+  // @ApiProperty({
+  //   example: '0.1',
+  //   description: 'The crypto currency the user is bidding',
+  // })
+  // @IsString()
+  // currency: string;
 }
