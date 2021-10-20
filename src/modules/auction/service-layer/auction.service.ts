@@ -60,21 +60,20 @@ export class AuctionService {
       throw new AuctionNotFoundException();
     }
 
-    // TODO: Add collection info for each nft
+    // TODO: Add collection info for each nft(Maybe won't be needed)
     const rewardTiers = await this.rewardTierRepository.find({ where: { auctionId: auction.id } });
     const rewardTierNfts = await this.rewardTierNftRepository.find({
       where: { rewardTierId: In(rewardTiers.map((rewardTier) => rewardTier.id)) },
     });
 
     const nftIds = rewardTierNfts.map((rewardTierNft) => rewardTierNft.nftId);
-    // console.log(nftIds);
 
     const nfts = await this.nftRepository.find({ where: { id: In(nftIds) } });
     const nftCollectionids = nfts.map((nft) => nft.collectionId);
 
     const collections = await this.nftCollectionRepository.find({ id: In(nftCollectionids) });
     const idNftMap = nfts.reduce((acc, nft) => ({ ...acc, [nft.id]: nft }), {} as Record<string, Nft>);
-    // console.log(idNftMap);
+
     const rewardTierNftsMap = rewardTierNfts.reduce(
       (acc, rewardTierNft) => ({
         ...acc,
@@ -83,10 +82,13 @@ export class AuctionService {
       {} as Record<string, Nft[]>,
     );
 
-    //TODO: Filter to return only active auctions
-    const moreActiveAuctions = await this.auctionRepository.find({ where: { userId: artist.id, id: Not(auction.id) } });
+    //TODO: Add pagination to this query to reduce the load on the BE
+    // https://github.com/UniverseXYZ/UniverseApp-Backend/issues/100
+    const now = new Date().toISOString();
+    const moreActiveAuctions = await this.auctionRepository.find({
+      where: { userId: artist.id, id: Not(auction.id), startDate: MoreThan(now), endDate: LessThan(now) },
+    });
 
-    // const bids = await this.auctionBidRepository.find({ where: { auctionId: auction.id } });
     const bids = await this.auctionBidRepository
       .createQueryBuilder('bid')
       .leftJoinAndMapOne('bid.user', User, 'bidder', 'bidder.id = bid.userId')
