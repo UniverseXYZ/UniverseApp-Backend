@@ -1,6 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { config } from 'node:process';
 import { Not, Repository } from 'typeorm';
 import { AppConfig } from '../configuration/configuration.service';
 import { S3Service } from '../file-storage/s3.service';
