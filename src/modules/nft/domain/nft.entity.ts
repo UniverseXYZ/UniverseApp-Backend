@@ -38,6 +38,9 @@ export class Nft {
   @Column({ nullable: true })
   creator: string;
 
+  @Column({ nullable: true, length: 42 })
+  owner: string;
+
   @Column({ nullable: true })
   name: string;
 

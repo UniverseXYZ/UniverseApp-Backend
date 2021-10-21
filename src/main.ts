@@ -9,6 +9,7 @@ import { ValidationPipe } from './modules/validation.pipe';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.enableCors();
   const config = app.get(AppConfig);
   const port = config.values.app.port;
   app.use(helmet());
