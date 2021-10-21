@@ -132,6 +132,13 @@ export class MoralisService {
       existingNft.thumbnail_url = s3Result.url;
       existingNft.original_url = metadata.image;
       await this.fileSystemService.removeFile(downloadPath);
+      existingNft.properties = metadata.attributes?.map((attrObj) => ({
+        [attrObj.trait_type]: attrObj.value,
+      }));
+      existingNft = await this.nftRepository.save(existingNft);
+      if (numberOfEditions > 1) {
+        await this.nftRepository.update({ tokenUri: token.token_uri }, { numberOfEditions });
+      }
     } else if (metadata.isImageOnWeb()) {
       const filename = `${await this.generateRandomHash()}${metadata.getFileExtension()}`;
       const downloadPath = `uploads/${filename}`;
@@ -148,15 +155,13 @@ export class MoralisService {
       existingNft.thumbnail_url = s3Result.url;
       existingNft.original_url = metadata.image;
       await this.fileSystemService.removeFile(downloadPath);
-    }
-    existingNft.properties = metadata.attributes?.map((attrObj) => ({
-      [attrObj.trait_type]: attrObj.value,
-    }));
-
-    existingNft = await this.nftRepository.save(existingNft);
-
-    if (numberOfEditions > 1) {
-      await this.nftRepository.update({ tokenUri: token.token_uri }, { numberOfEditions });
+      existingNft.properties = metadata.attributes?.map((attrObj) => ({
+        [attrObj.trait_type]: attrObj.value,
+      }));
+      existingNft = await this.nftRepository.save(existingNft);
+      if (numberOfEditions > 1) {
+        await this.nftRepository.update({ tokenUri: token.token_uri }, { numberOfEditions });
+      }
     }
 
     return existingNft;
