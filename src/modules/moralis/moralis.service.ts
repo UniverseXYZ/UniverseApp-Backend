@@ -11,6 +11,7 @@ import { QueueService } from '../queue/queue.service';
 
 import { S3Service } from '../file-storage/s3.service';
 import { Nft, NftSource } from '../nft/domain/nft.entity';
+import { MoralisLog } from './domain/moralis-log.entity';
 import { CollectionSource, NftCollection } from '../nft/domain/collection.entity';
 import { MonitoredNfts } from '../nft/domain/monitored-nfts';
 import { User } from '../users/user.entity';
@@ -44,6 +45,8 @@ export class MoralisService {
     private nftCollectionRepository: Repository<NftCollection>,
     @InjectRepository(MonitoredNfts)
     private monitoredNftsRepository: Repository<MonitoredNfts>,
+    @InjectRepository(MoralisLog)
+    private moralisLogRepository: Repository<MoralisLog>,
   ) {}
 
   async onModuleInit() {
@@ -51,6 +54,20 @@ export class MoralisService {
     Moralis.masterKey = this.config.values.moralis.masterKey;
     Moralis.initialize(this.config.values.moralis.applicationId);
     this.queue.initQueue(MORALIS_NEW_NFT_QUEUE, this.moralisNewNFTOwnerHandler, 1);
+    this.addNewNFT({
+      name: 'Non-Fungible Universe',
+      symbol: 'NFU',
+      token_uri:
+        'https://zm5ifcbx5r35mwg3gou3mj2r2emd5tfk7eviuenji5b4atpge4bq.arweave.net/yzqCiDfsd9ZY2zOptidR0Rg-zKr5KooRqUdDwE3mJwM',
+      token_id: '2',
+      token_address: '0xa70a9b83735c415f64a7c3c08ff4297513edd941',
+      owner_of: '0x9b6134fe036f1c22d9fe76c15ac81b7bc31212eb',
+      block_number: 8566634,
+      amount: 1,
+      contract_type: 'ERC721',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
   }
 
   addNewUserToWatchAddress = async (address: string) => {
@@ -88,6 +105,12 @@ export class MoralisService {
         existingNft = await this.createNewNft(token, existingCollection);
       }
     } catch (error) {
+      if (error instanceof NftMissingAttributesError || error instanceof TokenUriFormatNotSupportedError) {
+        const newRow = this.moralisLogRepository.create();
+        newRow.name = error.name;
+        newRow.token = JSON.stringify(token);
+        await this.moralisLogRepository.save(newRow);
+      }
       console.log(error);
     }
 
