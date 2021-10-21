@@ -1,3 +1,10 @@
+## [1.23.3](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.23.2...v1.23.3) (2021-10-21)
+
+
+### Bug Fixes
+
+* bring environment variables up-to-date ([553d306](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/553d306c50ce15d4cd6df02ab47d21d8a09cc7c8))
+
 ## [1.23.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.23.1...v1.23.2) (2021-10-18)
 
 
