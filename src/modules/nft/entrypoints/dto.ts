@@ -285,7 +285,7 @@ export class GetMyNftsResponse {
   @ApiProperty()
   id: number;
 
-  @ApiProperty({ enum: NftSource, examples: [NftSource.UNIVERSE, NftSource.SCRAPER] })
+  @ApiProperty({ enum: NftSource, example: [NftSource.UNIVERSE, NftSource.SCRAPER] })
   source: string;
 
   @ApiProperty({ example: '0x0000000000000000000000000000000000000000000000000000000000000000' })
@@ -300,7 +300,7 @@ export class GetMyNftsResponse {
   @ApiProperty()
   tokenId: string;
 
-  @ApiProperty({ examples: ['jpeg', 'png', 'gif', 'webp', 'mp4'], example: 'jpeg' })
+  @ApiProperty({ example: ['jpeg', 'png', 'gif', 'webp', 'mp4'] })
   artworkType: string;
 
   @ApiProperty()
@@ -335,7 +335,7 @@ export class GetUserNftsResponse {
   @ApiProperty()
   id: number;
 
-  @ApiProperty({ enum: NftSource, examples: [NftSource.UNIVERSE, NftSource.SCRAPER] })
+  @ApiProperty({ enum: NftSource, example: [NftSource.UNIVERSE, NftSource.SCRAPER] })
   source: string;
 
   @ApiProperty({ example: '0x0000000000000000000000000000000000000000000000000000000000000000' })
@@ -350,7 +350,7 @@ export class GetUserNftsResponse {
   @ApiProperty()
   tokenId: string;
 
-  @ApiProperty({ examples: ['jpeg', 'png', 'gif', 'webp', 'mp4'], example: 'jpeg' })
+  @ApiProperty({ example: ['jpeg', 'png', 'gif', 'webp', 'mp4'] })
   artworkType: string;
 
   @ApiProperty()

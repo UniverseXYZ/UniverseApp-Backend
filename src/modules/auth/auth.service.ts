@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { EthersService } from '../ethers/ethers.service';
@@ -9,15 +9,21 @@ import { LoginChallenge } from './model/login-challenge.entity';
 import { Repository } from 'typeorm';
 import { InvalidChallengeException } from './service-layer/exceptions/InvalidChallengeException';
 import { InvalidSignedMessageException } from './service-layer/exceptions/InvalidSignedMessageException';
+import { MoralisService } from '../moralis/moralis.service';
 
 @Injectable()
 export class AuthService {
+  private logger = new Logger(AuthService.name);
+
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
     private ethersService: EthersService,
+    private moralisService: MoralisService,
     @InjectRepository(LoginChallenge)
     private loginChallengeRepository: Repository<LoginChallenge>,
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
   ) {}
 
   async validateUser(address: string, message: string, signature: string): Promise<any> {
@@ -42,6 +48,14 @@ export class AuthService {
 
     await this.loginChallengeRepository.delete({ uuid: challengeUUID });
     const user = await this.usersService.findOne(address);
+
+    if (!user.moralisWatched) {
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      await this.moralisService.addNewUserToWatchAddress(user.address).catch((error) => {
+        console.log(error);
+      });
+      await this.usersRepository.update({ id: user.id }, { moralisWatched: true });
+    }
     const payload = { address: user.address, sub: user.id };
 
     return new LoginDto(this.jwtService.sign(payload), user);
