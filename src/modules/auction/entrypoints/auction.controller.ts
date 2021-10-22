@@ -156,7 +156,7 @@ export class AuctionController {
     );
   }
 
-  @Get('pages/my-auctions/past')
+  @Get('/pages/my-auctions/past')
   @UseGuards(JwtAuthGuard)
   @ApiTags('auction')
   @ApiOperation({ summary: 'Get my past auctions' })
