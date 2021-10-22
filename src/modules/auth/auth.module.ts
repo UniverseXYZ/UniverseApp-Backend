@@ -12,6 +12,8 @@ import { configValues } from '../configuration';
 import { AuthController } from './auth.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoginChallenge } from './model/login-challenge.entity';
+import { MoralisModule } from '../moralis/moralis.module';
+import { User } from '../users/user.entity';
 
 @Module({
   imports: [
@@ -23,7 +25,8 @@ import { LoginChallenge } from './model/login-challenge.entity';
       secret: configValues.auth.jwtSecret,
       signOptions: { expiresIn: '360d' },
     }),
-    TypeOrmModule.forFeature([LoginChallenge]),
+    TypeOrmModule.forFeature([LoginChallenge, User]),
+    MoralisModule,
   ],
   providers: [AuthService, JwtStrategy],
   exports: [AuthService],

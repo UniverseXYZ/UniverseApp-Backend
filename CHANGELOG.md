@@ -1,3 +1,15 @@
+# [1.24.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.23.2...v1.24.0) (2021-10-18)
+
+
+### Bug Fixes
+
+* **active-auction-page:** fix controller params and service logic ([54027db](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/54027dbd0b370096e3292016e9366aba245cb37d))
+
+
+### Features
+
+* **auction-states:** add wip states to auction entity and add state explanaition to readme ([b398eb0](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/b398eb05f69af2a8ea1a4d3355d30d5945b78ba5))
+
 ## [1.23.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.23.1...v1.23.2) (2021-10-18)
 
 

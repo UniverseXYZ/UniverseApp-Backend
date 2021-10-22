@@ -8,8 +8,8 @@ import { NftCollection } from '../../nft/domain/collection.entity';
 
 import { Repository } from 'typeorm';
 import { User } from '../../users/user.entity';
-import { DeployCollectionEvent } from '../domain/deploy-collection-event.entity';
-import { MintedNftEvent } from '../domain/mintNftEvent.entity';
+import { DeployCollectionEvent } from '../domain/deploy-collection-event';
+import { MintedNftEvent } from '../domain/mintNftEvent';
 import { customAlphabet } from 'nanoid';
 import { SavedNft } from '../../nft/domain/saved-nft.entity';
 import { MintingCollection } from '../../nft/domain/minting-collection.entity';

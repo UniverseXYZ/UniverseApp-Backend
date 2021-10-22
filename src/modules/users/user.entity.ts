@@ -40,6 +40,10 @@ export class User {
   @Exclude()
   isActive: boolean;
 
+  @Column({ default: false })
+  @Exclude()
+  moralisWatched: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -14,7 +14,9 @@ export class EthersService {
       },
     });
 
-    this.wallet = new ethers.Wallet(this.config.values.ethereum.beWalletPK, this.provider);
+    if (this.config.values.ethereum.beWalletPK) {
+      this.wallet = new ethers.Wallet(this.config.values.ethereum.beWalletPK, this.provider);
+    }
   }
 
   async verifySignature(message: string, signature: string) {

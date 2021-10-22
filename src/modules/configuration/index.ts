@@ -10,16 +10,12 @@ export const configValues = {
   },
   app: {
     port: parseInt(process.env.APP_PORT, 10),
-    sessionSecret: process.env.SESSION_SECRET,
   },
   ethereum: {
     infuraProjectId: process.env.INFURA_PROJECT_ID,
     infuraProjectSecret: process.env.INFURA_PROJECT_SECRET,
     ethereumNetwork: process.env.ETHEREUM_NETWORK,
     beWalletPK: process.env.BE_WALLET_PK,
-    contracts: {
-      universalNFTAddress: process.env.UNIVERSE_UNIVERSAL_NFT_ADDRESS,
-    },
   },
   auth: {
     jwtSecret: process.env.JWT_SECRET,
@@ -30,11 +26,13 @@ export const configValues = {
     bucketName: process.env.AWS_BUCKET_NAME,
     s3BaseUrl: process.env.AWS_S3_BASE_URL,
   },
-  frontend: {
-    domain: process.env.FRONTEND_DOMAIN,
-  },
   arweave: {
     wallet: process.env.AIRWEAVE_WALLET,
+  },
+  moralis: {
+    serverUrl: process.env.MORALIS_SERVER_URL,
+    masterKey: process.env.MORALIS_MASTER_KEY,
+    applicationId: process.env.MORALIS_APPLICATION_ID,
   },
 };
 
