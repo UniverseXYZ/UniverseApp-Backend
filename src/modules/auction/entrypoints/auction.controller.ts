@@ -156,7 +156,7 @@ export class AuctionController {
     );
   }
 
-  @Get('/pages/my-auctions/past')
+  @Get('pages/my-auctions/past')
   @UseGuards(JwtAuthGuard)
   @ApiTags('auction')
   @ApiOperation({ summary: 'Get my past auctions' })
@@ -169,11 +169,12 @@ export class AuctionController {
     );
   }
 
-  @Get('pages/auctions/:username/:auctionName')
+  @Get('pages/auctions/:id')
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiTags('auction')
   @ApiOperation({ summary: 'Get the public page of the auction' })
   async getAuctionPage(@Req() req, @Param() params: GetAuctionPageParams) {
-    return await this.auctionService.getAuctionPage(params.username, params.auctionName);
+    return await this.auctionService.getAuctionPage(req.user.sub, parseInt(params.id));
   }
 
   @Delete('auctions/:id')
