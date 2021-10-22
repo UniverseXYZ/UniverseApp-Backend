@@ -8,12 +8,13 @@ import { SavedNft } from '../nft/domain/saved-nft.entity';
 import { RewardTier } from '../auction/domain/reward-tier.entity';
 import { RewardTierNft } from '../auction/domain/reward-tier-nft.entity';
 import { Auction } from '../auction/domain/auction.entity';
-import { MintedNftEvent } from '../ethEventsScraper/domain/mintNftEvent.entity';
-import { DeployCollectionEvent } from '../ethEventsScraper/domain/deploy-collection-event.entity';
+import { MintedNftEvent } from '../ethEventsScraper/domain/mintNftEvent';
+import { DeployCollectionEvent } from '../ethEventsScraper/domain/deploy-collection-event';
 import { MintingCollection } from '../nft/domain/minting-collection.entity';
 import { LoginChallenge } from '../auth/model/login-challenge.entity';
 import { MintingNft } from '../nft/domain/minting-nft.entity';
 import { AuctionBid } from '../auction/domain/auction.bid.entity';
+import { MonitoredNfts } from '../nft/domain/monitored-nfts';
 
 // TODO: Add db entities here
 const entities = [
@@ -30,6 +31,7 @@ const entities = [
   LoginChallenge,
   MintingNft,
   AuctionBid,
+  MonitoredNfts,
 ];
 
 @Injectable()
