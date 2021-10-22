@@ -11,10 +11,7 @@ import { QueueService } from '../queue/queue.service';
 
 import { S3Service } from '../file-storage/s3.service';
 import { Nft, NftSource } from '../nft/domain/nft.entity';
-<<<<<<< HEAD
 import { MoralisLog } from './domain/moralis-log.entity';
-=======
->>>>>>> dev
 import { CollectionSource, NftCollection } from '../nft/domain/collection.entity';
 import { MonitoredNfts } from '../nft/domain/monitored-nfts';
 import { User } from '../users/user.entity';
@@ -48,11 +45,8 @@ export class MoralisService {
     private nftCollectionRepository: Repository<NftCollection>,
     @InjectRepository(MonitoredNfts)
     private monitoredNftsRepository: Repository<MonitoredNfts>,
-<<<<<<< HEAD
     @InjectRepository(MoralisLog)
     private moralisLogRepository: Repository<MoralisLog>,
-=======
->>>>>>> dev
   ) {}
 
   async onModuleInit() {
@@ -60,7 +54,6 @@ export class MoralisService {
     Moralis.masterKey = this.config.values.moralis.masterKey;
     Moralis.initialize(this.config.values.moralis.applicationId);
     this.queue.initQueue(MORALIS_NEW_NFT_QUEUE, this.moralisNewNFTOwnerHandler, 1);
-<<<<<<< HEAD
     this.addNewNFT({
       name: 'Non-Fungible Universe',
       symbol: 'NFU',
@@ -75,8 +68,6 @@ export class MoralisService {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-=======
->>>>>>> dev
   }
 
   addNewUserToWatchAddress = async (address: string) => {
@@ -114,15 +105,12 @@ export class MoralisService {
         existingNft = await this.createNewNft(token, existingCollection);
       }
     } catch (error) {
-<<<<<<< HEAD
       if (error instanceof NftMissingAttributesError || error instanceof TokenUriFormatNotSupportedError) {
         const newRow = this.moralisLogRepository.create();
         newRow.name = error.name;
         newRow.token = JSON.stringify(token);
         await this.moralisLogRepository.save(newRow);
       }
-=======
->>>>>>> dev
       console.log(error);
     }
 
@@ -167,8 +155,6 @@ export class MoralisService {
       existingNft.thumbnail_url = s3Result.url;
       existingNft.original_url = metadata.image;
       await this.fileSystemService.removeFile(downloadPath);
-<<<<<<< HEAD
-=======
       existingNft.properties = metadata.attributes?.map((attrObj) => ({
         [attrObj.trait_type]: attrObj.value,
       }));
@@ -176,7 +162,6 @@ export class MoralisService {
       if (numberOfEditions > 1) {
         await this.nftRepository.update({ tokenUri: token.token_uri }, { numberOfEditions });
       }
->>>>>>> dev
     } else if (metadata.isImageOnWeb()) {
       const filename = `${await this.generateRandomHash()}${metadata.getFileExtension()}`;
       const downloadPath = `uploads/${filename}`;
@@ -193,17 +178,6 @@ export class MoralisService {
       existingNft.thumbnail_url = s3Result.url;
       existingNft.original_url = metadata.image;
       await this.fileSystemService.removeFile(downloadPath);
-<<<<<<< HEAD
-    }
-    existingNft.properties = metadata.attributes?.map((attrObj) => ({
-      [attrObj.trait_type]: attrObj.value,
-    }));
-
-    existingNft = await this.nftRepository.save(existingNft);
-
-    if (numberOfEditions > 1) {
-      await this.nftRepository.update({ tokenUri: token.token_uri }, { numberOfEditions });
-=======
       existingNft.properties = metadata.attributes?.map((attrObj) => ({
         [attrObj.trait_type]: attrObj.value,
       }));
@@ -211,7 +185,6 @@ export class MoralisService {
       if (numberOfEditions > 1) {
         await this.nftRepository.update({ tokenUri: token.token_uri }, { numberOfEditions });
       }
->>>>>>> dev
     }
 
     return existingNft;
