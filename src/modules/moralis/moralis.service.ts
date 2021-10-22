@@ -22,6 +22,7 @@ import {
   NftMissingAttributesError,
   SkippedUniverseNftError,
   TokenUriFormatNotSupportedError,
+  NotFoundNftOwnerError,
 } from './service/exceptions';
 import { FileSystemService } from '../file-system/file-system.service';
 
@@ -54,20 +55,6 @@ export class MoralisService {
     Moralis.masterKey = this.config.values.moralis.masterKey;
     Moralis.initialize(this.config.values.moralis.applicationId);
     this.queue.initQueue(MORALIS_NEW_NFT_QUEUE, this.moralisNewNFTOwnerHandler, 1);
-    this.addNewNFT({
-      name: 'Non-Fungible Universe',
-      symbol: 'NFU',
-      token_uri:
-        'https://zm5ifcbx5r35mwg3gou3mj2r2emd5tfk7eviuenji5b4atpge4bq.arweave.net/yzqCiDfsd9ZY2zOptidR0Rg-zKr5KooRqUdDwE3mJwM',
-      token_id: '2',
-      token_address: '0xa70a9b83735c415f64a7c3c08ff4297513edd941',
-      owner_of: '0x9b6134fe036f1c22d9fe76c15ac81b7bc31212eb',
-      block_number: 8566634,
-      amount: 1,
-      contract_type: 'ERC721',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
   }
 
   addNewUserToWatchAddress = async (address: string) => {
@@ -105,11 +92,15 @@ export class MoralisService {
         existingNft = await this.createNewNft(token, existingCollection);
       }
     } catch (error) {
-      if (error instanceof NftMissingAttributesError || error instanceof TokenUriFormatNotSupportedError) {
-        const newRow = this.moralisLogRepository.create();
-        newRow.name = error.name;
-        newRow.token = JSON.stringify(token);
-        await this.moralisLogRepository.save(newRow);
+      if (
+        error instanceof NftMissingAttributesError ||
+        error instanceof TokenUriFormatNotSupportedError ||
+        error instanceof NotFoundNftOwnerError
+      ) {
+        const newMoralisLog = this.moralisLogRepository.create();
+        newMoralisLog.name = error.name;
+        newMoralisLog.token = JSON.stringify(token);
+        await this.moralisLogRepository.save(newMoralisLog);
       }
       console.log(error);
     }
@@ -120,6 +111,9 @@ export class MoralisService {
   private async createNewNft(token: MoralisNft, existingCollection: NftCollection) {
     let existingNft = this.nftRepository.create();
     const user = await this.userRepository.findOne({ where: { address: token.owner_of.toLowerCase() } });
+    if (!user) {
+      throw new NotFoundNftOwnerError(token.owner_of.toLowerCase());
+    }
     existingNft.userId = user.id;
     existingNft.collectionId = existingCollection.id;
     existingNft.source = NftSource.SCRAPER;
