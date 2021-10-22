@@ -794,9 +794,10 @@ export class AuctionService {
     }, {});
 
     const mappedBids = bids.map((bid) => {
-      const auctionBidsCount = +bidsQuery.find((b) => b['bid_auctionId'] === bid.auctionId)['bidcount'];
-      const highestBid = +bidsQuery.find((b) => b['bid_auctionId'] === bid.auctionId)['max'];
-      const lowestBid = +bidsQuery.find((b) => b['bid_auctionId'] === bid.auctionId)['min'];
+      const bidResult = bidsQuery.find((b) => b['bid_auctionId'] === bid.auctionId);
+      const auctionBidsCount = +bidResult['bidcount'];
+      const highestBid = +bidResult['max'];
+      const lowestBid = +bidResult['min'];
       const tiers = rewardTiersByAuctionId[bid.auctionId];
 
       // If auction has 5 winning slots but received only one bid -> numberOfWinners should be 1)
