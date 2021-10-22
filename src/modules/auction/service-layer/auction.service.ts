@@ -95,9 +95,7 @@ export class AuctionService {
       .orderBy('bid.amount', 'DESC')
       .getMany();
 
-    const bidders = this.groupBidsByUser(bids);
-
-    bidders.sort((a, b) => b.amount - a.amount).slice(0, 5);
+    bids.sort((a, b) => b.amount - a.amount).slice(0, 5);
 
     return {
       auction: classToPlain(auction),
@@ -108,27 +106,8 @@ export class AuctionService {
         nfts: rewardTierNftsMap[rewardTier.id].map((nft) => classToPlain(nft)),
       })),
       moreActiveAuctions: moreActiveAuctions.map((a) => classToPlain(a)),
-      bidders: bidders,
+      bidders: bids,
     };
-  }
-
-  private groupBidsByUser(bids: AuctionBid[]) {
-    const bidders = [];
-    bids.forEach((bid) => {
-      const existingBidder = bidders.find((bidder) => bidder.userId === bid.userId);
-      if (!existingBidder) {
-        const newBidder = {
-          ...bid,
-          amount: +bid.amount,
-        };
-
-        bidders.push(newBidder);
-      } else {
-        existingBidder.amount = +existingBidder.amount + +bid.amount;
-      }
-    });
-
-    return bidders;
   }
 
   async createRewardTier(
