@@ -11,7 +11,7 @@ export class MoralisLog {
   name: string;
 
   @Column({ type: 'jsonb' })
-  token?: any;
+  token: any;
 
   @CreateDateColumn()
   createdAt: Date;
