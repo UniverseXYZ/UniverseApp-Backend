@@ -1,7 +1,7 @@
 {
   "name": "nest-typescript-starter",
   "private": true,
-  "version": "1.23.3",
+  "version": "1.24.0",
   "description": "Nest TypeScript starter repository",
   "license": "MIT",
   "scripts": {
@@ -44,7 +44,9 @@
     "ethers": "^5.1.4",
     "express-session": "^1.17.1",
     "helmet": "^4.5.0",
+    "moralis": "0.0.92",
     "nanoid": "^3.1.23",
+    "nodejs-file-downloader": "^4.7.4",
     "passport": "^0.4.1",
     "passport-custom": "1.1.1",
     "passport-jwt": "^4.0.0",

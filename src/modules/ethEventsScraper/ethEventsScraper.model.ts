@@ -6,8 +6,8 @@ import { Nft } from '../nft/domain/nft.entity';
 import { QueueModel } from '../queue/queue.model';
 import { User } from '../users/user.entity';
 import { EthEventsScraperService } from './service_layer/ethEventsScraper.service';
-import { MintedNftEvent } from './domain/mintNftEvent.entity';
-import { DeployCollectionEvent } from './domain/deploy-collection-event.entity';
+import { MintedNftEvent } from './domain/mintNftEvent';
+import { DeployCollectionEvent } from './domain/deploy-collection-event';
 import { MintingCollection } from '../nft/domain/minting-collection.entity';
 import { MintingNft } from '../nft/domain/minting-nft.entity';
 
