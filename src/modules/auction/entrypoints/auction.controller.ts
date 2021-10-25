@@ -22,6 +22,7 @@ import {
   GetAuctionPageParams,
   GetMyAuctionsQuery,
   GetMyAuctionsResponse,
+  PlaceBidBody,
   UpdateAuctionExtraBody,
   UpdateRewardTierBody,
   UpdateRewardTierExtraBody,
@@ -282,6 +283,18 @@ export class AuctionController {
     if (status !== '') return;
 
     return await this.auctionService.listAuctionsByStatus(status, page, limit);
+  }
+
+  @Post('auction/placeBid')
+  @UseGuards(JwtAuthGuard)
+  async placeAuctionBid(@Req() req, @Body() placeBidBody: PlaceBidBody) {
+    return await this.auctionService.placeAuctionBid(req.user.sub, placeBidBody);
+  }
+
+  @Get('pages/my-bids')
+  @UseGuards(JwtAuthGuard)
+  async getUserBids(@Req() req) {
+    return await this.auctionService.getUserBids(req.user.sub);
   }
 
   //Todo: add tier info

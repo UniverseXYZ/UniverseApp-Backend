@@ -13,6 +13,7 @@ import { DeployCollectionEvent } from '../ethEventsScraper/domain/deploy-collect
 import { MintingCollection } from '../nft/domain/minting-collection.entity';
 import { LoginChallenge } from '../auth/model/login-challenge.entity';
 import { MintingNft } from '../nft/domain/minting-nft.entity';
+import { AuctionBid } from '../auction/domain/auction.bid.entity';
 import { MonitoredNfts } from '../nft/domain/monitored-nfts';
 
 // TODO: Add db entities here
@@ -29,6 +30,7 @@ const entities = [
   MintingCollection,
   LoginChallenge,
   MintingNft,
+  AuctionBid,
   MonitoredNfts,
 ];
 
