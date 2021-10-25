@@ -712,7 +712,6 @@ export class AddRewardTierBodyParams {
 
   @ApiProperty({
     type: CreateRewardTierBody,
-    isArray: true,
   })
   @Type(() => CreateRewardTierBody)
   rewardTier: CreateRewardTierBody;
