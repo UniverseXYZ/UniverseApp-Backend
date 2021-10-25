@@ -22,7 +22,6 @@ import {
   NftMissingAttributesError,
   SkippedUniverseNftError,
   TokenUriFormatNotSupportedError,
-  NotFoundNftOwnerError,
 } from './service/exceptions';
 import { FileSystemService } from '../file-system/file-system.service';
 
@@ -92,11 +91,7 @@ export class MoralisService {
         existingNft = await this.createNewNft(token, existingCollection);
       }
     } catch (error) {
-      if (
-        error instanceof NftMissingAttributesError ||
-        error instanceof TokenUriFormatNotSupportedError ||
-        error instanceof NotFoundNftOwnerError
-      ) {
+      if (error instanceof NftMissingAttributesError || error instanceof TokenUriFormatNotSupportedError) {
         const newMoralisLog = this.moralisLogRepository.create();
         newMoralisLog.name = error.name;
         newMoralisLog.token = token;
@@ -112,9 +107,8 @@ export class MoralisService {
     let existingNft = this.nftRepository.create();
     const user = await this.userRepository.findOne({ where: { address: token.owner_of.toLowerCase() } });
     if (!user) {
-      throw new NotFoundNftOwnerError(token.owner_of.toLowerCase());
+      existingNft.userId = user.id;
     }
-    existingNft.userId = user.id;
     existingNft.collectionId = existingCollection.id;
     existingNft.source = NftSource.SCRAPER;
     const editionUUID = customAlphabet('1234567890abcdefghijklmnopqrstuvwxyz', 10)();
@@ -240,7 +234,7 @@ export class MoralisService {
     return 'https://ipfs.moralis.io:2053/ipfs/' + url.split('ipfs://ipfs/').slice(-1)[0];
   }
 
-  private async getTokenUriMetadata(tokenUri: string) { 
+  private async getTokenUriMetadata(tokenUri: string) {
     let normalizedTokenUri;
 
     if (tokenUri.startsWith('ipfs')) {

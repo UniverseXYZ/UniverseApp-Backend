@@ -23,9 +23,3 @@ export class TokenUriFormatNotSupportedError extends ServiceError {
     super(`Token URI format not supported ${tokenUri}`);
   }
 }
-
-export class NotFoundNftOwnerError extends ServiceError {
-  constructor(address: string) {
-    super(`Not found the NFT owner in the user table ${address}`);
-  }
-}
