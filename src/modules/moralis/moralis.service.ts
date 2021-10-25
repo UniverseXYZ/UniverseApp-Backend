@@ -111,9 +111,7 @@ export class MoralisService {
   private async createNewNft(token: MoralisNft, existingCollection: NftCollection) {
     let existingNft = this.nftRepository.create();
     const user = await this.userRepository.findOne({ where: { address: token.owner_of.toLowerCase() } });
-    if (!user) {
-      existingNft.userId = user.id;
-    }
+    existingNft.userId = user?.id;
     existingNft.collectionId = existingCollection.id;
     existingNft.source = NftSource.SCRAPER;
     const editionUUID = customAlphabet('1234567890abcdefghijklmnopqrstuvwxyz', 10)();
