@@ -523,7 +523,11 @@ export class AuctionService {
   async getMyPastAuctionsPage(userId: number, limit: number, offset: number) {
     const user = await this.usersService.getById(userId, true);
     const { count, auctions } = await this.getMyPastAuctions(userId, limit, offset);
-    const formattedAuctions = await this.formatMyAuctions(auctions);
+    const auctionsWithTiers = await this.formatMyAuctions(auctions);
+    let auctionsWithBids = [];
+    if (auctionsWithTiers.length) {
+      auctionsWithBids = await this.attachBidsInfo(auctionsWithTiers);
+    }
 
     return {
       pagination: {
@@ -531,7 +535,7 @@ export class AuctionService {
         offset,
         limit,
       },
-      auctions: formattedAuctions,
+      auctions: auctionsWithBids,
     };
   }
 
@@ -539,7 +543,11 @@ export class AuctionService {
     const user = await this.usersService.getById(userId, true);
     const { count, auctions } = await this.getMyActiveAuctions(userId, limit, offset);
     const auctionsWithTiers = await this.formatMyAuctions(auctions);
-    const auctionsWithBids = await this.attachBidsInfo(auctionsWithTiers);
+
+    let auctionsWithBids = [];
+    if (auctionsWithTiers.length) {
+      auctionsWithBids = await this.attachBidsInfo(auctionsWithTiers);
+    }
 
     return {
       pagination: {
