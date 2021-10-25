@@ -11,10 +11,7 @@ import { QueueService } from '../queue/queue.service';
 
 import { S3Service } from '../file-storage/s3.service';
 import { Nft, NftSource } from '../nft/domain/nft.entity';
-<<<<<<< HEAD
 import { MoralisLog } from './domain/moralis-log.entity';
-=======
->>>>>>> 929c8b87d2ff91f1495e9efc9697a9777c85f454
 import { CollectionSource, NftCollection } from '../nft/domain/collection.entity';
 import { MonitoredNfts } from '../nft/domain/monitored-nfts';
 import { User } from '../users/user.entity';
@@ -25,10 +22,7 @@ import {
   NftMissingAttributesError,
   SkippedUniverseNftError,
   TokenUriFormatNotSupportedError,
-<<<<<<< HEAD
   ImageUriFormatNotSupportedError,
-=======
->>>>>>> 929c8b87d2ff91f1495e9efc9697a9777c85f454
 } from './service/exceptions';
 import { FileSystemService } from '../file-system/file-system.service';
 
@@ -52,11 +46,8 @@ export class MoralisService {
     private nftCollectionRepository: Repository<NftCollection>,
     @InjectRepository(MonitoredNfts)
     private monitoredNftsRepository: Repository<MonitoredNfts>,
-<<<<<<< HEAD
     @InjectRepository(MoralisLog)
     private moralisLogRepository: Repository<MoralisLog>,
-=======
->>>>>>> 929c8b87d2ff91f1495e9efc9697a9777c85f454
   ) {}
 
   async onModuleInit() {
