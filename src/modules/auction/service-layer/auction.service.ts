@@ -538,7 +538,8 @@ export class AuctionService {
   async getMyActiveAuctionsPage(userId: number, limit: number, offset: number) {
     const user = await this.usersService.getById(userId, true);
     const { count, auctions } = await this.getMyActiveAuctions(userId, limit, offset);
-    const formattedAuctions = await this.formatMyAuctions(auctions);
+    const auctionsWithTiers = await this.formatMyAuctions(auctions);
+    const auctionsWithBids = await this.attachBidsInfo(auctionsWithTiers);
 
     return {
       pagination: {
@@ -546,8 +547,45 @@ export class AuctionService {
         offset,
         limit,
       },
-      auctions: formattedAuctions,
+      auctions: auctionsWithBids,
     };
+  }
+
+  private async attachBidsInfo(auctions: Auction[]) {
+    const auctionIds = auctions.map((auction) => auction.id);
+    const bidsQuery = await this.auctionBidRepository
+      .createQueryBuilder('bid')
+      .select([
+        'bid.auctionId',
+        'MIN(bid.amount) as min',
+        'MAX(bid.amount) as max',
+        'SUM(bid.amount) as totalBidsAmount',
+        'COUNT(*) as bidCount',
+      ])
+      .groupBy('bid.auctionId')
+      .where('bid.auctionId IN (:...auctionIds)', { auctionIds: auctionIds })
+      .getRawMany();
+
+    return auctions.map((auction) => {
+      const bid = bidsQuery.find((bid) => bid['bid_auctionId'] === auction.id);
+      const bids = {
+        bidsCount: 0,
+        highestBid: 0,
+        lowestBid: 0,
+        totalBids: 0,
+      };
+      if (bid) {
+        bids.bidsCount = +bid['bidcount'];
+        bids.highestBid = +bid['max'];
+        bids.lowestBid = +bid['min'];
+        bids.totalBids = +bid['totalbidsamount'];
+      } else {
+      }
+      return {
+        ...auction,
+        bids,
+      };
+    });
   }
 
   private async formatMyAuctions(auctions: Auction[]) {
