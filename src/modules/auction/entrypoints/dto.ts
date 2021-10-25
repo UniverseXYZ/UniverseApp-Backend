@@ -8,6 +8,7 @@ import {
   IsNumberString,
   IsOptional,
   IsString,
+  IsInt,
   Length,
   Max,
   Min,
@@ -700,4 +701,19 @@ export class ChangeAuctionStatus {
 class StatusChange {
   name: string;
   value: boolean;
+}
+export class AddRewardTierBodyParams {
+  @ApiProperty({
+    description: 'The id of the Auction on which the tier should be added',
+    example: '1',
+  })
+  @IsInt()
+  auctionId: number;
+
+  @ApiProperty({
+    type: CreateRewardTierBody,
+    isArray: true,
+  })
+  @Type(() => CreateRewardTierBody)
+  rewardTier: CreateRewardTierBody;
 }
