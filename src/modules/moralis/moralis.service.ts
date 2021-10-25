@@ -22,6 +22,7 @@ import {
   NftMissingAttributesError,
   SkippedUniverseNftError,
   TokenUriFormatNotSupportedError,
+  ImageUriFormatNotSupportedError,
 } from './service/exceptions';
 import { FileSystemService } from '../file-system/file-system.service';
 
@@ -91,7 +92,11 @@ export class MoralisService {
         existingNft = await this.createNewNft(token, existingCollection);
       }
     } catch (error) {
-      if (error instanceof NftMissingAttributesError || error instanceof TokenUriFormatNotSupportedError) {
+      if (
+        error instanceof NftMissingAttributesError ||
+        error instanceof TokenUriFormatNotSupportedError ||
+        error instanceof ImageUriFormatNotSupportedError
+      ) {
         const newMoralisLog = this.moralisLogRepository.create();
         newMoralisLog.name = error.name;
         newMoralisLog.token = token;
@@ -173,6 +178,8 @@ export class MoralisService {
       if (numberOfEditions > 1) {
         await this.nftRepository.update({ tokenUri: token.token_uri }, { numberOfEditions });
       }
+    } else {
+      throw new ImageUriFormatNotSupportedError(metadata);
     }
 
     return existingNft;
