@@ -99,7 +99,7 @@ export class MoralisService {
       ) {
         const newMoralisLog = this.moralisLogRepository.create();
         newMoralisLog.name = error.name;
-        newMoralisLog.token = JSON.stringify(token);
+        newMoralisLog.token = token;
         await this.moralisLogRepository.save(newMoralisLog);
       }
       console.log(error);
@@ -240,19 +240,20 @@ export class MoralisService {
     return 'https://ipfs.moralis.io:2053/ipfs/' + url.split('ipfs://ipfs/').slice(-1)[0];
   }
 
-  private async getTokenUriMetadata(tokenUri: string) {
+  private async getTokenUriMetadata(tokenUri: string) { 
+    let normalizedTokenUri;
+
     if (tokenUri.startsWith('ipfs')) {
-      const newTokenUri = this.routeIpfsUrlToMoralisIpfs(tokenUri);
-      const { data } = await this.httpService.get(newTokenUri).toPromise();
-      const metadata = new StandardNftMetadata(data);
-      return metadata;
+      normalizedTokenUri = this.routeIpfsUrlToMoralisIpfs(tokenUri);
     } else if (tokenUri.startsWith('http')) {
-      const { data } = await this.httpService.get(tokenUri).toPromise();
-      const metadata = new StandardNftMetadata(data);
-      return metadata;
+      normalizedTokenUri = tokenUri;
     } else {
       throw new TokenUriFormatNotSupportedError(tokenUri);
     }
+
+    const { data } = await this.httpService.get(normalizedTokenUri).toPromise();
+    const metadata = new StandardNftMetadata(data);
+    return metadata;
   }
 
   private async generateRandomHash(length = 24): Promise<string> {
