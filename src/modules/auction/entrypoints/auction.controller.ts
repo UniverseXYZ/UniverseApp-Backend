@@ -31,6 +31,7 @@ import {
   DeployAuctionBody,
   WithdrawNftsBody,
   DepositNftsBody,
+  ChangeAuctionStatus,
 } from './dto';
 import { AuctionService } from '../service-layer/auction.service';
 import { JwtAuthGuard, OptionalJwtAuthGuard } from '../../auth/jwt-auth.guard';
@@ -302,5 +303,11 @@ export class AuctionController {
   @UseGuards(JwtAuthGuard)
   async getAuction(@Req() req, @Param('id') id = 0) {
     return await this.auctionService.getAuction(id);
+  }
+
+  @Patch('auction/status')
+  @UseGuards(JwtAuthGuard)
+  async changeAuctionStatus(@Req() req, @Body() changeAuctionStatusBody: ChangeAuctionStatus) {
+    return await this.auctionService.changeAuctionStatus(req.user.sub, changeAuctionStatusBody);
   }
 }

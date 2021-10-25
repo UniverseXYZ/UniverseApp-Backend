@@ -14,6 +14,7 @@ import {
   UpdateRewardTierBody,
   DepositNftsBody,
   PlaceBidBody,
+  ChangeAuctionStatus,
 } from '../entrypoints/dto';
 import { Nft } from 'src/modules/nft/domain/nft.entity';
 import { AuctionNotFoundException } from './exceptions/AuctionNotFoundException';
@@ -920,5 +921,20 @@ export class AuctionService {
     if (limit === 0 || page === 0) return;
 
     query.limit(limit).offset((page - 1) * limit);
+  }
+
+  public async changeAuctionStatus(userId: number, changeAuctionStatusBody: ChangeAuctionStatus) {
+    //TODO: This is a temporary endpoint until the scraper functionality is finished
+    let auction = await this.validateAuctionPermissions(userId, changeAuctionStatusBody.auctionId);
+
+    changeAuctionStatusBody.statuses.forEach((status) => {
+      auction[status.name] = status.value;
+    });
+
+    auction = await this.auctionRepository.save(auction);
+
+    return {
+      auction,
+    };
   }
 }
