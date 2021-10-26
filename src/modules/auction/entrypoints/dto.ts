@@ -8,6 +8,7 @@ import {
   IsNumberString,
   IsOptional,
   IsString,
+  IsInt,
   Length,
   Max,
   Min,
@@ -652,4 +653,59 @@ export class GetAuctionPageParams {
   })
   @IsNumberString()
   id: string;
+}
+
+export class PlaceBidBody {
+  @ApiProperty({
+    example: 1,
+    description: 'The id of the auction to which the user is bidding',
+  })
+  @IsNumber()
+  auctionId: number;
+
+  @ApiProperty({
+    example: '0.1',
+    description: 'Amount of crypto the user is bidding',
+  })
+  @IsNumber()
+  amount: number;
+}
+
+export class ChangeAuctionStatus {
+  @ApiProperty({
+    example: 1,
+    description: 'The id of the auction that the status will be changing',
+  })
+  @IsNumber()
+  auctionId: number;
+
+  @ApiProperty({
+    example: [
+      { name: 'canceled', value: true },
+      { name: 'depositing', value: false },
+    ],
+    description: 'Array of statuses that need to be changed',
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  statuses: StatusChange[];
+}
+
+class StatusChange {
+  name: string;
+  value: boolean;
+}
+export class AddRewardTierBodyParams {
+  @ApiProperty({
+    description: 'The id of the Auction on which the tier should be added',
+    example: '1',
+  })
+  @IsInt()
+  auctionId: number;
+
+  @ApiProperty({
+    type: CreateRewardTierBody,
+  })
+  @Type(() => CreateRewardTierBody)
+  rewardTier: CreateRewardTierBody;
 }

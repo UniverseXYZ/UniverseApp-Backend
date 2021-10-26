@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { getManager, In, LessThan, MoreThan, Repository, Transaction, TransactionRepository } from 'typeorm';
+import { getManager, In, LessThan, MoreThan, Not, Repository, Transaction, TransactionRepository } from 'typeorm';
 import { RewardTier } from '../domain/reward-tier.entity';
 import { RewardTierNft } from '../domain/reward-tier-nft.entity';
 import { Auction } from '../domain/auction.entity';
@@ -13,10 +13,15 @@ import {
   EditAuctionBody,
   UpdateRewardTierBody,
   DepositNftsBody,
+  PlaceBidBody,
+  ChangeAuctionStatus,
+  AddRewardTierBodyParams,
 } from '../entrypoints/dto';
 import { Nft } from 'src/modules/nft/domain/nft.entity';
 import { AuctionNotFoundException } from './exceptions/AuctionNotFoundException';
 import { AuctionBadOwnerException } from './exceptions/AuctionBadOwnerException';
+import { AuctionCannotBeModifiedException } from './exceptions/AuctionCannotBeModifiedException';
+import { RewardTierNFTUsedInOtherTierException } from './exceptions/RewardTierNFTUsedInOtherTierException';
 import { FileSystemService } from '../../file-system/file-system.service';
 import { RewardTierNotFoundException } from './exceptions/RewardTierNotFoundException';
 import { RewardTierBadOwnerException } from './exceptions/RewardTierBadOwnerException';
@@ -24,6 +29,8 @@ import { UsersService } from '../../users/users.service';
 import { classToPlain } from 'class-transformer';
 import { UploadResult } from 'src/modules/file-storage/model/UploadResult';
 import { NftCollection } from 'src/modules/nft/domain/collection.entity';
+import { AuctionBid } from '../domain/auction.bid.entity';
+import { User } from 'src/modules/users/user.entity';
 
 @Injectable()
 export class AuctionService {
@@ -39,27 +46,31 @@ export class AuctionService {
     private nftCollectionRepository: Repository<NftCollection>,
     @InjectRepository(Nft)
     private nftRepository: Repository<Nft>,
+    @InjectRepository(AuctionBid)
+    private auctionBidRepository: Repository<AuctionBid>,
     private s3Service: S3Service,
     private fileSystemService: FileSystemService,
     private readonly config: AppConfig,
   ) {}
 
-  async getAuctionPage(userId: number, auctionId: number) {
-    const auction = await this.auctionRepository.findOne({ where: { id: auctionId } });
+  async getAuctionPage(username: string, auctionName: string) {
+    const artist = await this.usersService.getByUsername(username);
+
+    //TODO: add a check if the auction has started
+    const auction = await this.auctionRepository.findOne({ link: auctionName });
 
     if (!auction) {
       throw new AuctionNotFoundException();
     }
-    // TODO: Add collection info for each nft
-    const rewardTiers = await this.rewardTierRepository.find({ where: { auctionId } });
+
+    // TODO: Add collection info for each nft(Maybe won't be needed)
+    const rewardTiers = await this.rewardTierRepository.find({ where: { auctionId: auction.id } });
     const rewardTierNfts = await this.rewardTierNftRepository.find({
       where: { rewardTierId: In(rewardTiers.map((rewardTier) => rewardTier.id)) },
     });
     const nftIds = rewardTierNfts.map((rewardTierNft) => rewardTierNft.nftId);
-    console.log(nftIds);
     const nfts = await this.nftRepository.find({ where: { id: In(nftIds) } });
     const idNftMap = nfts.reduce((acc, nft) => ({ ...acc, [nft.id]: nft }), {} as Record<string, Nft>);
-    console.log(idNftMap);
     const rewardTierNftsMap = rewardTierNfts.reduce(
       (acc, rewardTierNft) => ({
         ...acc,
@@ -69,57 +80,85 @@ export class AuctionService {
     );
     const artist = await this.usersService.getById(auction.userId, false);
 
+    //TODO: Add pagination to this query to reduce the load on the BE
+    // https://github.com/UniverseXYZ/UniverseApp-Backend/issues/100
+    const now = new Date().toISOString();
+    const moreActiveAuctions = await this.auctionRepository.find({
+      where: { userId: artist.id, id: Not(auction.id), startDate: LessThan(now), endDate: MoreThan(now) },
+    });
+
+    const bids = await this.auctionBidRepository
+      .createQueryBuilder('bid')
+      .leftJoinAndMapOne('bid.user', User, 'bidder', 'bidder.id = bid.userId')
+      .where({ auctionId: auction.id })
+      .orderBy('bid.amount', 'DESC')
+      .getMany();
+
+    bids.sort((a, b) => b.amount - a.amount);
+
     return {
       auction: classToPlain(auction),
       rewardTiers: rewardTiers.map((rewardTier) => ({
         ...classToPlain(rewardTier),
         nfts: rewardTierNftsMap[rewardTier.id].map((nft) => classToPlain(nft)),
       })),
-      bids: [],
-      artist: classToPlain(artist),
+      moreActiveAuctions: moreActiveAuctions.map((a) => classToPlain(a)),
+      bidders: bids,
     };
   }
 
-  async createRewardTier(
-    userId: number,
-    auctionId: number,
-    params: {
-      name: string;
-      numberOfWinners: number;
-      nftsPerWinner: number;
-      nftIds: number[];
-      minimumBid: number;
-      tierPosition: number;
-    },
-  ) {
-    const tier = await this.rewardTierRepository.findOne({
-      where: { userId, auctionId, tierPosition: params.tierPosition },
-    });
-    if (tier) return tier;
+  async createRewardTier(userId: number, params: AddRewardTierBodyParams) {
+    const {
+      auctionId,
+      rewardTier: { name, numberOfWinners, nftsPerWinner, minimumBid, nftSlots },
+    } = params;
 
-    return await getManager().transaction('SERIALIZABLE', async (transactionalEntityManager) => {
-      const tier = this.rewardTierRepository.create({
-        userId,
-        auctionId,
-        name: params.name,
-        nftsPerWinner: params.nftsPerWinner,
-        numberOfWinners: params.numberOfWinners,
-        minimumBid: params.minimumBid,
-        tierPosition: params.tierPosition,
-      });
-      await transactionalEntityManager.save(tier);
+    const auction = await this.auctionRepository.findOne({ where: { id: auctionId } });
 
-      const rewardTierNfts = params.nftIds.map((nftId) =>
-        this.rewardTierNftRepository.create({
-          rewardTierId: tier.id,
-          nftId: nftId,
-        }),
-      );
+    if (!auction) {
+      throw new AuctionNotFoundException();
+    }
 
-      await Promise.all(rewardTierNfts.map((rewardTierNft) => this.rewardTierNftRepository.save(rewardTierNft)));
+    await this.validateAuctionPermissions(userId, auctionId);
 
-      return tier;
-    });
+    const { depositedNfts, canceled, finalised, startDate } = auction;
+
+    const now = new Date();
+    const started = now >= startDate;
+
+    if (depositedNfts || canceled || finalised || started) {
+      throw new AuctionCannotBeModifiedException();
+    }
+
+    const currentTiers = await this.rewardTierRepository.findAndCount({ where: { auctionId } });
+    const nextTierIndex = currentTiers[1];
+
+    const tier = this.rewardTierRepository.create();
+    tier.auctionId = auction.id;
+    tier.userId = userId;
+    tier.name = name;
+    tier.numberOfWinners = numberOfWinners;
+    tier.nftsPerWinner = nftsPerWinner;
+    tier.minimumBid = minimumBid;
+    tier.tierPosition = nextTierIndex;
+    await this.rewardTierRepository.save(tier);
+
+    for (const nftSlot of nftSlots) {
+      for (const nftId of nftSlot.nftIds) {
+        const nftUsedInOtherTier = await this.rewardTierNftRepository.findOne({ where: { nftId } });
+        if (nftUsedInOtherTier) {
+          throw new RewardTierNFTUsedInOtherTierException();
+        }
+
+        const rewardTierNft = this.rewardTierNftRepository.create();
+        rewardTierNft.nftId = nftId;
+        rewardTierNft.slot = nftSlot.slot;
+        rewardTierNft.rewardTierId = tier.id;
+        await this.rewardTierNftRepository.save(rewardTierNft);
+      }
+    }
+
+    return tier;
   }
 
   async updateRewardTier(userId: number, id: number, params: UpdateRewardTierBody) {
@@ -493,7 +532,11 @@ export class AuctionService {
   async getMyPastAuctionsPage(userId: number, limit: number, offset: number) {
     const user = await this.usersService.getById(userId, true);
     const { count, auctions } = await this.getMyPastAuctions(userId, limit, offset);
-    const formattedAuctions = await this.formatMyAuctions(auctions);
+    const auctionsWithTiers = await this.formatMyAuctions(auctions);
+    let auctionsWithBids = [];
+    if (auctionsWithTiers.length) {
+      auctionsWithBids = await this.attachBidsInfo(auctionsWithTiers);
+    }
 
     return {
       pagination: {
@@ -501,14 +544,19 @@ export class AuctionService {
         offset,
         limit,
       },
-      auctions: formattedAuctions,
+      auctions: auctionsWithBids,
     };
   }
 
   async getMyActiveAuctionsPage(userId: number, limit: number, offset: number) {
     const user = await this.usersService.getById(userId, true);
     const { count, auctions } = await this.getMyActiveAuctions(userId, limit, offset);
-    const formattedAuctions = await this.formatMyAuctions(auctions);
+    const auctionsWithTiers = await this.formatMyAuctions(auctions);
+
+    let auctionsWithBids = [];
+    if (auctionsWithTiers.length) {
+      auctionsWithBids = await this.attachBidsInfo(auctionsWithTiers);
+    }
 
     return {
       pagination: {
@@ -516,8 +564,45 @@ export class AuctionService {
         offset,
         limit,
       },
-      auctions: formattedAuctions,
+      auctions: auctionsWithBids,
     };
+  }
+
+  private async attachBidsInfo(auctions: Auction[]) {
+    const auctionIds = auctions.map((auction) => auction.id);
+    const bidsQuery = await this.auctionBidRepository
+      .createQueryBuilder('bid')
+      .select([
+        'bid.auctionId',
+        'MIN(bid.amount) as min',
+        'MAX(bid.amount) as max',
+        'SUM(bid.amount) as totalBidsAmount',
+        'COUNT(*) as bidCount',
+      ])
+      .groupBy('bid.auctionId')
+      .where('bid.auctionId IN (:...auctionIds)', { auctionIds: auctionIds })
+      .getRawMany();
+
+    return auctions.map((auction) => {
+      const bid = bidsQuery.find((bid) => bid['bid_auctionId'] === auction.id);
+      const bids = {
+        bidsCount: 0,
+        highestBid: 0,
+        lowestBid: 0,
+        totalBids: 0,
+      };
+      if (bid) {
+        bids.bidsCount = +bid['bidcount'];
+        bids.highestBid = +bid['max'];
+        bids.lowestBid = +bid['min'];
+        bids.totalBids = +bid['totalbidsamount'];
+      } else {
+      }
+      return {
+        ...auction,
+        bids,
+      };
+    });
   }
 
   private async formatMyAuctions(auctions: Auction[]) {
@@ -718,9 +803,146 @@ export class AuctionService {
     };
   }
 
+  public async getUserBids(userId: number) {
+    //TODO: Add Pagination as this request can get quite computation heavy
+
+    // User should have only one bid per auction -> if user places multiple bids their amount should be accumulated into a single bid (That's how smart contract works)
+    const bids = await this.auctionBidRepository.find({ where: { userId: userId }, order: { createdAt: 'DESC' } });
+    const auctionIds = bids.map((bid) => bid.auctionId);
+
+    const [auctions, rewardTiers, bidsQuery] = await Promise.all([
+      this.auctionRepository
+        .createQueryBuilder('auction')
+        .leftJoinAndMapOne('auction.creator', User, 'creator', 'creator.id = auction.userId')
+        .where('auction.id IN (:...auctionIds)', { auctionIds: auctionIds })
+        .getMany(),
+      this.rewardTierRepository.find({ where: { auctionId: In(auctionIds) } }),
+      this.auctionBidRepository
+        .createQueryBuilder('bid')
+        .select(['bid.auctionId', 'MIN(bid.amount) as min', 'MAX(bid.amount) as max', 'COUNT(*) as bidCount'])
+        .groupBy('bid.auctionId')
+        .where('bid.auctionId IN (:...auctionIds)', { auctionIds: auctionIds })
+        .getRawMany(),
+    ]);
+
+    const rewardTiersNfts = await this.rewardTierNftRepository.find({
+      where: { rewardTierId: In(rewardTiers.map((nft) => nft.id)) },
+    });
+
+    const rewardTierNftsByRewardTierId = rewardTiersNfts.reduce((acc, rewardTierNft) => {
+      const group = acc[rewardTierNft.rewardTierId] || [];
+      group.push(rewardTierNft);
+      acc[rewardTierNft.rewardTierId] = group;
+      return acc;
+    }, {});
+
+    const rewardTiersByAuctionId = rewardTiers.reduce((acc, tier) => {
+      const group = acc[tier.auctionId] || [];
+      group.push(tier);
+      acc[tier.auctionId] = group;
+      return acc;
+    }, {});
+
+    const auctionsById = auctions.reduce((acc, auction) => {
+      acc[auction.id] = auction;
+      return acc;
+    }, {});
+
+    const mappedBids = bids.map((bid) => {
+      const bidResult = bidsQuery.find((b) => b['bid_auctionId'] === bid.auctionId);
+      const auctionBidsCount = +bidResult['bidcount'];
+      const highestBid = +bidResult['max'];
+      const lowestBid = +bidResult['min'];
+      const tiers = rewardTiersByAuctionId[bid.auctionId];
+
+      // If auction has 5 winning slots but received only one bid -> numberOfWinners should be 1)
+      const totalAuctionNumberOfWinners = tiers.reduce((acc, tier) => (acc += tier.numberOfWinners), 0);
+      const numberOfWinners = Math.min(totalAuctionNumberOfWinners, auctionBidsCount);
+
+      const tierNftIds = Object.keys(rewardTierNftsByRewardTierId).map((key) => +key);
+      const nftsBySlot = rewardTiersNfts
+        .filter((tierNft) => tierNftIds.includes(tierNft.rewardTierId))
+        .reduce((acc, item) => {
+          const group = acc[item.slot] || [];
+          group.push(item);
+          acc[item.slot] = group;
+          return acc;
+        }, {});
+
+      let maxNfts = Number.MIN_SAFE_INTEGER;
+      let minNfts = Number.MAX_SAFE_INTEGER;
+
+      Object.keys(nftsBySlot).forEach((slot) => {
+        if (nftsBySlot[slot].length > maxNfts) {
+          maxNfts = nftsBySlot[slot].length;
+        }
+        if (nftsBySlot[slot].length < minNfts) {
+          minNfts = nftsBySlot[slot].length;
+        }
+      });
+
+      return {
+        bid: classToPlain(bid),
+        auction: classToPlain(auctionsById[bid.auctionId]),
+        highestBid,
+        lowestBid,
+        numberOfWinners,
+        maxNfts,
+        minNfts,
+      };
+    });
+    return { bids: mappedBids, pagination: {} };
+  }
+
+  public async placeAuctionBid(userId: number, placeBidBody: PlaceBidBody) {
+    //TODO: This is a temporary endpoint until the scraper functionality is finished
+    const auction = await this.auctionRepository.findOne(placeBidBody.auctionId);
+
+    if (!auction) {
+      throw new AuctionNotFoundException();
+    }
+
+    const bidder = await this.usersService.getById(userId);
+
+    const bid = await this.auctionBidRepository.findOne({
+      where: { userId, auctionId: placeBidBody.auctionId },
+    });
+
+    if (bid) {
+      await this.auctionBidRepository.update(bid.id, {
+        amount: +bid.amount + +placeBidBody.amount,
+      });
+    } else {
+      await this.auctionBidRepository.save({
+        userId: userId,
+        amount: placeBidBody.amount,
+        auctionId: placeBidBody.auctionId,
+      });
+    }
+    const response = { ...placeBidBody, user: bidder };
+    return {
+      bid: response,
+    };
+  }
+
   private setPagination(query, page: number, limit: number) {
     if (limit === 0 || page === 0) return;
 
     query.limit(limit).offset((page - 1) * limit);
+  }
+
+  public async changeAuctionStatus(userId: number, changeAuctionStatusBody: ChangeAuctionStatus) {
+    //TODO: This is a temporary endpoint until the scraper functionality is finished
+    let auction = await this.validateAuctionPermissions(userId, changeAuctionStatusBody.auctionId);
+
+    changeAuctionStatusBody.statuses.forEach((status) => {
+      auction[status.name] = status.value;
+    });
+
+    auction = await this.auctionRepository.save(auction);
+
+    return {
+      auction,
+    };
   }
 }

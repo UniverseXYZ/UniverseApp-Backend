@@ -291,6 +291,8 @@ export class MoralisService {
   }
 
   private async getTokenUriMetadata(tokenUri: string) {
+    let normalizedTokenUri;
+
     if (tokenUri.startsWith('ipfs')) {
       const normalizedTokenUri = this.routeIpfsUrlToMoralisIpfs(tokenUri);
       const { data } = await this.httpService.get(normalizedTokenUri).toPromise();
@@ -308,6 +310,10 @@ export class MoralisService {
     } else {
       throw new TokenUriFormatNotSupportedError(tokenUri);
     }
+
+    const { data } = await this.httpService.get(normalizedTokenUri).toPromise();
+    const metadata = new StandardNftMetadata(data);
+    return metadata;
   }
 
   private async generateRandomHash(length = 24): Promise<string> {
