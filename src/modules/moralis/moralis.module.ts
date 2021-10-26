@@ -11,6 +11,8 @@ import { QueueModel } from '../queue/queue.model';
 import { User } from '../users/user.entity';
 import { MoralisService } from './moralis.service';
 import { MoralisWebHookController } from './moralis.webhook.controller';
+import { MoralisController } from './moralis.controller';
+import { NftValidator } from './service/nft-validator';
 
 @Module({
   imports: [
@@ -21,8 +23,8 @@ import { MoralisWebHookController } from './moralis.webhook.controller';
     FileStorageModule,
     FileSystemModule,
   ],
-  providers: [MoralisService],
+  providers: [MoralisService, NftValidator],
   exports: [MoralisService],
-  controllers: [MoralisWebHookController],
+  controllers: [MoralisWebHookController, MoralisController],
 })
 export class MoralisModule {}
