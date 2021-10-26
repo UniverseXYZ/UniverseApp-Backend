@@ -165,7 +165,7 @@ export class MoralisService {
     const metadata = await this.getTokenUriMetadata(token.token_uri);
     existingNft.name = metadata.name;
     existingNft.description = metadata.description;
-    console.log(metadata);
+
     if (metadata.isImageOnIPFS()) {
       const ipfsImageUrl = this.routeIpfsUrlToMoralisIpfs(metadata.getImage());
       const filename = `${await this.generateRandomHash()}${metadata.getFileExtension()}`;
@@ -193,25 +193,18 @@ export class MoralisService {
     } else if (metadata.isImageOnWeb()) {
       const filename = `${await this.generateRandomHash()}${metadata.getFileExtension()}`;
       const downloadPath = `uploads/${filename}`;
-      console.log(`config download from ${metadata.getImage()} to ${filename}`);
       const downloader = new Downloader({
         url: metadata.getImage(),
         directory: 'uploads',
         fileName: filename,
       });
-      console.log('start download');
       await downloader.download();
-      console.log('finish download');
-      console.log(`start s3 upload from ${downloadPath} to ${filename}`);
       const s3Result = await this.s3Service.uploadDocument(downloadPath, filename);
-      console.log('finish s3 upload');
       existingNft.artworkType = metadata.getFileExtension() && metadata.getFileExtension().split('.').slice(-1)[0];
       existingNft.url = s3Result.url;
       existingNft.optimized_url = s3Result.url;
       existingNft.thumbnail_url = s3Result.url;
-      console.log('delete file');
       await this.fileSystemService.removeFile(downloadPath);
-      console.log('deleted file');
       existingNft.properties = metadata.attributes?.map((attrObj) => ({
         [attrObj.trait_type]: attrObj.value,
       }));
