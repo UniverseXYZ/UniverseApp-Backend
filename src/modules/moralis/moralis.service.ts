@@ -1,6 +1,6 @@
 import { HttpService, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import * as crypto from 'crypto';
 import Moralis from 'moralis/node';
 import { customAlphabet } from 'nanoid';
@@ -25,6 +25,7 @@ import {
   ImageUriFormatNotSupportedError,
 } from './service/exceptions';
 import { FileSystemService } from '../file-system/file-system.service';
+import { NftValidator } from './service/nft-validator';
 
 const MORALIS_NEW_NFT_QUEUE = 'MORALIS_NEW_NFT_QUEUE';
 
@@ -38,6 +39,7 @@ export class MoralisService {
     private httpService: HttpService,
     private s3Service: S3Service,
     private fileSystemService: FileSystemService,
+    private nftValidator: NftValidator,
     @InjectRepository(Nft)
     private nftRepository: Repository<Nft>,
     @InjectRepository(User)
@@ -49,6 +51,37 @@ export class MoralisService {
     @InjectRepository(MoralisLog)
     private moralisLogRepository: Repository<MoralisLog>,
   ) {}
+
+  async retryAll() {
+    const take = 10;
+    let keepLooping = true;
+    let skip = 0;
+    const idsToDelete = [];
+    this.logger.log('retry');
+
+    while (keepLooping) {
+      const logs = await this.moralisLogRepository.find({
+        where: { name: In([ImageUriFormatNotSupportedError.name, TokenUriFormatNotSupportedError.name]) },
+        take,
+        skip: skip,
+      });
+      this.logger.log(`retry logs from ${skip} to ${skip + take}`);
+
+      for (const log of logs) {
+        try {
+          await this.processToken(log.token);
+          idsToDelete.push(log.id);
+        } catch (error) {
+          this.logger.error(`retry ${log.id} ${error}`);
+          continue;
+        }
+      }
+
+      if (logs.length < take) keepLooping = false;
+      skip = skip + take;
+    }
+    await this.moralisLogRepository.delete({ id: In(idsToDelete) });
+  }
 
   async onModuleInit() {
     Moralis.serverURL = this.config.values.moralis.serverUrl;
@@ -74,23 +107,7 @@ export class MoralisService {
     this.logger.log(token);
 
     try {
-      this.checkNftHasAllAttributes(token);
-      await this.checkNftIsNotUniverseContract(token.token_address);
-      await this.checkNftIsNotCoreUniverseContract(token.token_address);
-
-      const existingCollection = await this.findOrCreateCollection(token);
-      let existingNft = await this.nftRepository.findOne({
-        collectionId: existingCollection.id,
-        tokenId: parseInt(token.token_id),
-      });
-
-      if (existingNft) {
-        if (existingNft.owner !== token.owner_of.toLowerCase()) {
-          existingNft = await this.changeNftOwner(existingNft, token);
-        }
-      } else {
-        existingNft = await this.createNewNft(token, existingCollection);
-      }
+      await this.processToken(token);
     } catch (error) {
       if (
         error instanceof NftMissingAttributesError ||
@@ -107,6 +124,26 @@ export class MoralisService {
 
     cb(null, true);
   };
+
+  private async processToken(token: MoralisNft) {
+    this.nftValidator.checkNftHasAllAttributes(token);
+    await this.checkNftIsNotUniverseContract(token.token_address);
+    await this.checkNftIsNotCoreUniverseContract(token.token_address);
+
+    const existingCollection = await this.findOrCreateCollection(token);
+    let existingNft = await this.nftRepository.findOne({
+      collectionId: existingCollection.id,
+      tokenId: parseInt(token.token_id),
+    });
+
+    if (existingNft) {
+      if (existingNft.owner !== token.owner_of.toLowerCase()) {
+        existingNft = await this.changeNftOwner(existingNft, token);
+      }
+    } else {
+      existingNft = await this.createNewNft(token, existingCollection);
+    }
+  }
 
   private async createNewNft(token: MoralisNft, existingCollection: NftCollection) {
     let existingNft = this.nftRepository.create();
@@ -130,7 +167,7 @@ export class MoralisService {
     existingNft.description = metadata.description;
 
     if (metadata.isImageOnIPFS()) {
-      const ipfsImageUrl = this.routeIpfsUrlToMoralisIpfs(metadata.image);
+      const ipfsImageUrl = this.routeIpfsUrlToMoralisIpfs(metadata.getImage());
       const filename = `${await this.generateRandomHash()}${metadata.getFileExtension()}`;
       const downloadPath = `uploads/${filename}`;
       const downloader = new Downloader({
@@ -144,7 +181,7 @@ export class MoralisService {
       existingNft.url = s3Result.url;
       existingNft.optimized_url = s3Result.url;
       existingNft.thumbnail_url = s3Result.url;
-      existingNft.original_url = metadata.image;
+      existingNft.original_url = metadata.getImage();
       await this.fileSystemService.removeFile(downloadPath);
       existingNft.properties = metadata.attributes?.map((attrObj) => ({
         [attrObj.trait_type]: attrObj.value,
@@ -157,7 +194,7 @@ export class MoralisService {
       const filename = `${await this.generateRandomHash()}${metadata.getFileExtension()}`;
       const downloadPath = `uploads/${filename}`;
       const downloader = new Downloader({
-        url: metadata.image,
+        url: metadata.getImage(),
         directory: 'uploads',
         fileName: filename,
       });
@@ -167,8 +204,24 @@ export class MoralisService {
       existingNft.url = s3Result.url;
       existingNft.optimized_url = s3Result.url;
       existingNft.thumbnail_url = s3Result.url;
-      existingNft.original_url = metadata.image;
       await this.fileSystemService.removeFile(downloadPath);
+      existingNft.properties = metadata.attributes?.map((attrObj) => ({
+        [attrObj.trait_type]: attrObj.value,
+      }));
+      existingNft = await this.nftRepository.save(existingNft);
+      if (numberOfEditions > 1) {
+        await this.nftRepository.update({ tokenUri: token.token_uri }, { numberOfEditions });
+      }
+    } else if (metadata.isImageBase64Image) {
+      const decoded = this.fileSystemService.decodeBase64(metadata.getImage());
+      const extension = decoded.type.split('/')[1].split('+')[0];
+      const filename = `${await this.generateRandomHash()}.${extension}`;
+      const s3Result = await this.s3Service.uploadBuffer(decoded.data, filename);
+      existingNft.artworkType = extension;
+      existingNft.url = s3Result.url;
+      existingNft.optimized_url = s3Result.url;
+      existingNft.thumbnail_url = s3Result.url;
+      existingNft.original_url = s3Result.url;
       existingNft.properties = metadata.attributes?.map((attrObj) => ({
         [attrObj.trait_type]: attrObj.value,
       }));
@@ -226,33 +279,28 @@ export class MoralisService {
     }
   }
 
-  private checkNftHasAllAttributes(nft: MoralisNft) {
-    const error = new NftMissingAttributesError();
-    if (!nft.token_uri) throw error;
-    if (!Number.isInteger(parseInt(nft.token_id))) throw error;
-    if (!nft.token_address) throw error;
-    if (!nft.owner_of) throw error;
-    if (nft.contract_type !== 'ERC721') throw error;
-  }
-
   private routeIpfsUrlToMoralisIpfs(url: string) {
     return 'https://ipfs.moralis.io:2053/ipfs/' + url.split('ipfs://ipfs/').slice(-1)[0];
   }
 
   private async getTokenUriMetadata(tokenUri: string) {
-    let normalizedTokenUri;
-
     if (tokenUri.startsWith('ipfs')) {
-      normalizedTokenUri = this.routeIpfsUrlToMoralisIpfs(tokenUri);
+      const normalizedTokenUri = this.routeIpfsUrlToMoralisIpfs(tokenUri);
+      const { data } = await this.httpService.get(normalizedTokenUri).toPromise();
+      const metadata = new StandardNftMetadata(data);
+      return metadata;
     } else if (tokenUri.startsWith('http')) {
-      normalizedTokenUri = tokenUri;
+      const normalizedTokenUri = tokenUri;
+      const { data } = await this.httpService.get(normalizedTokenUri).toPromise();
+      const metadata = new StandardNftMetadata(data);
+      return metadata;
+    } else if (tokenUri.startsWith('data:application/json;base64,')) {
+      const data = this.nftValidator.parseBase64TokenUri(tokenUri);
+      const metadata = new StandardNftMetadata(data);
+      return metadata;
     } else {
       throw new TokenUriFormatNotSupportedError(tokenUri);
     }
-
-    const { data } = await this.httpService.get(normalizedTokenUri).toPromise();
-    const metadata = new StandardNftMetadata(data);
-    return metadata;
   }
 
   private async generateRandomHash(length = 24): Promise<string> {

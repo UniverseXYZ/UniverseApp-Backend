@@ -38,4 +38,23 @@ export class S3Service {
       );
     });
   }
+  public uploadBuffer(sourceBuffer: Buffer, bucketPath: string) {
+    return new Promise<UploadResult>((resolve, reject) => {
+      this.client.upload(
+        {
+          Bucket: this.config.values.aws.bucketName,
+          Key: bucketPath,
+          Body: sourceBuffer,
+        },
+        (error, data) => {
+          if (error) {
+            Logger.log(error);
+            reject(error);
+          } else {
+            resolve(UploadResult.fromAws(data));
+          }
+        },
+      );
+    });
+  }
 }

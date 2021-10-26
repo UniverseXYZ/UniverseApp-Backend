@@ -13,7 +13,7 @@ export class Nft {
   id: number;
 
   @Exclude()
-  @Column()
+  @Column({ nullable: true })
   @Index()
   userId: number;
 
