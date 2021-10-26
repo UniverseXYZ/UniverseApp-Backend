@@ -952,6 +952,8 @@ export class AuctionService {
 
     auction = await this.auctionRepository.save(auction);
 
+    this.gateway.notifyAuctionStatus(auction);
+
     return {
       auction,
     };

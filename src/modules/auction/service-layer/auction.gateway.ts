@@ -1,15 +1,24 @@
 
-import { WebSocketGateway, OnGatewayInit, WebSocketServer, OnGatewayConnection } from '@nestjs/websockets';
+import { 
+  WebSocketGateway,
+  OnGatewayInit,
+  WebSocketServer,
+  OnGatewayConnection
+} from '@nestjs/websockets';
 import { Server } from 'socket.io';
+import { User } from 'src/modules/users/user.entity';
+import { Auction } from '../domain/auction.entity';
+import { configValues } from '../../configuration';
 
 
-@WebSocketGateway(3001) //todo .env
+
+@WebSocketGateway(configValues.app.auctionsPort)
 export class AuctionGateway implements OnGatewayInit, OnGatewayConnection {
 
   @WebSocketServer()
    server: Server;
 
-  afterInit(server: any) {
+  afterInit() {
     console.log('Gateway is up and running')
   }
 
@@ -17,11 +26,11 @@ export class AuctionGateway implements OnGatewayInit, OnGatewayConnection {
       client.emit('connection', 'Successfully connected.')
   }
 
-  public notifyBids(auctionId: number, bids: any): void {
+  public notifyBids(auctionId: number, bids: { user: User; auctionId: number; amount: number; }): void {
       this.server.sockets.emit('bids_' + auctionId, bids);
   }
 
-  public notifyAuctionStatus() {
-      
+  public notifyAuctionStatus(auction: Auction) {
+      this.server.sockets.emit('auction_' + auction.id, auction); 
   }
 }
