@@ -32,6 +32,7 @@ import {
   WithdrawNftsBody,
   DepositNftsBody,
   ChangeAuctionStatus,
+  AddRewardTierBodyParams,
 } from './dto';
 import { AuctionService } from '../service-layer/auction.service';
 import { JwtAuthGuard, OptionalJwtAuthGuard } from '../../auth/jwt-auth.guard';
@@ -186,22 +187,13 @@ export class AuctionController {
     return await this.auctionService.cancelFutureAuction(req.user.sub, id);
   }
 
-  /**
-   * old endpoints
-   */
-  //Todo: add endpoint to get reward tier ?
-  //Todo: needs to check that there are enough nfts, and that the nfts are not already set as rewards in other tiers
-  @Post('reward-tier')
+  @Post('/add-reward-tier')
   @UseGuards(JwtAuthGuard)
-  async createRewardTier(@Req() req, @Body() createRewardTierBody: CreateRewardTierBody) {
-    // return await this.auctionService.createRewardTier(req.user.sub, createRewardTierBody.auctionId, {
-    //   name: createRewardTierBody.name,
-    //   numberOfWinners: createRewardTierBody.numberOfWinners,
-    //   nftsPerWinner: createRewardTierBody.nftsPerWinner,
-    //   nftIds: createRewardTierBody.nftIds,
-    //   minimumBid: createRewardTierBody.minimumBid,
-    //   tierPosition: createRewardTierBody.tierPosition,
-    // });
+  @ApiTags('auction')
+  @ApiOperation({ summary: 'Add a Reward Tier to a Specific Auction' })
+  @ApiResponse({ type: EditRewardTierResponse, status: 200 })
+  async createRewardTier(@Req() req, @Body() addRewardTierBodyParams: AddRewardTierBodyParams) {
+    return await this.auctionService.createRewardTier(req.user.sub, addRewardTierBodyParams);
   }
 
   @Patch('reward-tier-extra-data')
