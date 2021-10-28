@@ -83,6 +83,25 @@ export class MoralisService {
     await this.moralisLogRepository.delete({ id: In(idsToDelete) });
   }
 
+  async getHistory(start: number, end: number) {
+    const skip = 0;
+    const pageSize = 50;
+    let keepLooping = true;
+    while (keepLooping) {
+      const params = {
+        skip: skip,
+        start: start,
+        end: end,
+        limit: pageSize,
+      };
+      const results = await Moralis.Cloud.run('fetchEthNFTOwners', params);
+      if (results.length < pageSize) keepLooping = false;
+      for (const token of results) {
+        this.addNewNFT(token);
+      }
+    }
+  }
+
   async onModuleInit() {
     Moralis.serverURL = this.config.values.moralis.serverUrl;
     Moralis.masterKey = this.config.values.moralis.masterKey;
