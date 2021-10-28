@@ -3,8 +3,6 @@ import { MoralisService } from './moralis.service';
 
 const getOneHourAgoTimeStamp = (timeStamp: number): number => {
   const date = new Date(timeStamp);
-  console.log(date);
-  console.log(timeStamp);
   date.setTime(date.getTime() - 60 * 60 * 1000);
   return date.getTime();
 };
