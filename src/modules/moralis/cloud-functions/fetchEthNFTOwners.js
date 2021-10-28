@@ -6,19 +6,20 @@ Moralis.Cloud.define('fetchEthNFTOwners', async (request) => {
 
   const query = new Moralis.Query('EthNFTOwners');
 
+  query.greaterThan('createdAt', startDate);
+  query.lessThan('createdAt', endDate);
+
   query.skip(skip);
   query.limit(limit);
 
-  query.greaterThan('createdAt', startDate);
-  query.lessThan('createdAt', endDate);
   const queryResults = await query.find();
 
-  const result = [];
+  const tokens = [];
   for (let i = 0; i < queryResults.length; i++) {
-    result.push({
+    tokens.push({
       ...queryResults[i].attributes,
     });
   }
 
-  return result;
+  return tokens;
 });
