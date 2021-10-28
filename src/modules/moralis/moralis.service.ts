@@ -89,9 +89,9 @@ export class MoralisService {
     let keepLooping = true;
     while (keepLooping) {
       const params = {
-        skip: skip,
         start: start,
         end: end,
+        skip: skip,
         limit: pageSize,
       };
       const results = await Moralis.Cloud.run('fetchEthNFTOwners', params);
