@@ -30,7 +30,7 @@ export class StandardNftMetadata {
     const components = this.getImage()?.split('.');
     if (Array.isArray(components) && components.length >= 3) {
       const extension = components[components.length - 1];
-      if (extension.length <= 4) return `.${extension}`;
+      if (extension.length <= 7) return `.${extension}`; 
     }
     return '';
   }
