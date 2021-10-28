@@ -26,7 +26,7 @@ export class StandardNftMetadata {
     return this.getImage()?.startsWith('ipfs:');
   }
 
-  public getExtension() {
+  public getFileExtension() {
     const components = this.getImage()?.split('.');
     if (Array.isArray(components) && components.length >= 3) {
       const extension = components[components.length - 1];
