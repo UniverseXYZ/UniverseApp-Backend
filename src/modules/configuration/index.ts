@@ -10,6 +10,7 @@ export const configValues = {
   },
   app: {
     port: parseInt(process.env.APP_PORT, 10),
+    auctionsPort: parseInt(process.env.AUCTIONS_SOCKET_PORT),
   },
   ethereum: {
     infuraProjectId: process.env.INFURA_PROJECT_ID,

@@ -11,6 +11,7 @@ services:
       - backend-node-modules:/usr/src/app/node_modules
     ports:
       - ${APP_PORT}:${APP_PORT}
+      - ${AUCTIONS_SOCKET_PORT}:${AUCTIONS_SOCKET_PORT}
       - 9229:9229
     command: ./docker/dev.command.sh
     env_file:
