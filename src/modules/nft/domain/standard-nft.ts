@@ -26,15 +26,12 @@ export class StandardNftMetadata {
     return this.getImage()?.startsWith('ipfs:');
   }
 
-  public getFileExtension() {
-    const uri = this.getImage();
-    if (uri) {
-      const extension = uri.substring(uri.lastIndexOf('.'));
-      if (extension && extension.length <= 5) {
-        return extension;
-      }
+  public getExtension() {
+    const components = this.getImage()?.split('.');
+    if (Array.isArray(components) && components.length >= 3) {
+      const extension = components[components.length - 1];
+      if (extension.length <= 4) return `.${extension}`;
     }
-
     return '';
   }
 
