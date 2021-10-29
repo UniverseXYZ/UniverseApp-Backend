@@ -1,3 +1,10 @@
+## [1.23.6](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.23.5...v1.23.6) (2021-10-29)
+
+
+### Bug Fixes
+
+* **nft-collection:** change response of my collections to return collections of owned nfts ([b1ac1ae](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/b1ac1aef704a5a682c5f7d759487dfe3dbf1a747))
+
 ## [1.23.5](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.23.4...v1.23.5) (2021-10-26)
 
 
