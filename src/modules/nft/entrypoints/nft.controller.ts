@@ -242,7 +242,7 @@ export class NftController {
   @ApiOperation({ summary: 'Get my nfts with availability information' })
   @ApiResponse({ type: GetMyNftsResponse, status: 200, isArray: true })
   async getMyNftsAvailability(@Req() req, @Query() params: GetMyNftsAvailabilityParams) {
-    return await this.nftService.getMyNftsAvailability(req.user.sub, params.start, params.limit, params.size);
+    return await this.nftService.getMyNftsAvailability(req.user.sub, params.start, params.limit, params.size, params.auctionId);
   }
 
   @Get('nfts/collections/my-collections')
