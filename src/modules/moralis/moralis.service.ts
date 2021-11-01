@@ -118,6 +118,11 @@ export class MoralisService {
         newMoralisLog.name = error.name;
         newMoralisLog.token = token;
         await this.moralisLogRepository.save(newMoralisLog);
+      } else {
+        const newMoralisLog = this.moralisLogRepository.create();
+        newMoralisLog.name = 'Unknown';
+        newMoralisLog.token = token;
+        await this.moralisLogRepository.save(newMoralisLog);
       }
       console.log(error);
     }
@@ -127,8 +132,6 @@ export class MoralisService {
 
   private async processToken(token: MoralisNft) {
     this.nftValidator.checkNftHasAllAttributes(token);
-    await this.checkNftIsNotUniverseContract(token.token_address);
-    await this.checkNftIsNotCoreUniverseContract(token.token_address);
 
     const existingCollection = await this.findOrCreateCollection(token);
     let existingNft = await this.nftRepository.findOne({
@@ -141,6 +144,9 @@ export class MoralisService {
         existingNft = await this.changeNftOwner(existingNft, token);
       }
     } else {
+      // create only non-Universe NFTs
+      await this.checkNftIsNotUniverseContract(token.token_address);
+      await this.checkNftIsNotCoreUniverseContract(token.token_address);
       existingNft = await this.createNewNft(token, existingCollection);
     }
   }
@@ -238,6 +244,7 @@ export class MoralisService {
 
   private async changeNftOwner(existingNft: Nft, token: MoralisNft) {
     existingNft.owner = token.owner_of.toLowerCase();
+    existingNft.userId = null;
     existingNft = await this.nftRepository.save(existingNft);
     return existingNft;
   }
