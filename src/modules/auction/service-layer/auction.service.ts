@@ -33,6 +33,7 @@ import { NftCollection } from 'src/modules/nft/domain/collection.entity';
 import { AuctionBid } from '../domain/auction.bid.entity';
 import { User } from 'src/modules/users/user.entity';
 import { AuctionGateway } from './auction.gateway';
+import { AuctionBidNotFoundException } from './exceptions/AuctionBidNotFoundException';
 
 @Injectable()
 export class AuctionService {
@@ -167,6 +168,32 @@ export class AuctionService {
         await this.rewardTierNftRepository.save(rewardTierNft);
       }
     }
+
+    return tier;
+  }
+
+  async removeRewardTier(userId: number, id: string) {
+    const tier = await this.rewardTierRepository.findOne({ where: { userId: userId, id: parseInt(id, 10) } });
+
+    if (!tier) {
+      throw new RewardTierNotFoundException();
+    }
+
+    const { auctionId } = tier;
+
+    const auction = await this.auctionRepository.findOne({ where: { id: auctionId } });
+
+    const { onChainId } = auction;
+
+    if (onChainId) {
+      // If the auction has already been created on smart contract level we cannot modify it
+      throw new AuctionCannotBeModifiedException();
+    }
+
+    await getManager().transaction(async (transactionalEntityManager) => {
+      await transactionalEntityManager.delete(RewardTier, { id });
+      await transactionalEntityManager.delete(RewardTierNft, { rewardTierId: id });
+    });
 
     return tier;
   }
@@ -382,8 +409,11 @@ export class AuctionService {
     const auction = await this.validateAuctionPermissions(userId, auctionId);
     //TODO: We need some kind of validation that this on chain id really exists
     const deployedAuction = await this.auctionRepository.update(auctionId, {
-      onChain: false,
-      onChainId: null,
+      // We must not change those properties, because the auction is already deployed on the smart contract and
+      // If we cancel an auction it cannot be undone. Please note if you edit this request, to handle delettion of reward tier reqeust checks
+      // onChain: false,
+      // onChainId: null,
+      canceled: true,
       txHash: '',
     });
 
@@ -945,11 +975,29 @@ export class AuctionService {
       });
     }
     const response = { ...placeBidBody, user: bidder };
-    this.gateway.notifyBids(placeBidBody.auctionId, response);
+    // this.gateway.notifyBids(placeBidBody.auctionId, response);
 
     return {
       bid: response,
     };
+  }
+
+  public async cancelAuctionBid(userId: number, auctionId: number) {
+    //TODO: This is a temporary endpoint until the scraper functionality is finished
+    await this.validateAuctionPermissions(userId, auctionId);
+
+    const bid = await this.auctionBidRepository.findOne({
+      where: { userId, auctionId: auctionId },
+    });
+
+    if (bid) {
+      const deleteResult = await this.auctionBidRepository.delete(bid.id);
+      return {
+        deleted: deleteResult.affected,
+      };
+    }
+
+    throw new AuctionBidNotFoundException();
   }
 
   private setPagination(query, page: number, limit: number) {
@@ -968,7 +1016,7 @@ export class AuctionService {
 
     auction = await this.auctionRepository.save(auction);
 
-    this.gateway.notifyAuctionStatus(auction);
+    // this.gateway.notifyAuctionStatus(auction);
 
     return {
       auction,
