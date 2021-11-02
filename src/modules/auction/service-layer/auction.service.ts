@@ -17,6 +17,7 @@ import {
   ChangeAuctionStatus,
   WithdrawNftsBody,
   AddRewardTierBodyParams,
+  RemoveRewardTierParams,
 } from '../entrypoints/dto';
 import { Nft } from 'src/modules/nft/domain/nft.entity';
 import { AuctionNotFoundException } from './exceptions/AuctionNotFoundException';
@@ -168,6 +169,23 @@ export class AuctionService {
         await this.rewardTierNftRepository.save(rewardTierNft);
       }
     }
+
+    return tier;
+  }
+
+  async removeRewardTier(userId: number, params: RemoveRewardTierParams) {
+    const { tierId } = params;
+
+    const tier = await this.rewardTierRepository.findOne({ where: { userId: userId, id: tierId } });
+
+    if (!tier) {
+      throw new RewardTierNotFoundException();
+    }
+
+    await getManager().transaction(async (transactionalEntityManager) => {
+      await transactionalEntityManager.delete(RewardTier, { id: tierId });
+      await transactionalEntityManager.delete(RewardTierNft, { rewardTierId: tierId });
+    });
 
     return tier;
   }
