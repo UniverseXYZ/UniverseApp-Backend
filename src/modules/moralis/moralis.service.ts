@@ -84,21 +84,29 @@ export class MoralisService {
   }
 
   async getHistory(start: number, end: number) {
-    const skip = 0;
+    let skip = 0;
     const pageSize = 50;
     let keepLooping = true;
     while (keepLooping) {
+      console.log(`Fetch NFTs from ${skip} to ${skip + pageSize}`);
       const params = {
         skip: skip,
         start: start,
         end: end,
         limit: pageSize,
       };
-      const results = await Moralis.Cloud.run('fetchEthNFTOwners', params);
+      let results = [];
+      try {
+        results = await Moralis.Cloud.run('fetchEthNFTOwners', params);
+      } catch (err) {
+        console.log(err);
+      }
+
       if (results.length < pageSize) keepLooping = false;
       for (const token of results) {
         this.addNewNFT(token);
       }
+      skip += pageSize;
     }
   }
 
@@ -107,6 +115,22 @@ export class MoralisService {
     Moralis.masterKey = this.config.values.moralis.masterKey;
     Moralis.initialize(this.config.values.moralis.applicationId);
     this.queue.initQueue(MORALIS_NEW_NFT_QUEUE, this.moralisNewNFTOwnerHandler, 1);
+
+    const token = {
+      name: 'FLUF',
+      amount: '1',
+      symbol: 'FLUF',
+      owner_of: '0x0c45a25d72d71bf323f5fdbf33c9069394efb2b7',
+      token_id: '8811',
+      createdAt: '2021-10-29T13:53:27.623Z',
+      token_uri: 'https://api.fluf.world/api/token/8811',
+      updatedAt: '2021-10-29T13:53:27.623Z',
+      block_number: 12994816,
+      contract_type: 'ERC721',
+      token_address: '0xccc441ac31f02cd96c153db6fd5fe0a2f4e6a68d',
+    };
+
+    this.addNewNFT(token);
   }
 
   addNewUserToWatchAddress = async (address: string) => {
@@ -128,6 +152,7 @@ export class MoralisService {
     try {
       await this.processToken(token);
     } catch (error) {
+      console.log('error', error);
       if (
         error instanceof NftMissingAttributesError ||
         error instanceof TokenUriFormatNotSupportedError ||
@@ -190,16 +215,22 @@ export class MoralisService {
     existingNft.name = metadata.name;
     existingNft.description = metadata.description;
 
+    console.log({metadata});
+
     if (metadata.isImageOnIPFS()) {
       const ipfsImageUrl = this.routeIpfsUrlToMoralisIpfs(metadata.getImage());
+      console.log({ipfsImageUrl});
       const filename = `${await this.generateRandomHash()}${metadata.getFileExtension()}`;
       const downloadPath = `uploads/${filename}`;
+      console.log(`downloadPath is ${downloadPath}`);
       const downloader = new Downloader({
         url: ipfsImageUrl,
         directory: 'uploads',
         fileName: filename,
       });
+      
       await downloader.download();
+      console.log('downloaded successfully');
       const s3Result = await this.s3Service.uploadDocument(downloadPath, filename);
       existingNft.artworkType = metadata.getFileExtension() && metadata.getFileExtension().split('.').slice(-1)[0];
       existingNft.url = s3Result.url;
@@ -304,7 +335,11 @@ export class MoralisService {
   }
 
   private routeIpfsUrlToMoralisIpfs(url: string) {
-    return 'https://ipfs.moralis.io:2053/ipfs/' + url.split('ipfs://ipfs/').slice(-1)[0];
+    if (url.includes('ipfs://ipfs/')) {
+      return 'https://ipfs.moralis.io:2053/ipfs/' + url.split('ipfs://ipfs/').slice(-1)[0];
+    } else {
+      return 'https://ipfs.moralis.io:2053/ipfs/' + url.split('ipfs://').slice(-1)[0];
+    }
   }
 
   private async getTokenUriMetadata(tokenUri: string) {

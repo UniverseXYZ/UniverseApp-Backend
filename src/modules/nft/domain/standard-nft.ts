@@ -8,6 +8,7 @@ export class StandardNftMetadata {
   description?: string;
   private image?: string;
   image_url?: string;
+  image_large?: string;
   attributes?: StandardNftMetadataAttribute[];
 
   constructor(json: Record<string, any>) {
@@ -19,7 +20,7 @@ export class StandardNftMetadata {
   }
 
   public getImage() {
-    return this.image || this.image_url;
+    return this.image || this.image_url || this.image_large;
   }
 
   public isImageOnIPFS() {
