@@ -716,12 +716,3 @@ export class AddRewardTierBodyParams {
   @Type(() => CreateRewardTierBody)
   rewardTier: CreateRewardTierBody;
 }
-
-export class RemoveRewardTierParams {
-  @ApiProperty({
-    description: 'The id of the Tier which should be removed',
-    example: 1,
-  })
-  @IsInt()
-  tierId: number;
-}

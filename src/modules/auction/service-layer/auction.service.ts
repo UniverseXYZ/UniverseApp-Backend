@@ -17,7 +17,6 @@ import {
   ChangeAuctionStatus,
   WithdrawNftsBody,
   AddRewardTierBodyParams,
-  RemoveRewardTierParams,
 } from '../entrypoints/dto';
 import { Nft } from 'src/modules/nft/domain/nft.entity';
 import { AuctionNotFoundException } from './exceptions/AuctionNotFoundException';
@@ -173,18 +172,27 @@ export class AuctionService {
     return tier;
   }
 
-  async removeRewardTier(userId: number, params: RemoveRewardTierParams) {
-    const { tierId } = params;
-
-    const tier = await this.rewardTierRepository.findOne({ where: { userId: userId, id: tierId } });
+  async removeRewardTier(userId: number, id: string) {
+    const tier = await this.rewardTierRepository.findOne({ where: { userId: userId, id: parseInt(id, 10) } });
 
     if (!tier) {
       throw new RewardTierNotFoundException();
     }
 
+    const { auctionId } = tier;
+
+    const auction = await this.auctionRepository.findOne({ where: { id: auctionId } });
+
+    const { onChainId } = auction;
+
+    if (onChainId) {
+      // If the auction has already been created on smart contract level we cannot modify it
+      throw new AuctionCannotBeModifiedException();
+    }
+
     await getManager().transaction(async (transactionalEntityManager) => {
-      await transactionalEntityManager.delete(RewardTier, { id: tierId });
-      await transactionalEntityManager.delete(RewardTierNft, { rewardTierId: tierId });
+      await transactionalEntityManager.delete(RewardTier, { id });
+      await transactionalEntityManager.delete(RewardTierNft, { rewardTierId: id });
     });
 
     return tier;
@@ -401,8 +409,11 @@ export class AuctionService {
     const auction = await this.validateAuctionPermissions(userId, auctionId);
     //TODO: We need some kind of validation that this on chain id really exists
     const deployedAuction = await this.auctionRepository.update(auctionId, {
-      onChain: false,
-      onChainId: null,
+      // We must not change those properties, because the auction is already deployed on the smart contract and
+      // If we cancel an auction it cannot be undone. Please note if you edit this request, to handle delettion of reward tier reqeust checks
+      // onChain: false,
+      // onChainId: null,
+      canceled: true,
       txHash: '',
     });
 
