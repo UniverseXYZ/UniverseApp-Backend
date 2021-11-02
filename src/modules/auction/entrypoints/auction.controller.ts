@@ -292,6 +292,12 @@ export class AuctionController {
     return await this.auctionService.placeAuctionBid(req.user.sub, placeBidBody);
   }
 
+  @Delete('auction/{:id}/cancelBid')
+  @UseGuards(JwtAuthGuard)
+  async cancelAuctionBid(@Req() req, @Param('id') auctionId = 0) {
+    return await this.auctionService.cancelAuctionBid(req.user.sub, auctionId);
+  }
+
   @Get('pages/my-bids')
   @UseGuards(JwtAuthGuard)
   async getUserBids(@Req() req) {
