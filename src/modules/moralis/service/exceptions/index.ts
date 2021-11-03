@@ -23,3 +23,9 @@ export class TokenUriFormatNotSupportedError extends ServiceError {
     super(`Token URI format not supported ${tokenUri}`);
   }
 }
+
+export class ImageUriFormatNotSupportedError extends ServiceError {
+  constructor(metadata) {
+    super(`Image URI format not supported ${metadata}`);
+  }
+}

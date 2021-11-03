@@ -254,7 +254,7 @@ export class NftController {
     if (params.mintable === 'true') {
       return await this.nftService.getMyMintableCollections(req.user.sub);
     }
-    return await this.nftService.getMyOwnedCollections(req.user.sub);
+    return await this.nftService.getMyNftsCollections(req.user.sub);
   }
 
   @Delete('saved-nfts/:id')

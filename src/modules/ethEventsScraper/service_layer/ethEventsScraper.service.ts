@@ -175,6 +175,7 @@ export class EthEventsScraperService {
     nft.tokenId = event.token_id;
     nft.tokenUri = event.token_uri;
     nft.creator = event.receiver?.toLowerCase();
+    nft.owner = event.receiver?.toLowerCase();
   }
 
   private mapTokenUriToEvents(events: MintedNftEvent[]) {

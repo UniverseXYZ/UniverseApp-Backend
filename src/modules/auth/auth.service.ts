@@ -50,11 +50,12 @@ export class AuthService {
     const user = await this.usersService.findOne(address);
 
     if (!user.moralisWatched) {
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      await this.moralisService.addNewUserToWatchAddress(user.address).catch((error) => {
-        console.log(error);
-      });
-      await this.usersRepository.update({ id: user.id }, { moralisWatched: true });
+      try {
+        await this.moralisService.addNewUserToWatchAddress(user.address);
+        await this.usersRepository.update({ id: user.id }, { moralisWatched: true });
+      } catch (error) {
+        this.logger.error(error);
+      }
     }
     const payload = { address: user.address, sub: user.id };
 
