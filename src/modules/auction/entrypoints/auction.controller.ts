@@ -34,6 +34,7 @@ import {
   ChangeAuctionStatus,
   AddRewardTierBodyParams,
   GetAuctionsQuery,
+  ClaimAuctionFundsBody,
 } from './dto';
 import { AuctionService } from '../service-layer/auction.service';
 import { JwtAuthGuard, OptionalJwtAuthGuard } from '../../auth/jwt-auth.guard';
@@ -364,5 +365,11 @@ export class AuctionController {
   @UseGuards(JwtAuthGuard)
   async changeAuctionStatus(@Req() req, @Body() changeAuctionStatusBody: ChangeAuctionStatus) {
     return await this.auctionService.changeAuctionStatus(req.user.sub, changeAuctionStatusBody);
+  }
+
+  @Patch('auction/claimFunds')
+  @UseGuards(JwtAuthGuard)
+  async claimAuctionBid(@Req() req, claimAuctionFundsBody: ClaimAuctionFundsBody) {
+    return await this.auctionService.claimAuctionFunds(req.user.sub, claimAuctionFundsBody);
   }
 }

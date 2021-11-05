@@ -17,6 +17,7 @@ import {
   ChangeAuctionStatus,
   WithdrawNftsBody,
   AddRewardTierBodyParams,
+  ClaimAuctionFundsBody,
 } from '../entrypoints/dto';
 import { Nft } from 'src/modules/nft/domain/nft.entity';
 import { AuctionNotFoundException } from './exceptions/AuctionNotFoundException';
@@ -84,7 +85,10 @@ export class AuctionService {
     const rewardTierNftsMap = rewardTierNfts.reduce(
       (acc, rewardTierNft) => ({
         ...acc,
-        [rewardTierNft.rewardTierId]: [...(acc[rewardTierNft.rewardTierId] || []), idNftMap[rewardTierNft.nftId]],
+        [rewardTierNft.rewardTierId]: [
+          ...(acc[rewardTierNft.rewardTierId] || []),
+          { ...idNftMap[rewardTierNft.nftId], slot: rewardTierNft.slot },
+        ],
       }),
       {} as Record<string, Nft[]>,
     );
@@ -476,6 +480,7 @@ export class AuctionService {
   }
 
   async cancelFutureAuction(userId: number, auctionId: number) {
+    //TODO: Add validations
     const auction = await this.validateAuctionPermissions(userId, auctionId);
     let canceled = false;
     const now = new Date();
@@ -1127,5 +1132,14 @@ export class AuctionService {
     return {
       auction,
     };
+  }
+
+  public async claimAuctionFunds(userId: number, claimAuctionFundsBody: ClaimAuctionFundsBody) {
+    //TODO: This is a temporary endpoint until the scraper functionality is finished
+    const auction = await this.validateAuctionPermissions(userId, claimAuctionFundsBody.auctionId);
+    auction.claimedFunds += claimAuctionFundsBody.amount;
+    await this.auctionRepository.save(auction);
+
+    return { auction };
   }
 }

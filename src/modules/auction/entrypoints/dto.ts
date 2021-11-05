@@ -764,3 +764,19 @@ export class GetAuctionsQuery {
   })
   filters: [];
 }
+
+export class ClaimAuctionFundsBody {
+  @ApiProperty({
+    example: 1,
+    description: 'The id of the auction',
+  })
+  @IsInt()
+  auctionId: number;
+
+  @ApiProperty({
+    example: 1,
+    description: 'The amount of erc20 claimed',
+  })
+  @IsNumber()
+  amount: number;
+}
