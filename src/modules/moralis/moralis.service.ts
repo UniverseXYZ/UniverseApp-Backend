@@ -244,7 +244,6 @@ export class MoralisService {
 
   private async changeNftOwner(existingNft: Nft, token: MoralisNft) {
     existingNft.owner = token.owner_of.toLowerCase();
-    existingNft.userId = null;
     existingNft = await this.nftRepository.save(existingNft);
     return existingNft;
   }
