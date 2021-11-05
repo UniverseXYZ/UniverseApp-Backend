@@ -597,7 +597,7 @@ export class NftService {
     return this.reduceUserNftsByEdition(user.id, additionalData, prefetchData);
   }
 
-  public async getMyNftsAvailability(userId: number, start: number = 0, limit: number = 8, size: number = 0, auctionId: number = 0) {
+  public async getMyNftsAvailability(userId: number, start = 0, limit = 8, size = 0, auctionId = 0) {
     const editionsCount = parseInt(
       (
         await this.nftRepository.query(
