@@ -204,6 +204,15 @@ export class AuctionController {
     return await this.auctionService.createRewardTier(req.user.sub, addRewardTierBodyParams);
   }
 
+  @Delete('/reward-tiers/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiTags('auction')
+  @ApiOperation({ summary: 'Remove a Reward Tier from a specific Auction' })
+  @ApiResponse({ type: EditRewardTierResponse, status: 200 })
+  async removeRewardTier(@Req() req, @Param('id') id) {
+    return await this.auctionService.removeRewardTier(req.user.sub, id);
+  }
+
   @Patch('reward-tier-extra-data')
   @UseGuards(JwtAuthGuard)
   async updateRewardTierExtraData(@Req() req, @Body() updateRewardTierExtraBody: UpdateRewardTierExtraBody) {
@@ -290,6 +299,12 @@ export class AuctionController {
   @UseGuards(JwtAuthGuard)
   async placeAuctionBid(@Req() req, @Body() placeBidBody: PlaceBidBody) {
     return await this.auctionService.placeAuctionBid(req.user.sub, placeBidBody);
+  }
+
+  @Delete('auction/{:id}/cancelBid')
+  @UseGuards(JwtAuthGuard)
+  async cancelAuctionBid(@Req() req, @Param('id') auctionId = 0) {
+    return await this.auctionService.cancelAuctionBid(req.user.sub, auctionId);
   }
 
   @Get('pages/my-bids')
