@@ -91,4 +91,7 @@ export class Auction {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column({ default: 0 })
+  claimedFunds: number;
 }
