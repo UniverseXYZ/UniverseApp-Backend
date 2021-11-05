@@ -716,3 +716,45 @@ export class AddRewardTierBodyParams {
   @Type(() => CreateRewardTierBody)
   rewardTier: CreateRewardTierBody;
 }
+
+export class GetAuctionsQuery {
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    example: 8,
+    description: 'The number of returned auction items ',
+    type: 'number',
+    required: false,
+  })
+  limit: string;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    example: 0,
+    description: 'The number of auction items to be skipped',
+    type: 'number',
+    required: false,
+  })
+  offset: string;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    example: 1,
+    description: 'User id',
+    type: 'number',
+    required: false,
+  })
+  userId: string;
+
+  @IsArray()
+  @IsOptional()
+  @ApiProperty({
+    example: [],
+    description: 'The filters which the actions should be ordered by',
+    type: Array,
+    required: false,
+  })
+  filters: []
+}

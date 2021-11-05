@@ -33,6 +33,7 @@ import {
   DepositNftsBody,
   ChangeAuctionStatus,
   AddRewardTierBodyParams,
+  GetAuctionsQuery,
 } from './dto';
 import { AuctionService } from '../service-layer/auction.service';
 import { JwtAuthGuard, OptionalJwtAuthGuard } from '../../auth/jwt-auth.guard';
@@ -177,6 +178,53 @@ export class AuctionController {
       req.user.sub,
       parseInt(query.limit) || undefined,
       parseInt(query.offset) || undefined,
+    );
+  }
+
+  @Get('/pages/auctions/past')
+  @ApiTags('auction')
+  @ApiOperation({ summary: 'Get past auctions' })
+  @ApiResponse({ type: GetMyAuctionsResponse, status: 200 })
+  async getPastAuctions(@Query() query: GetAuctionsQuery) {
+
+
+    console.log([parseInt(query.userId),
+      parseInt(query.limit),
+      parseInt(query.offset),
+      query.filters,]);
+
+
+    return await this.auctionService.getPastAuctions(
+      parseInt(query.userId),
+      parseInt(query.limit) || undefined,
+      parseInt(query.offset) || undefined,
+      query.filters,
+    );
+  }
+
+  @Get('/pages/auctions/active')
+  @ApiTags('auction')
+  @ApiOperation({ summary: 'Get active auctions' })
+  @ApiResponse({ type: GetMyAuctionsResponse, status: 200 })
+  async getActiveAuctions(@Query() query: GetAuctionsQuery) {
+    return await this.auctionService.getActiveAuctions(
+      parseInt(query.userId),
+      parseInt(query.limit) || undefined,
+      parseInt(query.offset) || undefined,
+      query.filters,
+    );
+  }
+
+  @Get('/pages/auctions/future')
+  @ApiTags('auction')
+  @ApiOperation({ summary: 'Get future auctions' })
+  @ApiResponse({ type: GetMyAuctionsResponse, status: 200 })
+  async getFutureAuctions(@Query() query: GetAuctionsQuery) {
+    return await this.auctionService.getFutureAuctions(
+      parseInt(query.userId),
+      parseInt(query.limit) || undefined,
+      parseInt(query.offset) || undefined,
+      query.filters,
     );
   }
 
