@@ -281,6 +281,12 @@ export class EditAuctionBody {
   @IsNumber()
   @IsOptional()
   onChainId: number;
+
+  @IsString()
+  @IsOptional()
+  @Length(1, 255)
+  @ApiProperty({ description: 'The hash of the createAuction transaction', example: `0x0000000000` })
+  createAuctionTxHash: string;
 }
 
 export class DeployAuctionBody {
