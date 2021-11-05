@@ -627,15 +627,15 @@ export class AuctionService {
     const now = new Date().toISOString();
 
     const query = this.auctionRepository
-    .createQueryBuilder('auctions')
-    .where('auctions.endDate < :now', {now: now})
-    .orderBy('id', 'DESC')
-    .limit(limit)
-    .offset(offset);
+      .createQueryBuilder('auctions')
+      .where('auctions.endDate < :now', { now: now })
+      .orderBy('id', 'DESC')
+      .limit(limit)
+      .offset(offset);
 
     if (userId) {
       const user = await this.usersService.getById(userId, true);
-      query.andWhere('auctions.userId = :userId', {userId: user.id});
+      query.andWhere('auctions.userId = :userId', { userId: user.id });
     }
 
     if (filters) {
@@ -664,15 +664,15 @@ export class AuctionService {
     const now = new Date().toISOString();
 
     const query = this.auctionRepository
-    .createQueryBuilder('auctions')
-    .where('auctions.startDate < :now AND auctions.endDate > :now', {now: now})
-    .orderBy('id', 'DESC')
-    .limit(limit)
-    .offset(offset);
+      .createQueryBuilder('auctions')
+      .where('auctions.startDate < :now AND auctions.endDate > :now', { now: now })
+      .orderBy('id', 'DESC')
+      .limit(limit)
+      .offset(offset);
 
     if (userId) {
       const user = await this.usersService.getById(userId, true);
-      query.andWhere('auctions.userId = :userId', {userId: user.id});
+      query.andWhere('auctions.userId = :userId', { userId: user.id });
     }
 
     if (filters) {
@@ -701,15 +701,15 @@ export class AuctionService {
     const now = new Date().toISOString();
 
     const query = this.auctionRepository
-    .createQueryBuilder('auctions')
-    .where('auctions.startDate > :now', {now: now})
-    .orderBy('id', 'DESC')
-    .limit(limit)
-    .offset(offset);
+      .createQueryBuilder('auctions')
+      .where('auctions.startDate > :now', { now: now })
+      .orderBy('id', 'DESC')
+      .limit(limit)
+      .offset(offset);
 
     if (userId) {
       const user = await this.usersService.getById(userId, true);
-      query.andWhere('auctions.userId = :userId', {userId: user.id});
+      query.andWhere('auctions.userId = :userId', { userId: user.id });
     }
 
     if (filters) {
