@@ -84,7 +84,10 @@ export class AuctionService {
     const rewardTierNftsMap = rewardTierNfts.reduce(
       (acc, rewardTierNft) => ({
         ...acc,
-        [rewardTierNft.rewardTierId]: [...(acc[rewardTierNft.rewardTierId] || []), idNftMap[rewardTierNft.nftId]],
+        [rewardTierNft.rewardTierId]: [
+          ...(acc[rewardTierNft.rewardTierId] || []),
+          { ...idNftMap[rewardTierNft.nftId], slot: rewardTierNft.slot },
+        ],
       }),
       {} as Record<string, Nft[]>,
     );
@@ -620,6 +623,112 @@ export class AuctionService {
         limit,
       },
       auctions: auctionsWithBids,
+    };
+  }
+
+  async getPastAuctions(userId: number, limit = 8, offset = 0, filters = []) {
+    const now = new Date().toISOString();
+
+    const query = this.auctionRepository
+      .createQueryBuilder('auctions')
+      .where('auctions.endDate < :now', { now: now })
+      .orderBy('id', 'DESC')
+      .limit(limit)
+      .offset(offset);
+
+    if (userId) {
+      const user = await this.usersService.getById(userId, true);
+      query.andWhere('auctions.userId = :userId', { userId: user.id });
+    }
+
+    if (filters) {
+      //todo filters
+    }
+
+    const [auctions, count] = await query.getManyAndCount();
+    const auctionsWithTiers = await this.formatMyAuctions(auctions);
+
+    let auctionsWithBids = [];
+    if (auctionsWithTiers.length) {
+      auctionsWithBids = await this.attachBidsInfo(auctionsWithTiers);
+    }
+
+    return {
+      pagination: {
+        total: count,
+        offset,
+        limit,
+      },
+      auctions: auctionsWithBids,
+    };
+  }
+
+  async getActiveAuctions(userId: number, limit = 8, offset = 0, filters = []) {
+    const now = new Date().toISOString();
+
+    const query = this.auctionRepository
+      .createQueryBuilder('auctions')
+      .where('auctions.startDate < :now AND auctions.endDate > :now', { now: now })
+      .orderBy('id', 'DESC')
+      .limit(limit)
+      .offset(offset);
+
+    if (userId) {
+      const user = await this.usersService.getById(userId, true);
+      query.andWhere('auctions.userId = :userId', { userId: user.id });
+    }
+
+    if (filters) {
+      //todo filters
+    }
+
+    const [auctions, count] = await query.getManyAndCount();
+    const auctionsWithTiers = await this.formatMyAuctions(auctions);
+
+    let auctionsWithBids = [];
+    if (auctionsWithTiers.length) {
+      auctionsWithBids = await this.attachBidsInfo(auctionsWithTiers);
+    }
+
+    return {
+      pagination: {
+        total: count,
+        offset,
+        limit,
+      },
+      auctions: auctionsWithBids,
+    };
+  }
+
+  async getFutureAuctions(userId: number, limit = 8, offset = 0, filters = []) {
+    const now = new Date().toISOString();
+
+    const query = this.auctionRepository
+      .createQueryBuilder('auctions')
+      .where('auctions.startDate > :now', { now: now })
+      .orderBy('id', 'DESC')
+      .limit(limit)
+      .offset(offset);
+
+    if (userId) {
+      const user = await this.usersService.getById(userId, true);
+      query.andWhere('auctions.userId = :userId', { userId: user.id });
+    }
+
+    if (filters) {
+      //todo filters
+    }
+
+    const [auctions, count] = await query.getManyAndCount();
+    const auctionsWithTiers = await this.formatMyAuctions(auctions);
+
+    return {
+      pagination: {
+        total: count,
+        offset,
+        limit,
+      },
+      auctions: auctionsWithTiers,
     };
   }
 
