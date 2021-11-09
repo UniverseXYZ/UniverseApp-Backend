@@ -369,7 +369,7 @@ export class AuctionController {
 
   @Patch('auction/claimFunds')
   @UseGuards(JwtAuthGuard)
-  async claimAuctionBid(@Req() req, claimAuctionFundsBody: ClaimAuctionFundsBody) {
+  async claimAuctionBid(@Req() req, @Body() claimAuctionFundsBody: ClaimAuctionFundsBody) {
     return await this.auctionService.claimAuctionFunds(req.user.sub, claimAuctionFundsBody);
   }
 }

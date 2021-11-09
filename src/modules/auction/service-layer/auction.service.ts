@@ -1137,7 +1137,9 @@ export class AuctionService {
   public async claimAuctionFunds(userId: number, claimAuctionFundsBody: ClaimAuctionFundsBody) {
     //TODO: This is a temporary endpoint until the scraper functionality is finished
     const auction = await this.validateAuctionPermissions(userId, claimAuctionFundsBody.auctionId);
-    auction.claimedFunds += claimAuctionFundsBody.amount;
+    let claimedFunds = BigInt((+auction.claimedFunds || 0) * (10 * auction.tokenDecimals));
+    claimedFunds += BigInt(claimAuctionFundsBody.amount || 0);
+    auction.claimedFunds = claimedFunds.toString();
     await this.auctionRepository.save(auction);
 
     return { auction };
