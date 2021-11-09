@@ -496,7 +496,6 @@ export class GetNftParams {
   })
   tokenId: number;
 }
-
 export class GetMyNftsAvailabilityParams {
   @IsNumberString()
   @IsOptional()
