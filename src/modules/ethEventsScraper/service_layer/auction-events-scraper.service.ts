@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 import { AuctionCreatedEvent } from '../domain/create-auction-event';
 import { Auction } from '../../auction/domain/auction.entity';
+import { Erc721DepositedEvent } from '../domain/deposited-erc721-event';
 
 @Injectable()
 export class AuctionEventsScraperService {
@@ -14,6 +15,8 @@ export class AuctionEventsScraperService {
   constructor(
     @InjectRepository(AuctionCreatedEvent)
     private auctionCreatedEventRepository: Repository<AuctionCreatedEvent>,
+    @InjectRepository(Erc721DepositedEvent)
+    private erc721DepositedEventRepository: Repository<Erc721DepositedEvent>,
     private connection: Connection,
   ) {}
 
@@ -24,6 +27,7 @@ export class AuctionEventsScraperService {
       if (this.processing) return;
       this.processing = true;
       await this.syncAuctionCreatedEvents();
+      await this.syncErc721DepositedEvents();
       this.processing = false;
     } catch (e) {
       this.processing = false;
@@ -53,6 +57,34 @@ export class AuctionEventsScraperService {
           auction.owner = event.data?.auctionOwner?.toLowerCase();
           auction.onChainStartTime = event.data?.startTime && event.data?.startTime.toString();
           auction.onChainEndTime = event.data?.endTime && event.data?.endTime.toString();
+          await transactionalEntityManager.save(auction);
+
+          event.processed = true;
+          await transactionalEntityManager.save(event);
+        })
+        .catch((error) => {
+          this.logger.error(error);
+        });
+    }
+  }
+
+  private async syncErc721DepositedEvents() {
+    const events = await this.erc721DepositedEventRepository.find({ where: { processed: false } });
+    this.logger.log(`found ${events.length} Erc721Deposited events`);
+
+    for (const event of events) {
+      await this.connection
+        .transaction(async (transactionalEntityManager) => {
+          const auction = await transactionalEntityManager.findOne(Auction, {
+            where: { onChainId: event.data.auctionId },
+          });
+
+          if (!auction) {
+            this.logger.warn(`auction not found with auctionId ${event.data.auctionId}`);
+            return;
+          }
+
+          auction.depositedNfts = true;
           await transactionalEntityManager.save(auction);
 
           event.processed = true;
