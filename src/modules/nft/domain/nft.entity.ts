@@ -94,4 +94,7 @@ export class Nft {
 
   @Column({ default: 1 })
   amount: number;
+
+  @Column({ default: 'ERC721' })
+  standard: string;
 }
