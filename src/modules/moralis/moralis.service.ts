@@ -61,7 +61,6 @@ export class MoralisService {
 
     while (keepLooping) {
       const logs = await this.moralisLogRepository.find({
-        // where: { name: In([ImageUriFormatNotSupportedError.name, TokenUriFormatNotSupportedError.name]) },
         take,
         skip: skip,
       });
@@ -72,7 +71,7 @@ export class MoralisService {
           try {
             await this.processToken(log.token);
             idsToDelete.push(log.id);
-            if(idsToDelete.length > 100) {
+            if (idsToDelete.length > 100) {
               await this.moralisLogRepository.delete({ id: In(idsToDelete) });
               idsToDelete = [];
             }
@@ -121,6 +120,19 @@ export class MoralisService {
     Moralis.masterKey = this.config.values.moralis.masterKey;
     Moralis.initialize(this.config.values.moralis.applicationId);
     this.queue.initQueue(MORALIS_NEW_NFT_QUEUE, this.moralisNewNFTOwnerHandler, 1);
+
+    const token = {
+      amount: '1',
+      owner_of: '0x1d7f4ba2997d644d21195aada3f2f85f24330e6d',
+      token_id: '105429395741785673812204831456016304461809812224957458376883318882721652015105',
+      createdAt: '2021-10-29T13:52:09.359Z',
+      token_uri: 'https://api.opensea.io/api/v1/metadata/0x495f947276749Ce646f68AC8c248420045cb7b5e/0x{id}',
+      updatedAt: '2021-10-29T13:52:09.359Z',
+      block_number: 13475072,
+      contract_type: 'ERC1155',
+      token_address: '0x495f947176749ce646f68ac8c248420045cb7b5e',
+    };
+    this.addNewNFT(token);
   }
 
   addNewUserToWatchAddress = async (address: string) => {
@@ -184,8 +196,8 @@ export class MoralisService {
     }
   }
 
-  private getTokenUri (token: MoralisNft) {
-    if(token.token_uri.includes('0x{id}')) {
+  private getTokenUri(token: MoralisNft) {
+    if (token.token_uri.includes('0x{id}')) {
       return token.token_uri.replace('0x{id}', token.token_id); //Cyber Girls
     } else {
       return token.token_uri;
@@ -196,7 +208,7 @@ export class MoralisService {
     let existingNft = this.nftRepository.create();
     const user = await this.userRepository.findOne({ where: { address: token.owner_of.toLowerCase() } });
     existingNft.userId = user?.id;
-    if(token.contract_type === 'ERC1155') {
+    if (token.contract_type === 'ERC1155') {
       existingNft.amount = Number(token.amount);
     }
     existingNft.collectionId = existingCollection.id;
@@ -213,7 +225,7 @@ export class MoralisService {
     existingNft.standard = token.contract_type;
     existingNft.tokenUri = this.getTokenUri(token);
 
-    if(!!token.token_uri) {
+    if (!!token.token_uri) {
       const metadata = await this.getTokenUriMetadata(existingNft.tokenUri);
       existingNft.name = metadata.name;
       existingNft.description = metadata.description;
@@ -236,9 +248,9 @@ export class MoralisService {
         existingNft.thumbnail_url = s3Result.url;
         existingNft.original_url = metadata.getImage();
         await this.fileSystemService.removeFile(downloadPath);
-        
+
         existingNft.properties = metadata.getNormalizedAttributes();
-        
+
         existingNft = await this.nftRepository.save(existingNft);
         if (numberOfEditions > 1) {
           await this.nftRepository.update({ tokenUri: token.token_uri }, { numberOfEditions });
@@ -281,8 +293,6 @@ export class MoralisService {
       } else {
         throw new ImageUriFormatNotSupportedError(metadata);
       }
-    } else {  // token uri is empty
-
     }
 
     return existingNft;
@@ -302,7 +312,7 @@ export class MoralisService {
       existingCollection = this.nftCollectionRepository.create();
       existingCollection.source = CollectionSource.SCRAPER;
       existingCollection.address = token.token_address.toLowerCase();
-      existingCollection.name = token.name ? token.name: '';
+      existingCollection.name = token.name ? token.name : '';
       existingCollection.symbol = token.symbol;
       existingCollection.publicCollection = false;
       existingCollection = await this.nftCollectionRepository.save(existingCollection);

@@ -9,7 +9,7 @@ export class StandardNftMetadata {
   private image?: string;
   image_url?: string;
   image_large?: string;
-  attributes?: StandardNftMetadataAttribute[] | Object ;
+  attributes?: StandardNftMetadataAttribute[] | Record<string, unknown>;
 
   constructor(json: Record<string, any>) {
     this.name = json?.name;
@@ -31,7 +31,7 @@ export class StandardNftMetadata {
     const components = this.getImage()?.split('.');
     if (Array.isArray(components) && components.length >= 3) {
       const extension = components[components.length - 1];
-      if (extension.length <= 7) return `.${extension}`; 
+      if (extension.length <= 7) return `.${extension}`;
     }
     return '';
   }
@@ -44,18 +44,18 @@ export class StandardNftMetadata {
     return !!this.getImage()?.startsWith('data:image/');
   }
 
-  public getNormalizedAttributes () {
-    if(this.attributes) {
-    if(Array.isArray(this.attributes)) {
-      return this.attributes.map((attrObj) => ({
-        [attrObj.trait_type]: attrObj.value,
-      }));
-    } else {
+  public getNormalizedAttributes() {
+    if (this.attributes) {
+      if (Array.isArray(this.attributes)) {
+        return this.attributes.map((attrObj) => ({
+          [attrObj.trait_type]: attrObj.value,
+        }));
+      } else {
         return Object.keys(this.attributes).map((key) => ({
-          key: this.attributes[key]
+          key: this.attributes[key],
         }));
       }
-    } 
+    }
     return undefined;
   }
 }
