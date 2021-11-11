@@ -23,7 +23,7 @@ export class MoralisController {
     if (start >= end) {
       console.log(`Start date must be earlier than end date`);
     }
-    console.log(`Fetch moralis NFTs that are created from ${new Date(start)} to ${new Date(end)}`);
+    console.log(`Fetch moralis NFTs that are created from ${new Date(Number(start))} to ${new Date(end)}`);
     this.moralisService.getHistory(start, end);
   }
 }
