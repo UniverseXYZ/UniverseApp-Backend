@@ -165,8 +165,6 @@ export class MoralisService {
 
   private async processToken(token: MoralisNft) {
     this.nftValidator.checkNftHasAllAttributes(token);
-    await this.checkNftIsNotUniverseContract(token.token_address);
-    await this.checkNftIsNotCoreUniverseContract(token.token_address);
 
     const existingCollection = await this.findOrCreateCollection(token);
     let existingNft = await this.nftRepository.findOne({
@@ -179,6 +177,9 @@ export class MoralisService {
         existingNft = await this.changeNftOwner(existingNft, token);
       }
     } else {
+      // create only non-Universe NFTs
+      await this.checkNftIsNotUniverseContract(token.token_address);
+      await this.checkNftIsNotCoreUniverseContract(token.token_address);
       existingNft = await this.createNewNft(token, existingCollection);
     }
   }

@@ -12,6 +12,9 @@ export class Auction {
   @Exclude()
   userId: number;
 
+  @Column({ nullable: true })
+  owner: string;
+
   @Column()
   name: string;
 
@@ -72,6 +75,16 @@ export class Auction {
   @Column({ nullable: true })
   @Exclude()
   txHash: string;
+
+  @Column({ nullable: true })
+  @Exclude()
+  createAuctionTxHash: string;
+
+  @Column({ type: 'bigint', nullable: true })
+  onChainStartTime: string;
+
+  @Column({ type: 'bigint', nullable: true })
+  onChainEndTime: string;
 
   @CreateDateColumn()
   createdAt: Date;
