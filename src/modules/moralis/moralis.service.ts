@@ -185,6 +185,8 @@ export class MoralisService {
   private getTokenUri(token: MoralisNft) {
     if (token.token_uri.includes('0x{id}')) {
       return token.token_uri.replace('0x{id}', token.token_id); //Cyber Girls
+    } else if (token.token_uri.includes('{id}')) {
+      return token.token_uri.replace('{id}', token.token_id); //Fluf erc-1155
     } else {
       return token.token_uri;
     }
