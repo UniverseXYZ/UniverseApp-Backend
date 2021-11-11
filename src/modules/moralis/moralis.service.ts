@@ -120,19 +120,6 @@ export class MoralisService {
     Moralis.masterKey = this.config.values.moralis.masterKey;
     Moralis.initialize(this.config.values.moralis.applicationId);
     this.queue.initQueue(MORALIS_NEW_NFT_QUEUE, this.moralisNewNFTOwnerHandler, 1);
-
-    const token = {
-      amount: '1',
-      owner_of: '0x1d7f4ba2997d644d21195aada3f2f85f24330e6d',
-      token_id: '105429395741785673812204831456016304461809812224957458376883318882721652015105',
-      createdAt: '2021-10-29T13:52:09.359Z',
-      token_uri: 'https://api.opensea.io/api/v1/metadata/0x495f947276749Ce646f68AC8c248420045cb7b5e/0x{id}',
-      updatedAt: '2021-10-29T13:52:09.359Z',
-      block_number: 13475072,
-      contract_type: 'ERC1155',
-      token_address: '0x495f947176749ce646f68ac8c248420045cb7b5e',
-    };
-    this.addNewNFT(token);
   }
 
   addNewUserToWatchAddress = async (address: string) => {
