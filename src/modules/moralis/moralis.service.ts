@@ -212,9 +212,7 @@ export class MoralisService {
     existingNft.tokenUri = this.getTokenUri(token);
 
     if(!!token.token_uri) {
-      console.log("oh yess");
       const metadata = await this.getTokenUriMetadata(existingNft.tokenUri);
-      console.log({metadata});
       existingNft.name = metadata.name;
       existingNft.description = metadata.description;
 
