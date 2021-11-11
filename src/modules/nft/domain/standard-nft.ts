@@ -9,7 +9,7 @@ export class StandardNftMetadata {
   private image?: string;
   image_url?: string;
   image_large?: string;
-  attributes?: StandardNftMetadataAttribute[];
+  attributes?: StandardNftMetadataAttribute[] | Object ;
 
   constructor(json: Record<string, any>) {
     this.name = json?.name;
@@ -42,6 +42,21 @@ export class StandardNftMetadata {
 
   public isImageBase64Image() {
     return !!this.getImage()?.startsWith('data:image/');
+  }
+
+  public getNormalizedAttributes () {
+    if(this.attributes) {
+    if(Array.isArray(this.attributes)) {
+      return this.attributes.map((attrObj) => ({
+        [attrObj.trait_type]: attrObj.value,
+      }));
+    } else {
+        return Object.keys(this.attributes).map((key) => ({
+          key: this.attributes[key]
+        }));
+      }
+    } 
+    return undefined;
   }
 }
 
