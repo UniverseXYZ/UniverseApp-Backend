@@ -209,6 +209,7 @@ export class MoralisService {
 
     existingNft.owner = token.owner_of.toLowerCase();
     existingNft.tokenId = token.token_id;
+    existingNft.standard = token.contract_type;
     existingNft.tokenUri = this.getTokenUri(token);
 
     if(!!token.token_uri) {
