@@ -1,4 +1,4 @@
-import { Connection, Repository } from 'typeorm';
+import { Connection, EntityManager, In, Repository } from 'typeorm';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -6,6 +6,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AuctionCreatedEvent } from '../domain/create-auction-event';
 import { Auction } from '../../auction/domain/auction.entity';
 import { Erc721DepositedEvent } from '../domain/deposited-erc721-event';
+import { Nft } from 'src/modules/nft/domain/nft.entity';
+import { NftCollection } from 'src/modules/nft/domain/collection.entity';
+import { RewardTierNft } from 'src/modules/auction/domain/reward-tier-nft.entity';
+import { RewardTier } from 'src/modules/auction/domain/reward-tier.entity';
+import { MarkRewardTierNftAsDepositedException } from './exceptions';
 
 @Injectable()
 export class AuctionEventsScraperService {
@@ -87,6 +92,8 @@ export class AuctionEventsScraperService {
           auction.depositedNfts = true;
           await transactionalEntityManager.save(auction);
 
+          await this.markRewardTierNftAsDeposited(transactionalEntityManager, event);
+
           event.processed = true;
           await transactionalEntityManager.save(event);
         })
@@ -94,5 +101,33 @@ export class AuctionEventsScraperService {
           this.logger.error(error);
         });
     }
+  }
+
+  private async markRewardTierNftAsDeposited(transactionalEntityManager: EntityManager, event: Erc721DepositedEvent) {
+    const collection = await transactionalEntityManager.findOne(NftCollection, {
+      where: { address: event.data?.tokenAddress?.toLowerCase() },
+    });
+
+    if (!collection) throw new MarkRewardTierNftAsDepositedException('Collection not found');
+
+    const nft = await transactionalEntityManager.findOne(Nft, {
+      where: { collectionId: collection.id, tokenId: event.data?.tokenId },
+    });
+    if (!nft) throw new MarkRewardTierNftAsDepositedException('Nft not found');
+
+    const rewardTiers = await transactionalEntityManager.find(RewardTier, {
+      where: { auctionId: event.data?.auctionId },
+    });
+    if (rewardTiers.length === 0) throw new MarkRewardTierNftAsDepositedException('Reward Tiers not found');
+
+    await transactionalEntityManager.update(
+      RewardTierNft,
+      {
+        rewardTierId: In(rewardTiers.map((rewardTier) => rewardTier.id)),
+        nftId: nft.id,
+        slot: event.data?.slotIndex,
+      },
+      { deposited: true },
+    );
   }
 }
