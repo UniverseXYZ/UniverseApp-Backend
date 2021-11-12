@@ -137,6 +137,11 @@ export class MoralisService {
         newMoralisLog.name = error.name;
         newMoralisLog.token = token;
         await this.moralisLogRepository.save(newMoralisLog);
+      } else {
+        const newMoralisLog = this.moralisLogRepository.create();
+        newMoralisLog.name = 'Unknown';
+        newMoralisLog.token = token;
+        await this.moralisLogRepository.save(newMoralisLog);
       }
       console.log(error);
     }
