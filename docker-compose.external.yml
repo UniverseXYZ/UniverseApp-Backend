@@ -9,7 +9,7 @@ services:
         "--bind",
         "redis",
         "--port",
-        "6379"
+        "${REDIS_PORT}"
     ]
     volumes:
       - reddata:/var/lib/redis
