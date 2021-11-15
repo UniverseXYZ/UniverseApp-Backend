@@ -53,14 +53,6 @@ export class AuctionController {
     return await this.auctionService.createAuction(req.user.sub, createAuctionBody);
   }
 
-  @Patch('/auctions/:id/saveTxHash')
-  @ApiTags('auction')
-  @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Set tx hash on the auction' })
-  async addTxHash(@Req() req, @Param('id') auctionId: number, @Body() txHashBody: TxHashBody) {
-    return await this.auctionService.appendTxHash(req.user.sub, auctionId, txHashBody);
-  }
-
   @Post('/auctions/cancel/:auctionId')
   @ApiTags('auction')
   @UseGuards(JwtAuthGuard)
