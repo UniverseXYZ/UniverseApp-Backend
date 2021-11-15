@@ -28,7 +28,7 @@ import {
   UpdateRewardTierExtraBody,
   UpdateRewardTierParams,
   UploaductionLandingImagesParams,
-  DeployAuctionBody,
+  TxHashBody,
   WithdrawNftsBody,
   DepositNftsBody,
   ChangeAuctionStatus,
@@ -53,12 +53,12 @@ export class AuctionController {
     return await this.auctionService.createAuction(req.user.sub, createAuctionBody);
   }
 
-  @Post('/auctions/deploy')
+  @Patch('/auctions/:id/saveTxHash')
   @ApiTags('auction')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Set on chain properies of auction' })
-  async deployAuction(@Req() req, @Body() deployAuctionBody: DeployAuctionBody) {
-    return await this.auctionService.deployAuction(req.user.sub, deployAuctionBody);
+  @ApiOperation({ summary: 'Set tx hash on the auction' })
+  async addTxHash(@Req() req, @Param('id') auctionId: number, @Body() txHashBody: TxHashBody) {
+    return await this.auctionService.appendTxHash(req.user.sub, auctionId, txHashBody);
   }
 
   @Post('/auctions/cancel/:auctionId')

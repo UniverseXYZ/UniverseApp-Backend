@@ -12,6 +12,7 @@ import { RewardTierNft } from 'src/modules/auction/domain/reward-tier-nft.entity
 import { RewardTier } from 'src/modules/auction/domain/reward-tier.entity';
 import { MarkRewardTierNftAsDepositedException } from './exceptions';
 import { AuctionCanceledEvent } from '../domain/auction-canceled-event';
+import { AuctionGateway } from 'src/modules/auction/service-layer/auction.gateway';
 
 @Injectable()
 export class AuctionEventsScraperService {
@@ -26,6 +27,7 @@ export class AuctionEventsScraperService {
     @InjectRepository(AuctionCanceledEvent)
     private auctionCanceledEventRepository: Repository<AuctionCanceledEvent>,
     private connection: Connection,
+    private auctionGateway: AuctionGateway,
   ) {}
 
   @Cron('*/9 * * * * *')
@@ -71,6 +73,7 @@ export class AuctionEventsScraperService {
 
           event.processed = true;
           await transactionalEntityManager.save(event);
+          this.auctionGateway.notifyAuctionCreated(auction.id, auction.onChainId);
         })
         .catch((error) => {
           this.logger.error(error);
