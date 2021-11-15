@@ -9,7 +9,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AuctionStatus } from '../domain/types';
 import {
   CreateAuctionBody,
-  DeployAuctionBody,
   EditAuctionBody,
   UpdateRewardTierBody,
   DepositNftsBody,
@@ -474,17 +473,6 @@ export class AuctionService {
 
     return {
       id: auction.id,
-    };
-  }
-
-  public async appendTxHash(userId: number, auctionId: number, deployBody: DeployAuctionBody) {
-    const auction = await this.validateAuctionPermissions(userId, auctionId);
-    const updatedAuction = await this.auctionRepository.update(auction.id, {
-      createAuctionTxHash: deployBody.txHash,
-    });
-
-    return {
-      auction: classToPlain(updatedAuction),
     };
   }
 
