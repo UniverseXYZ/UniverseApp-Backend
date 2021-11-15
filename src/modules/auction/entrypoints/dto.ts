@@ -290,15 +290,6 @@ export class EditAuctionBody {
   createAuctionTxHash: string;
 }
 
-export class TxHashBody {
-  @ApiProperty({
-    description: `The tx hash of the create auction contract call`,
-    example: '0xb4bc263278d3ф82a652a8d73a6bfd8ec0ba1a63923bbb4f38147fb8a943da26d',
-  })
-  @IsString()
-  txHash: string;
-}
-
 export class DepositNftsBody {
   @ApiProperty({
     description: `The auction's id from the back end`,
