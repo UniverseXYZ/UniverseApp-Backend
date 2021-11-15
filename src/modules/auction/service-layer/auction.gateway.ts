@@ -16,7 +16,7 @@ export class AuctionGateway implements OnGatewayInit, OnGatewayConnection, OnGat
   server: Server;
   private logger: Logger = new Logger('MessageGateway');
   afterInit() {
-    console.log('Gateway is up and running');
+    console.log('Auctions WS Gateway is up and running');
   }
 
   public handleDisconnect(client: Socket): void {
@@ -33,5 +33,12 @@ export class AuctionGateway implements OnGatewayInit, OnGatewayConnection, OnGat
 
   public notifyAuctionCreated(auctionId: number, onChainId: number) {
     this.server.emit(`auction_${auctionId}_created`, { onChainId: onChainId });
+  }
+
+  public notifyAuctionCanceled(auctionId: number) {
+    this.server.emit(`auction_${auctionId}_canceled`);
+  }
+  public notifyAuctionDepositedNfts(auctionId: number) {
+    this.server.emit(`auction_${auctionId}_depositedNfts`);
   }
 }
