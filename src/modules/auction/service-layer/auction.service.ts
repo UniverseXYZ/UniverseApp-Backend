@@ -601,13 +601,21 @@ export class AuctionService {
 
   private async getMyFutureAuctions(userId: number, limit: number, offset: number) {
     const now = new Date().toISOString();
-    const [auctions, count] = await this.auctionRepository.findAndCount({
-      where: {
-        userId,
-      },
-      skip: offset,
-      take: limit,
-    });
+    const [auctions, count] = await this.auctionRepository
+      .createQueryBuilder('auction')
+      .where('auction.userId = :userId AND auction.startDate > :now', { now: now, userId: userId })
+      .orWhere('auction.userId = :userId AND auction.startDate < :now AND auction.onChain = FALSE', {
+        now: now,
+        userId: userId,
+      })
+      .orWhere(
+        'auction.userId = :userId AND auction.startDate < :now AND auction.onChain = TRUE AND auction.canceled = TRUE',
+        { now: now, userId: userId },
+      )
+      .orderBy('id', 'DESC')
+      .limit(limit)
+      .offset(offset)
+      .getManyAndCount();
 
     return { auctions, count };
   }
@@ -619,9 +627,12 @@ export class AuctionService {
         userId,
         startDate: LessThan(now),
         endDate: MoreThan(now),
+        onChain: true,
+        canceled: false,
       },
       skip: offset,
       take: limit,
+      order: { id: 'DESC' },
     });
 
     return { auctions, count };
@@ -633,9 +644,12 @@ export class AuctionService {
       where: {
         userId,
         endDate: LessThan(now),
+        onChain: true,
+        canceled: false,
       },
       skip: offset,
       take: limit,
+      order: { id: 'DESC' },
     });
 
     return { auctions, count };
@@ -1162,7 +1176,11 @@ export class AuctionService {
 
   public async cancelAuctionBid(userId: number, auctionId: number) {
     //TODO: This is a temporary endpoint until the scraper functionality is finished
-    await this.validateAuctionPermissions(userId, auctionId);
+    const auction = await this.auctionRepository.findOne({ where: { id: auctionId } });
+
+    if (!auction) {
+      throw new AuctionNotFoundException();
+    }
 
     const bid = await this.auctionBidRepository.findOne({
       where: { userId, auctionId: auctionId },
