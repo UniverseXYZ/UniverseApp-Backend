@@ -48,7 +48,7 @@ export class Nft {
   description?: string;
 
   @Column({ nullable: true })
-  tokenId: number;
+  tokenId: string;
 
   @Column({ nullable: true })
   artworkType?: string;
@@ -91,4 +91,10 @@ export class Nft {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column({ default: 1 })
+  amount: number;
+
+  @Column({ default: 'ERC721' })
+  standard: string;
 }
