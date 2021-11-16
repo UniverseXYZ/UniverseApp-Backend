@@ -20,6 +20,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export class NftSlots {
   nftIds: number[];
   slot: number;
+  minimumBid: number;
 }
 
 class RewardTierBodyParams {
@@ -91,9 +92,9 @@ export class UpdateRewardTierBody {
   @ApiProperty({
     description: 'The nft slot configuration',
     example: [
-      { nftIds: [1, 4], slot: 1 },
-      { nftIds: [2, 5], slot: 2 },
-      { nftIds: [3, 6], slot: 3 },
+      { nftIds: [1, 4], slot: 1, minimumBid: 0.1 },
+      { nftIds: [2, 5], slot: 2, minimumBid: 0.2 },
+      { nftIds: [3, 6], slot: 3, minimumBid: 0.3 },
     ],
   })
   @IsArray()
@@ -289,29 +290,6 @@ export class EditAuctionBody {
   createAuctionTxHash: string;
 }
 
-export class DeployAuctionBody {
-  @ApiProperty({
-    description: `The auction's id from the back end`,
-    example: 1,
-  })
-  @IsNumber()
-  auctionId: number;
-
-  @ApiProperty({
-    description: `The auction's id from the smart contract`,
-    example: 1,
-  })
-  @IsNumber()
-  onChainId: number;
-
-  @ApiProperty({
-    description: `The tx hash of the create auction contract call`,
-    example: '0xb4bc263278d3ф82a652a8d73a6bfd8ec0ba1a63923bbb4f38147fb8a943da26d',
-  })
-  @IsString()
-  txHash: string;
-}
-
 export class DepositNftsBody {
   @ApiProperty({
     description: `The auction's id from the back end`,
@@ -380,9 +358,9 @@ export class CreateRewardTierBody {
   @ApiProperty({
     description: 'The nft slot configuration',
     example: [
-      { nftIds: [1, 4], slot: 1 },
-      { nftIds: [2, 5], slot: 2 },
-      { nftIds: [3, 6], slot: 3 },
+      { nftIds: [1, 4], slot: 1, minimumBid: 0.1 },
+      { nftIds: [2, 5], slot: 2, minimumBid: 0.2 },
+      { nftIds: [3, 6], slot: 3, minimumBid: 0.3 },
     ],
   })
   @IsArray()

@@ -9,7 +9,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AuctionStatus } from '../domain/types';
 import {
   CreateAuctionBody,
-  DeployAuctionBody,
   EditAuctionBody,
   UpdateRewardTierBody,
   DepositNftsBody,
@@ -17,11 +16,14 @@ import {
   ChangeAuctionStatus,
   WithdrawNftsBody,
   AddRewardTierBodyParams,
+  NftSlots,
 } from '../entrypoints/dto';
 import { Nft } from 'src/modules/nft/domain/nft.entity';
 import { AuctionNotFoundException } from './exceptions/AuctionNotFoundException';
 import { AuctionBadOwnerException } from './exceptions/AuctionBadOwnerException';
 import { AuctionCannotBeModifiedException } from './exceptions/AuctionCannotBeModifiedException';
+import { RewardTierSlotsMinimumBidException } from './exceptions/RewardTierSlotsMinimumBidException';
+import { RewardTierSlotsOrderException } from './exceptions/RewardTierSlotsOrderException';
 import { RewardTierNFTUsedInOtherTierException } from './exceptions/RewardTierNFTUsedInOtherTierException';
 import { FileSystemService } from '../../file-system/file-system.service';
 import { RewardTierNotFoundException } from './exceptions/RewardTierNotFoundException';
@@ -56,6 +58,56 @@ export class AuctionService {
     private gateway: AuctionGateway,
     private readonly config: AppConfig,
   ) {}
+
+  private validateSlotsMinimumBid(slots: NftSlots[]): void {
+    const sorted = [...slots].sort((a, b) => a.slot - b.slot);
+
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const current = sorted[i];
+      const next = sorted[i + 1];
+      if (current.minimumBid < next.minimumBid) {
+        throw new RewardTierSlotsMinimumBidException();
+      }
+    }
+  }
+
+  private validateSlotIndexOrder(slots: NftSlots[]): void {
+    const slotIndexes = [];
+    slots.forEach((slot) => slotIndexes.push(slot.slot));
+
+    for (let i = 0; i < slotIndexes.length - 1; i++) {
+      const current = slotIndexes[i];
+      const next = slotIndexes[i + 1];
+      if (current >= next) {
+        throw new RewardTierSlotsOrderException();
+      }
+    }
+  }
+
+  private async validateSlotsNFTsNotUsed(slots: NftSlots[]) {
+    const nftIDs = [];
+    slots.forEach((slot) => nftIDs.push(...slot.nftIds));
+    const nfts = await this.rewardTierNftRepository.find({ where: { nftId: In(nftIDs) } });
+    if (nfts.length) {
+      throw new RewardTierNFTUsedInOtherTierException();
+    }
+  }
+
+  private validateSlotsBasedOnPrevTier(slots: NftSlots[], prevTier: RewardTier) {
+    const prevTierLastSlot = prevTier.slots[prevTier.slots.length - 1];
+    const newTierSorted = slots.sort((a, b) => a.slot - b.slot);
+    const newTierFirstSlot = newTierSorted[0];
+    const wrongSlotOrder = newTierFirstSlot.slot !== prevTierLastSlot.index + 1;
+    const wrongMinBid = newTierFirstSlot.minimumBid > prevTierLastSlot.minimumBid;
+
+    if (wrongSlotOrder) {
+      throw new RewardTierSlotsOrderException();
+    }
+
+    if (wrongMinBid) {
+      throw new RewardTierSlotsMinimumBidException();
+    }
+  }
 
   async getAuctionPage(username: string, auctionName: string) {
     const artist = await this.usersService.getByUsername(username);
@@ -124,7 +176,7 @@ export class AuctionService {
   async createRewardTier(userId: number, params: AddRewardTierBodyParams) {
     const {
       auctionId,
-      rewardTier: { name, numberOfWinners, nftsPerWinner, minimumBid, nftSlots },
+      rewardTier: { name, numberOfWinners, nftsPerWinner, nftSlots },
     } = params;
 
     const auction = await this.auctionRepository.findOne({ where: { id: auctionId } });
@@ -146,14 +198,25 @@ export class AuctionService {
 
     const currentTiers = await this.rewardTierRepository.findAndCount({ where: { auctionId } });
     const nextTierIndex = currentTiers[1];
+    const prevTier = currentTiers[0][nextTierIndex - 1];
+    if (prevTier) {
+      this.validateSlotsBasedOnPrevTier(nftSlots, prevTier);
+    }
 
     const tier = this.rewardTierRepository.create();
+
+    await this.validateSlotsNFTsNotUsed(nftSlots);
+    this.validateSlotIndexOrder(nftSlots);
+    this.validateSlotsMinimumBid(nftSlots);
+
+    const slots = nftSlots.map((data) => ({ index: data.slot, minimumBid: data.minimumBid }));
+    tier.slots = slots;
     tier.auctionId = auction.id;
     tier.userId = userId;
     tier.name = name;
     tier.numberOfWinners = numberOfWinners;
     tier.nftsPerWinner = nftsPerWinner;
-    tier.minimumBid = minimumBid;
+
     tier.tierPosition = nextTierIndex;
     await this.rewardTierRepository.save(tier);
 
@@ -193,6 +256,7 @@ export class AuctionService {
       throw new AuctionCannotBeModifiedException();
     }
 
+    // TODO:: We should update the tierPosition property of the other tiers in this auction
     await getManager().transaction(async (transactionalEntityManager) => {
       await transactionalEntityManager.delete(RewardTier, { id });
       await transactionalEntityManager.delete(RewardTierNft, { rewardTierId: id });
@@ -222,8 +286,18 @@ export class AuctionService {
         tier.description = params.description;
       }
 
-      if (typeof params.minimumBid === 'number' || params.minimumBid === null) {
-        tier.minimumBid = params.minimumBid;
+      if (params.nftSlots) {
+        const auctionId = tier.auctionId;
+        const currentTiers = await this.rewardTierRepository.findAndCount({ where: { auctionId } });
+        const prevTier = currentTiers[0].find((t) => t.id === tier.id - 1);
+        if (prevTier) {
+          this.validateSlotsBasedOnPrevTier(params.nftSlots, prevTier);
+        }
+        await this.validateSlotsNFTsNotUsed(params.nftSlots);
+        this.validateSlotIndexOrder(params.nftSlots);
+        this.validateSlotsMinimumBid(params.nftSlots);
+        const slots = params.nftSlots.map((data) => ({ index: data.slot, minimumBid: data.minimumBid }));
+        tier.slots = slots;
       }
 
       if (typeof params.color === 'string' || params.color === null) {
@@ -365,6 +439,15 @@ export class AuctionService {
     });
     auction = await auctionRepository.save(auction);
 
+    let slotsData: NftSlots[];
+    createAuctionBody.rewardTiers.forEach((tier) => {
+      tier.nftSlots.forEach((slot) => slotsData.push(slot));
+    });
+    await this.validateSlotsNFTsNotUsed(slotsData);
+    this.validateSlotIndexOrder(slotsData);
+    this.validateSlotsMinimumBid(slotsData);
+
+    // Validate minimumBids are not higher than the previous slot
     for (const [index, rewardTierBody] of createAuctionBody.rewardTiers.entries()) {
       const rewardTier = rewardTierRepository.create();
       rewardTier.auctionId = auction.id;
@@ -372,7 +455,8 @@ export class AuctionService {
       rewardTier.name = rewardTierBody.name;
       rewardTier.numberOfWinners = rewardTierBody.numberOfWinners;
       rewardTier.nftsPerWinner = rewardTierBody.nftsPerWinner;
-      rewardTier.minimumBid = rewardTierBody.minimumBid;
+      const slots = rewardTierBody.nftSlots.map((data) => ({ index: data.slot, minimumBid: data.minimumBid }));
+      rewardTier.slots = slots;
       rewardTier.tierPosition = index;
       await rewardTierRepository.save(rewardTier);
 
@@ -389,21 +473,6 @@ export class AuctionService {
 
     return {
       id: auction.id,
-    };
-  }
-
-  public async deployAuction(userId: number, deployBody: DeployAuctionBody) {
-    // TODO: This is a temporary endpoint to create auction. In the future the scraper should fill in these fields
-    const auction = await this.validateAuctionPermissions(userId, deployBody.auctionId);
-    //TODO: We need some kind of validation that this on chain id really exists
-    const deployedAuction = await this.auctionRepository.update(auction.id, {
-      onChain: true,
-      onChainId: deployBody.onChainId,
-      txHash: deployBody.txHash,
-    });
-
-    return {
-      auction: classToPlain(deployedAuction),
     };
   }
 
@@ -532,13 +601,21 @@ export class AuctionService {
 
   private async getMyFutureAuctions(userId: number, limit: number, offset: number) {
     const now = new Date().toISOString();
-    const [auctions, count] = await this.auctionRepository.findAndCount({
-      where: {
-        userId,
-      },
-      skip: offset,
-      take: limit,
-    });
+    const [auctions, count] = await this.auctionRepository
+      .createQueryBuilder('auction')
+      .where('auction.userId = :userId AND auction.startDate > :now', { now: now, userId: userId })
+      .orWhere('auction.userId = :userId AND auction.startDate < :now AND auction.onChain = FALSE', {
+        now: now,
+        userId: userId,
+      })
+      .orWhere(
+        'auction.userId = :userId AND auction.startDate < :now AND auction.onChain = TRUE AND auction.canceled = TRUE',
+        { now: now, userId: userId },
+      )
+      .orderBy('id', 'DESC')
+      .limit(limit)
+      .offset(offset)
+      .getManyAndCount();
 
     return { auctions, count };
   }
@@ -550,9 +627,12 @@ export class AuctionService {
         userId,
         startDate: LessThan(now),
         endDate: MoreThan(now),
+        onChain: true,
+        canceled: false,
       },
       skip: offset,
       take: limit,
+      order: { id: 'DESC' },
     });
 
     return { auctions, count };
@@ -564,9 +644,12 @@ export class AuctionService {
       where: {
         userId,
         endDate: LessThan(now),
+        onChain: true,
+        canceled: false,
       },
       skip: offset,
       take: limit,
+      order: { id: 'DESC' },
     });
 
     return { auctions, count };
@@ -1093,7 +1176,11 @@ export class AuctionService {
 
   public async cancelAuctionBid(userId: number, auctionId: number) {
     //TODO: This is a temporary endpoint until the scraper functionality is finished
-    await this.validateAuctionPermissions(userId, auctionId);
+    const auction = await this.auctionRepository.findOne({ where: { id: auctionId } });
+
+    if (!auction) {
+      throw new AuctionNotFoundException();
+    }
 
     const bid = await this.auctionBidRepository.findOne({
       where: { userId, auctionId: auctionId },
@@ -1124,8 +1211,12 @@ export class AuctionService {
     });
 
     auction = await this.auctionRepository.save(auction);
+    const eventStatuses = [];
+    changeAuctionStatusBody.statuses.forEach((status) => {
+      eventStatuses.push({ status: status.name, value: status.value });
+    });
 
-    // this.gateway.notifyAuctionStatus(auction);
+    this.gateway.notifyAuctionStatus(auction.id, eventStatuses);
 
     return {
       auction,

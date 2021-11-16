@@ -1,6 +1,22 @@
 version: '3.7'
 
 services:
+  redis:
+    image: redis:latest
+    container_name: redis-socket
+    command: [
+        "redis-server",
+        "--bind",
+        "redis",
+        "--port",
+        "${REDIS_PORT}"
+    ]
+    volumes:
+      - reddata:/var/lib/redis
+    ports:
+      - '${REDIS_PORT}:${REDIS_PORT}'
+    networks:
+      - universe
   backend:
     container_name: universe-backend
     build:
@@ -20,6 +36,7 @@ services:
       - universe
     depends_on:
       - postgres-universe-external
+      - redis
   postgres-universe-external:
     container_name: postgres-universe-external
     image: postgres:12.2
@@ -42,3 +59,4 @@ networks:
 volumes:
   backend-node-modules:
   pgdata:
+  reddata:
