@@ -22,15 +22,6 @@ export class NftSlots {
   slot: number;
   minimumBid: number;
 }
-
-class RewardTierBodyParams {
-  name: string;
-  numberOfWinners: number;
-  minimumBid: number;
-  nftsPerWinner: number;
-  nftIds: number[];
-}
-
 export class UpdateRewardTierParams {
   @IsNumberString()
   id: string;
@@ -81,15 +72,6 @@ export class UpdateRewardTierBody {
   nftsPerWinner: number;
 
   @ApiProperty({
-    description: 'The minimum bid associated with the reward tier',
-    example: 0.1,
-    required: false,
-  })
-  @IsNumber()
-  @IsOptional()
-  minimumBid: number;
-
-  @ApiProperty({
     description: 'The nft slot configuration',
     example: [
       { nftIds: [1, 4], slot: 1, minimumBid: 0.1 },
@@ -122,13 +104,6 @@ export class CreateAuctionBody {
   @IsString()
   @Length(1, 100)
   name: string;
-
-  @ApiProperty({
-    description: 'Starting bid of the auction',
-    example: 0.1,
-  })
-  @IsNumber()
-  startingBid: number;
 
   @ApiProperty({
     description: 'Address of the bidding token',
@@ -200,14 +175,6 @@ export class EditAuctionBody {
   @IsOptional()
   @Length(1, 100)
   name: string;
-
-  @ApiProperty({
-    description: 'Starting bid of the auction',
-    example: 0.1,
-  })
-  @IsNumber()
-  @IsOptional()
-  startingBid: number;
 
   @ApiProperty({
     description: 'Address of the bidding token',
@@ -348,14 +315,6 @@ export class CreateRewardTierBody {
   nftsPerWinner: number;
 
   @ApiProperty({
-    description: 'The minimum bid associated with the reward tier',
-    example: 0.1,
-    required: false,
-  })
-  @IsNumber()
-  minimumBid: number;
-
-  @ApiProperty({
     description: 'The nft slot configuration',
     example: [
       { nftIds: [1, 4], slot: 1, minimumBid: 0.1 },
@@ -408,10 +367,6 @@ export class UpdateAuctionBody {
   @IsOptional()
   bidCurrency: string;
 
-  @IsNumber()
-  @IsOptional()
-  startingBid: number;
-
   @IsString()
   @IsOptional()
   txHash: string;
@@ -460,11 +415,6 @@ export class EditRewardTierResponse {
     example: 1,
   })
   nftsPerWinner: number;
-
-  @ApiProperty({
-    example: '0.1',
-  })
-  minimumBid: string;
 
   @ApiProperty({
     example: 1,
@@ -540,9 +490,6 @@ export class AuctionResponse {
   headline: string;
 
   @ApiProperty()
-  startingBid: number;
-
-  @ApiProperty()
   tokenAddress: string;
 
   @ApiProperty()
@@ -594,9 +541,6 @@ export class RewardTierResponse {
 
   @ApiProperty()
   nftsPerWinner: number;
-
-  @ApiProperty()
-  minimumBid: number;
 
   @ApiProperty()
   tierPosition: number;

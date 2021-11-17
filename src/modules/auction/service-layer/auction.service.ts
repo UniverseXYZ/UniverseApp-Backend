@@ -429,7 +429,6 @@ export class AuctionService {
     let auction = auctionRepository.create({
       userId,
       name: createAuctionBody.name,
-      startingBid: createAuctionBody.startingBid,
       tokenAddress: createAuctionBody.tokenAddress,
       tokenSymbol: createAuctionBody.tokenSymbol,
       tokenDecimals: createAuctionBody.tokenDecimals,
@@ -439,7 +438,7 @@ export class AuctionService {
     });
     auction = await auctionRepository.save(auction);
 
-    let slotsData: NftSlots[];
+    const slotsData: NftSlots[] = [];
     createAuctionBody.rewardTiers.forEach((tier) => {
       tier.nftSlots.forEach((slot) => slotsData.push(slot));
     });
