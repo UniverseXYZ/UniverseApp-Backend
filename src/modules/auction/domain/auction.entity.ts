@@ -21,9 +21,6 @@ export class Auction {
   @Column({ nullable: true })
   headline: string;
 
-  @Column({ type: 'decimal' })
-  startingBid: number;
-
   @Column()
   tokenAddress: string;
 
