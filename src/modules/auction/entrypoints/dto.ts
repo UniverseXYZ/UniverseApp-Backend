@@ -64,12 +64,12 @@ export class UpdateRewardTierBody {
   numberOfWinners: number;
 
   @ApiProperty({
-    description: 'The number of allocated nfts per winner',
-    example: 1,
+    description: 'The range of allocated nfts per winner',
+    example: '1-3',
   })
-  @IsNumber()
+  @IsString()
   @IsOptional()
-  nftsPerWinner: number;
+  nftsPerWinner: string;
 
   @ApiProperty({
     description: 'The nft slot configuration',
@@ -308,11 +308,11 @@ export class CreateRewardTierBody {
   numberOfWinners: number;
 
   @ApiProperty({
-    description: 'The number of allocated nfts per winner',
-    example: 1,
+    description: 'The range of allocated nfts per winner',
+    example: '1-3',
   })
-  @IsNumber()
-  nftsPerWinner: number;
+  @IsString()
+  nftsPerWinner: string;
 
   @ApiProperty({
     description: 'The nft slot configuration',
@@ -412,9 +412,9 @@ export class EditRewardTierResponse {
   numberOfWinners: number;
 
   @ApiProperty({
-    example: 1,
+    example: '1-3',
   })
-  nftsPerWinner: number;
+  nftsPerWinner: string;
 
   @ApiProperty({
     example: 1,
@@ -540,7 +540,7 @@ export class RewardTierResponse {
   numberOfWinners: number;
 
   @ApiProperty()
-  nftsPerWinner: number;
+  nftsPerWinner: string;
 
   @ApiProperty()
   tierPosition: number;

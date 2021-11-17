@@ -84,10 +84,10 @@ export class AuctionService {
     }
   }
 
-  private async validateSlotsNFTsNotUsed(slots: NftSlots[]) {
+  private async validateSlotsNFTsNotUsed(slots: NftSlots[], tierId: number) {
     const nftIDs = [];
     slots.forEach((slot) => nftIDs.push(...slot.nftIds));
-    const nfts = await this.rewardTierNftRepository.find({ where: { nftId: In(nftIDs) } });
+    const nfts = await this.rewardTierNftRepository.find({ where: { nftId: In(nftIDs), rewardTierId: Not(tierId) } });
     if (nfts.length) {
       throw new RewardTierNFTUsedInOtherTierException();
     }
@@ -205,7 +205,7 @@ export class AuctionService {
 
     const tier = this.rewardTierRepository.create();
 
-    await this.validateSlotsNFTsNotUsed(nftSlots);
+    await this.validateSlotsNFTsNotUsed(nftSlots, null);
     this.validateSlotIndexOrder(nftSlots);
     this.validateSlotsMinimumBid(nftSlots);
 
@@ -277,7 +277,6 @@ export class AuctionService {
         throw new RewardTierBadOwnerException();
       }
       //TODO: Add validation(ex: numberOfWinners should eq tier.nftSlots.length)
-      //TODO: Add validation(ex: nftsPerWinnder should eq tier.nftSlots.nftIds.length)
       tier.name = params.name ? params.name : tier.name;
       tier.numberOfWinners = params.numberOfWinners ? params.numberOfWinners : tier.numberOfWinners;
       tier.nftsPerWinner = params.nftsPerWinner ? params.nftsPerWinner : tier.nftsPerWinner;
@@ -293,7 +292,7 @@ export class AuctionService {
         if (prevTier) {
           this.validateSlotsBasedOnPrevTier(params.nftSlots, prevTier);
         }
-        await this.validateSlotsNFTsNotUsed(params.nftSlots);
+        await this.validateSlotsNFTsNotUsed(params.nftSlots, id);
         this.validateSlotIndexOrder(params.nftSlots);
         this.validateSlotsMinimumBid(params.nftSlots);
         const slots = params.nftSlots.map((data) => ({ index: data.slot, minimumBid: data.minimumBid }));
@@ -442,7 +441,7 @@ export class AuctionService {
     createAuctionBody.rewardTiers.forEach((tier) => {
       tier.nftSlots.forEach((slot) => slotsData.push(slot));
     });
-    await this.validateSlotsNFTsNotUsed(slotsData);
+    await this.validateSlotsNFTsNotUsed(slotsData, null);
     this.validateSlotIndexOrder(slotsData);
     this.validateSlotsMinimumBid(slotsData);
 
