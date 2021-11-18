@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { getManager, In, LessThan, MoreThan, Not, Repository, Transaction, TransactionRepository } from 'typeorm';
+import { getManager, In, LessThan, MoreThan, Not, QueryResult, Repository, SelectQueryBuilder, Transaction, TransactionRepository } from 'typeorm';
 import { RewardTier } from '../domain/reward-tier.entity';
 import { RewardTierNft } from '../domain/reward-tier-nft.entity';
 import { Auction } from '../domain/auction.entity';
@@ -722,23 +722,29 @@ export class AuctionService {
     };
   }
 
-  async getPastAuctions(userId: number, limit = 8, offset = 0, filters = []) {
+  async getPastAuctions(userId: number, limit = 8, offset = 0, filter = 'recent', search = '') {
     const now = new Date().toISOString();
 
     const query = this.auctionRepository
       .createQueryBuilder('auctions')
       .where('auctions.endDate < :now', { now: now })
-      .orderBy('id', 'DESC')
+      .andWhere('auctions.onChain = true')
+      .andWhere('auctions.canceled = false')
+      .leftJoinAndMapOne('auctions.user', User, 'user', 'user.id = auctions.userId')
       .limit(limit)
       .offset(offset);
 
     if (userId) {
       const user = await this.usersService.getById(userId, true);
-      query.andWhere('auctions.userId = :userId', { userId: user.id });
+      query.andWhere('"auctions"."userId" = :userId', { userId: user.id });
     }
 
-    if (filters) {
-      //todo filters
+    if (search) {
+      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', { auction: `${search}%`,name: `${search}%` });
+    }
+
+    if (filter) {
+      this.buildFilters(query, filter);
     }
 
     const [auctions, count] = await query.getManyAndCount();
@@ -759,12 +765,14 @@ export class AuctionService {
     };
   }
 
-  async getActiveAuctions(userId: number, limit = 8, offset = 0, filters = []) {
+  async getActiveAuctions(userId: number, limit = 8, offset = 0, filter = 'ending', search = '') {
     const now = new Date().toISOString();
 
     const query = this.auctionRepository
       .createQueryBuilder('auctions')
       .where('auctions.startDate < :now AND auctions.endDate > :now', { now: now })
+      .andWhere('auctions.onChain = true')
+      .andWhere('auctions.canceled = false')
       .orderBy('id', 'DESC')
       .limit(limit)
       .offset(offset);
@@ -774,8 +782,12 @@ export class AuctionService {
       query.andWhere('auctions.userId = :userId', { userId: user.id });
     }
 
-    if (filters) {
-      //todo filters
+    if (search) {
+      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', { auction: `${search}%`,name: `${search}%` });
+    }
+
+    if (filter) {
+      this.buildFilters(query, filter);
     }
 
     const [auctions, count] = await query.getManyAndCount();
@@ -796,12 +808,14 @@ export class AuctionService {
     };
   }
 
-  async getFutureAuctions(userId: number, limit = 8, offset = 0, filters = []) {
+  async getFutureAuctions(userId: number, limit = 8, offset = 0, filter = 'starting', search = '') {
     const now = new Date().toISOString();
 
     const query = this.auctionRepository
       .createQueryBuilder('auctions')
       .where('auctions.startDate > :now', { now: now })
+      .andWhere('auctions.onChain = true')
+      .andWhere('auctions.canceled = false')
       .orderBy('id', 'DESC')
       .limit(limit)
       .offset(offset);
@@ -811,8 +825,12 @@ export class AuctionService {
       query.andWhere('auctions.userId = :userId', { userId: user.id });
     }
 
-    if (filters) {
-      //todo filters
+    if (search) {
+      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', { auction: `${search}%`,name: `${search}%` });
+    }
+
+    if (filter) {
+      this.buildFilters(query, filter);
     }
 
     const [auctions, count] = await query.getManyAndCount();
@@ -1234,5 +1252,36 @@ export class AuctionService {
     return {
       auction,
     };
+  }
+
+  private async buildFilters(query, filter = 'ending') {
+    switch (filter) {
+      case 'recent':
+        query.orderBy('auctions.id', 'DESC');
+        break;
+
+      case 'ending':
+        query.orderBy('auctions.endDate', 'ASC');
+        break;
+      
+      case 'highestBid':
+        query.leftJoin('auction_bid', 'ab', 'auctions.id = ab.auctionId').
+        query.groupBy('"auctions"."id", "user"."id"').
+        query.orderBy('MAX(ab.amount)', 'DESC');
+        break;
+
+      case 'lowestBid':
+        query.leftJoin('auction_bid', 'ab', 'auctions.id = ab.auctionId').
+        query.groupBy('"auctions"."id", "user"."id"').
+        query.orderBy('MAX(ab.amount)', 'ASC');
+        break;
+
+      case 'starting':
+        query.orderBy('auctions.startDate', 'ASC');
+        break;
+
+      default:
+        break;
+    }
   }
 }
