@@ -676,13 +676,23 @@ export class GetAuctionsQuery {
   })
   userId: string;
 
-  @IsArray()
+  @IsString()
   @IsOptional()
   @ApiProperty({
-    example: [],
-    description: 'The filters which the actions should be ordered by',
-    type: Array,
+    example: 'ending',
+    description: 'The filter in which the actions should be ordered by',
+    type: 'string',
     required: false,
   })
-  filters: [];
+  filters: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    example: 'universe',
+    description: 'Searching by auction or artist name',
+    type: 'string',
+    required: false,
+  })
+  search: string;
 }

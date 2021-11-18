@@ -182,6 +182,7 @@ export class AuctionController {
       parseInt(query.limit) || undefined,
       parseInt(query.offset) || undefined,
       query.filters,
+      query.search,
     );
   }
 
@@ -195,6 +196,7 @@ export class AuctionController {
       parseInt(query.limit) || undefined,
       parseInt(query.offset) || undefined,
       query.filters,
+      query.search,
     );
   }
 
@@ -208,6 +210,7 @@ export class AuctionController {
       parseInt(query.limit) || undefined,
       parseInt(query.offset) || undefined,
       query.filters,
+      query.search,
     );
   }
 
