@@ -728,6 +728,8 @@ export class AuctionService {
     const query = this.auctionRepository
       .createQueryBuilder('auctions')
       .where('auctions.endDate < :now', { now: now })
+      .andWhere('auctions.onChain = true')
+      .andWhere('auctions.canceled = false')
       .leftJoinAndMapOne('auctions.user', User, 'user', 'user.id = auctions.userId')
       .limit(limit)
       .offset(offset);
@@ -769,6 +771,8 @@ export class AuctionService {
     const query = this.auctionRepository
       .createQueryBuilder('auctions')
       .where('auctions.startDate < :now AND auctions.endDate > :now', { now: now })
+      .andWhere('auctions.onChain = true')
+      .andWhere('auctions.canceled = false')
       .orderBy('id', 'DESC')
       .limit(limit)
       .offset(offset);
@@ -810,6 +814,8 @@ export class AuctionService {
     const query = this.auctionRepository
       .createQueryBuilder('auctions')
       .where('auctions.startDate > :now', { now: now })
+      .andWhere('auctions.onChain = true')
+      .andWhere('auctions.canceled = false')
       .orderBy('id', 'DESC')
       .limit(limit)
       .offset(offset);
