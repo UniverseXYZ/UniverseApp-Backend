@@ -1,5 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { getManager, In, LessThan, MoreThan, Not, QueryResult, Repository, SelectQueryBuilder, Transaction, TransactionRepository } from 'typeorm';
+import {
+  getManager,
+  In,
+  LessThan,
+  MoreThan,
+  Not,
+  QueryResult,
+  Repository,
+  SelectQueryBuilder,
+  Transaction,
+  TransactionRepository,
+} from 'typeorm';
 import { RewardTier } from '../domain/reward-tier.entity';
 import { RewardTierNft } from '../domain/reward-tier-nft.entity';
 import { Auction } from '../domain/auction.entity';
@@ -281,7 +292,7 @@ export class AuctionService {
   }
 
   async updateRewardTier(userId: number, id: number, params: UpdateRewardTierBody) {
-    return await getManager().transaction('SERIALIZABLE', async (transactionalEntityManager) => {
+    await getManager().transaction('SERIALIZABLE', async (transactionalEntityManager) => {
       const tier = await this.rewardTierRepository.findOne({ where: { id } });
 
       if (!tier) {
@@ -378,15 +389,16 @@ export class AuctionService {
           await this.rewardTierNftRepository.update(toUpdateSlot.id, { slot: toUpdateSlot.slot });
         }
       }
-
-      const rewardTierNfts = await this.rewardTierNftRepository.find({ where: { rewardTierId: id } });
-      const nftIds = rewardTierNfts.map((nft) => nft.nftId);
-      const nfts = await this.nftRepository.find({ where: { id: In(nftIds) } });
-      return {
-        ...classToPlain(tier),
-        nfts: nfts.map((nft) => classToPlain(nft)),
-      };
     });
+
+    const tier = await this.rewardTierRepository.findOne({ where: { id } });
+    const rewardTierNfts = await this.rewardTierNftRepository.find({ where: { rewardTierId: id } });
+    const nftIds = rewardTierNfts.map((nft) => nft.nftId);
+    const nfts = await this.nftRepository.find({ where: { id: In(nftIds) } });
+    return {
+      ...classToPlain(tier),
+      nfts: nfts.map((nft) => classToPlain(nft)),
+    };
   }
 
   private async validateTierPermissions(userId: number, tierId: number) {
@@ -740,7 +752,10 @@ export class AuctionService {
     }
 
     if (search) {
-      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', { auction: `${search}%`,name: `${search}%` });
+      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', {
+        auction: `${search}%`,
+        name: `${search}%`,
+      });
     }
 
     if (filter) {
@@ -783,7 +798,10 @@ export class AuctionService {
     }
 
     if (search) {
-      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', { auction: `${search}%`,name: `${search}%` });
+      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', {
+        auction: `${search}%`,
+        name: `${search}%`,
+      });
     }
 
     if (filter) {
@@ -826,7 +844,10 @@ export class AuctionService {
     }
 
     if (search) {
-      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', { auction: `${search}%`,name: `${search}%` });
+      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', {
+        auction: `${search}%`,
+        name: `${search}%`,
+      });
     }
 
     if (filter) {
@@ -1263,17 +1284,19 @@ export class AuctionService {
       case 'ending':
         query.orderBy('auctions.endDate', 'ASC');
         break;
-      
+
       case 'highestBid':
-        query.leftJoin('auction_bid', 'ab', 'auctions.id = ab.auctionId').
-        query.groupBy('"auctions"."id", "user"."id"').
-        query.orderBy('MAX(ab.amount)', 'DESC');
+        query
+          .leftJoin('auction_bid', 'ab', 'auctions.id = ab.auctionId')
+          .query.groupBy('"auctions"."id", "user"."id"')
+          .query.orderBy('MAX(ab.amount)', 'DESC');
         break;
 
       case 'lowestBid':
-        query.leftJoin('auction_bid', 'ab', 'auctions.id = ab.auctionId').
-        query.groupBy('"auctions"."id", "user"."id"').
-        query.orderBy('MAX(ab.amount)', 'ASC');
+        query
+          .leftJoin('auction_bid', 'ab', 'auctions.id = ab.auctionId')
+          .query.groupBy('"auctions"."id", "user"."id"')
+          .query.orderBy('MAX(ab.amount)', 'ASC');
         break;
 
       case 'starting':
