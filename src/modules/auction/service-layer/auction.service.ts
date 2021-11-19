@@ -47,6 +47,7 @@ import { AuctionBid } from '../domain/auction.bid.entity';
 import { User } from 'src/modules/users/user.entity';
 import { AuctionGateway } from './auction.gateway';
 import { AuctionBidNotFoundException } from './exceptions/AuctionBidNotFoundException';
+import { DuplicateAuctionLinkException } from './exceptions/DuplicateAuctionLinkException';
 
 @Injectable()
 export class AuctionService {
@@ -563,7 +564,12 @@ export class AuctionService {
 
   async updateAuction(userId: number, auctionId: number, updateAuctionBody: EditAuctionBody) {
     let auction = await this.validateAuctionPermissions(userId, auctionId);
-
+    if (updateAuctionBody.link) {
+      const duplicateLinks = await this.auctionRepository.find({ where: { link: updateAuctionBody.link } });
+      if (duplicateLinks.length) {
+        throw new DuplicateAuctionLinkException();
+      }
+    }
     for (const key in updateAuctionBody) {
       auction[key] = updateAuctionBody[key];
     }
