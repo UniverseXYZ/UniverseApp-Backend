@@ -208,7 +208,12 @@ export class AuctionService {
       throw new AuctionCannotBeModifiedException();
     }
 
-    const currentTiers = await this.rewardTierRepository.findAndCount({ where: { auctionId } });
+    const currentTiers = await this.rewardTierRepository.findAndCount({
+      where: { auctionId },
+      order: {
+        id: 'ASC',
+      },
+    });
     const nextTierIndex = currentTiers[1];
     const prevTier = currentTiers[0][nextTierIndex - 1];
     if (prevTier) {
@@ -269,23 +274,36 @@ export class AuctionService {
     }
 
     await getManager().transaction(async (transactionalEntityManager) => {
-      const currentTiers = await this.rewardTierRepository.find({ where: { auctionId } });
+      const currentTiers = await this.rewardTierRepository.find({
+        where: { auctionId },
+        order: {
+          id: 'ASC',
+        },
+      });
       const removedTierIndex = currentTiers.findIndex((t) => t.id.toString() === id);
       const adjacentTiers = currentTiers.slice(removedTierIndex + 1);
+      const removedTierSlotsCount = tier.slots.length;
 
       await transactionalEntityManager.delete(RewardTier, { id });
       await transactionalEntityManager.delete(RewardTierNft, { rewardTierId: id });
 
       // After deleting a tier we have to decrease other tiers, slots indexes that are adjacent to the deleted one
-      for (const tier of adjacentTiers) {
-        const updatedSlots = tier.slots.map((s) => {
+      for (const adjacentTier of adjacentTiers) {
+        const updatedSlots = adjacentTier.slots.map((s) => {
           const slot = { ...s };
-          slot.index -= 1;
+          slot.index -= removedTierSlotsCount;
           return slot;
         });
 
-        tier.slots = updatedSlots;
-        await transactionalEntityManager.save(tier);
+        adjacentTier.slots = updatedSlots;
+        await transactionalEntityManager.save(adjacentTier);
+
+        const adjacentTierNfts = await this.rewardTierNftRepository.find({ where: { rewardTierId: adjacentTier.id } });
+
+        for (const adjacentNFT of adjacentTierNfts) {
+          const newSlotIndex = adjacentNFT.slot - removedTierSlotsCount;
+          await transactionalEntityManager.update(RewardTierNft, { id: adjacentNFT.id }, { slot: newSlotIndex });
+        }
       }
     });
 
@@ -314,14 +332,52 @@ export class AuctionService {
 
       if (params.nftSlots) {
         const auctionId = tier.auctionId;
-        const currentTiers = await this.rewardTierRepository.findAndCount({ where: { auctionId } });
-        const prevTier = currentTiers[0].find((t) => t.id === tier.id - 1);
+        const currentTiers = await this.rewardTierRepository.find({
+          where: { auctionId },
+          order: {
+            id: 'ASC',
+          },
+        });
+        const updatedTierIndex = currentTiers.findIndex((t) => t.id.toString() === tier.id.toString());
+        const adjacentTiers = currentTiers.slice(updatedTierIndex + 1);
+
+        const prevTier = currentTiers.find((t) => t.id === tier.id - 1);
         if (prevTier) {
           this.validateSlotsBasedOnPrevTier(params.nftSlots, prevTier);
         }
         await this.validateSlotsNFTsNotUsed(params.nftSlots, id);
         this.validateSlotIndexOrder(params.nftSlots);
         this.validateSlotsMinimumBid(params.nftSlots);
+
+        // Find out how many slots have been, added or removed from this tier Update
+        // In case of add, increase the adjacent tiers slots with that count
+        // In case of remove, decrease the adjacent tiers slots with that count
+
+        const currentSlotsCount = tier.slots.length;
+        const newSlotsCount = params.nftSlots.length;
+
+        const addedSlots = currentSlotsCount < newSlotsCount;
+        const removedSlots = currentSlotsCount > newSlotsCount;
+
+        for (const adjacentTier of adjacentTiers) {
+          const updatedSlots = adjacentTier.slots.map((s) => {
+            const slot = { ...s };
+
+            if (addedSlots) {
+              const addedCount = newSlotsCount - currentSlotsCount;
+              slot.index += addedCount;
+            } else if (removedSlots) {
+              const removedCount = currentSlotsCount - newSlotsCount;
+              slot.index -= removedCount;
+            }
+
+            return slot;
+          });
+
+          adjacentTier.slots = updatedSlots;
+          await transactionalEntityManager.save(adjacentTier);
+        }
+
         const slots = params.nftSlots.map((data) => ({ index: data.slot, minimumBid: data.minimumBid }));
         tier.slots = slots;
       }
@@ -912,7 +968,12 @@ export class AuctionService {
 
   private async formatMyAuctions(auctions: Auction[]) {
     const auctionIds = auctions.map((auction) => auction.id);
-    const rewardTiers = await this.rewardTierRepository.find({ where: { auctionId: In(auctionIds) } });
+    const rewardTiers = await this.rewardTierRepository.find({
+      where: { auctionId: In(auctionIds) },
+      order: {
+        id: 'ASC',
+      },
+    });
     const auctionRewardTiersMap = auctionIds.reduce((acc, auctionId) => {
       const prevRewardTiers = acc[auctionId] || [];
       return {
