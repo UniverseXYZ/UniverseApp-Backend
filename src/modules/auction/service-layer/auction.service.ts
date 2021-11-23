@@ -896,6 +896,7 @@ export class AuctionService {
       .where('auctions.startDate > :now', { now: now })
       .andWhere('auctions.onChain = true')
       .andWhere('auctions.canceled = false')
+      .andWhere('auctions.depositedNfts =  true')
       .orderBy('id', 'DESC')
       .limit(limit)
       .offset(offset);
