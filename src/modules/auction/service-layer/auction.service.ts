@@ -1,5 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { getManager, In, LessThan, MoreThan, Not, QueryResult, Repository, SelectQueryBuilder, Transaction, TransactionRepository } from 'typeorm';
+import {
+  getManager,
+  In,
+  LessThan,
+  MoreThan,
+  Not,
+  QueryResult,
+  Repository,
+  SelectQueryBuilder,
+  Transaction,
+  TransactionRepository,
+} from 'typeorm';
 import { RewardTier } from '../domain/reward-tier.entity';
 import { RewardTierNft } from '../domain/reward-tier-nft.entity';
 import { Auction } from '../domain/auction.entity';
@@ -36,6 +47,7 @@ import { AuctionBid } from '../domain/auction.bid.entity';
 import { User } from 'src/modules/users/user.entity';
 import { AuctionGateway } from './auction.gateway';
 import { AuctionBidNotFoundException } from './exceptions/AuctionBidNotFoundException';
+import { DuplicateAuctionLinkException } from './exceptions/DuplicateAuctionLinkException';
 
 @Injectable()
 export class AuctionService {
@@ -196,7 +208,12 @@ export class AuctionService {
       throw new AuctionCannotBeModifiedException();
     }
 
-    const currentTiers = await this.rewardTierRepository.findAndCount({ where: { auctionId } });
+    const currentTiers = await this.rewardTierRepository.findAndCount({
+      where: { auctionId },
+      order: {
+        id: 'ASC',
+      },
+    });
     const nextTierIndex = currentTiers[1];
     const prevTier = currentTiers[0][nextTierIndex - 1];
     if (prevTier) {
@@ -257,23 +274,36 @@ export class AuctionService {
     }
 
     await getManager().transaction(async (transactionalEntityManager) => {
-      const currentTiers = await this.rewardTierRepository.find({ where: { auctionId } });
+      const currentTiers = await this.rewardTierRepository.find({
+        where: { auctionId },
+        order: {
+          id: 'ASC',
+        },
+      });
       const removedTierIndex = currentTiers.findIndex((t) => t.id.toString() === id);
       const adjacentTiers = currentTiers.slice(removedTierIndex + 1);
+      const removedTierSlotsCount = tier.slots.length;
 
       await transactionalEntityManager.delete(RewardTier, { id });
       await transactionalEntityManager.delete(RewardTierNft, { rewardTierId: id });
 
       // After deleting a tier we have to decrease other tiers, slots indexes that are adjacent to the deleted one
-      for (const tier of adjacentTiers) {
-        const updatedSlots = tier.slots.map((s) => {
+      for (const adjacentTier of adjacentTiers) {
+        const updatedSlots = adjacentTier.slots.map((s) => {
           const slot = { ...s };
-          slot.index -= 1;
+          slot.index -= removedTierSlotsCount;
           return slot;
         });
 
-        tier.slots = updatedSlots;
-        await transactionalEntityManager.save(tier);
+        adjacentTier.slots = updatedSlots;
+        await transactionalEntityManager.save(adjacentTier);
+
+        const adjacentTierNfts = await this.rewardTierNftRepository.find({ where: { rewardTierId: adjacentTier.id } });
+
+        for (const adjacentNFT of adjacentTierNfts) {
+          const newSlotIndex = adjacentNFT.slot - removedTierSlotsCount;
+          await transactionalEntityManager.update(RewardTierNft, { id: adjacentNFT.id }, { slot: newSlotIndex });
+        }
       }
     });
 
@@ -281,7 +311,7 @@ export class AuctionService {
   }
 
   async updateRewardTier(userId: number, id: number, params: UpdateRewardTierBody) {
-    return await getManager().transaction('SERIALIZABLE', async (transactionalEntityManager) => {
+    await getManager().transaction('SERIALIZABLE', async (transactionalEntityManager) => {
       const tier = await this.rewardTierRepository.findOne({ where: { id } });
 
       if (!tier) {
@@ -302,14 +332,52 @@ export class AuctionService {
 
       if (params.nftSlots) {
         const auctionId = tier.auctionId;
-        const currentTiers = await this.rewardTierRepository.findAndCount({ where: { auctionId } });
-        const prevTier = currentTiers[0].find((t) => t.id === tier.id - 1);
+        const currentTiers = await this.rewardTierRepository.find({
+          where: { auctionId },
+          order: {
+            id: 'ASC',
+          },
+        });
+        const updatedTierIndex = currentTiers.findIndex((t) => t.id.toString() === tier.id.toString());
+        const adjacentTiers = currentTiers.slice(updatedTierIndex + 1);
+
+        const prevTier = currentTiers.find((t) => t.id === tier.id - 1);
         if (prevTier) {
           this.validateSlotsBasedOnPrevTier(params.nftSlots, prevTier);
         }
         await this.validateSlotsNFTsNotUsed(params.nftSlots, id);
         this.validateSlotIndexOrder(params.nftSlots);
         this.validateSlotsMinimumBid(params.nftSlots);
+
+        // Find out how many slots have been, added or removed from this tier Update
+        // In case of add, increase the adjacent tiers slots with that count
+        // In case of remove, decrease the adjacent tiers slots with that count
+
+        const currentSlotsCount = tier.slots.length;
+        const newSlotsCount = params.nftSlots.length;
+
+        const addedSlots = currentSlotsCount < newSlotsCount;
+        const removedSlots = currentSlotsCount > newSlotsCount;
+
+        for (const adjacentTier of adjacentTiers) {
+          const updatedSlots = adjacentTier.slots.map((s) => {
+            const slot = { ...s };
+
+            if (addedSlots) {
+              const addedCount = newSlotsCount - currentSlotsCount;
+              slot.index += addedCount;
+            } else if (removedSlots) {
+              const removedCount = currentSlotsCount - newSlotsCount;
+              slot.index -= removedCount;
+            }
+
+            return slot;
+          });
+
+          adjacentTier.slots = updatedSlots;
+          await transactionalEntityManager.save(adjacentTier);
+        }
+
         const slots = params.nftSlots.map((data) => ({ index: data.slot, minimumBid: data.minimumBid }));
         tier.slots = slots;
       }
@@ -378,15 +446,16 @@ export class AuctionService {
           await this.rewardTierNftRepository.update(toUpdateSlot.id, { slot: toUpdateSlot.slot });
         }
       }
-
-      const rewardTierNfts = await this.rewardTierNftRepository.find({ where: { rewardTierId: id } });
-      const nftIds = rewardTierNfts.map((nft) => nft.nftId);
-      const nfts = await this.nftRepository.find({ where: { id: In(nftIds) } });
-      return {
-        ...classToPlain(tier),
-        nfts: nfts.map((nft) => classToPlain(nft)),
-      };
     });
+
+    const tier = await this.rewardTierRepository.findOne({ where: { id } });
+    const rewardTierNfts = await this.rewardTierNftRepository.find({ where: { rewardTierId: id } });
+    const nftIds = rewardTierNfts.map((nft) => nft.nftId);
+    const nfts = await this.nftRepository.find({ where: { id: In(nftIds) } });
+    return {
+      ...classToPlain(tier),
+      nfts: nfts.map((nft) => classToPlain(nft)),
+    };
   }
 
   private async validateTierPermissions(userId: number, tierId: number) {
@@ -551,7 +620,12 @@ export class AuctionService {
 
   async updateAuction(userId: number, auctionId: number, updateAuctionBody: EditAuctionBody) {
     let auction = await this.validateAuctionPermissions(userId, auctionId);
-
+    if (updateAuctionBody.link) {
+      const duplicateLinks = await this.auctionRepository.find({ where: { link: updateAuctionBody.link } });
+      if (duplicateLinks.length) {
+        throw new DuplicateAuctionLinkException();
+      }
+    }
     for (const key in updateAuctionBody) {
       auction[key] = updateAuctionBody[key];
     }
@@ -740,7 +814,10 @@ export class AuctionService {
     }
 
     if (search) {
-      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', { auction: `${search}%`,name: `${search}%` });
+      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', {
+        auction: `${search}%`,
+        name: `${search}%`,
+      });
     }
 
     if (filter) {
@@ -773,7 +850,7 @@ export class AuctionService {
       .where('auctions.startDate < :now AND auctions.endDate > :now', { now: now })
       .andWhere('auctions.onChain = true')
       .andWhere('auctions.canceled = false')
-      .orderBy('id', 'DESC')
+      .leftJoinAndMapOne('auctions.user', User, 'user', 'user.id = auctions.userId')
       .limit(limit)
       .offset(offset);
 
@@ -783,7 +860,10 @@ export class AuctionService {
     }
 
     if (search) {
-      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', { auction: `${search}%`,name: `${search}%` });
+      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', {
+        auction: `${search}%`,
+        name: `${search}%`,
+      });
     }
 
     if (filter) {
@@ -816,7 +896,8 @@ export class AuctionService {
       .where('auctions.startDate > :now', { now: now })
       .andWhere('auctions.onChain = true')
       .andWhere('auctions.canceled = false')
-      .orderBy('id', 'DESC')
+      .andWhere('auctions.depositedNfts =  true')
+      .leftJoinAndMapOne('auctions.user', User, 'user', 'user.id = auctions.userId')
       .limit(limit)
       .offset(offset);
 
@@ -826,7 +907,10 @@ export class AuctionService {
     }
 
     if (search) {
-      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', { auction: `${search}%`,name: `${search}%` });
+      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', {
+        auction: `${search}%`,
+        name: `${search}%`,
+      });
     }
 
     if (filter) {
@@ -885,7 +969,12 @@ export class AuctionService {
 
   private async formatMyAuctions(auctions: Auction[]) {
     const auctionIds = auctions.map((auction) => auction.id);
-    const rewardTiers = await this.rewardTierRepository.find({ where: { auctionId: In(auctionIds) } });
+    const rewardTiers = await this.rewardTierRepository.find({
+      where: { auctionId: In(auctionIds) },
+      order: {
+        id: 'ASC',
+      },
+    });
     const auctionRewardTiersMap = auctionIds.reduce((acc, auctionId) => {
       const prevRewardTiers = acc[auctionId] || [];
       return {
@@ -1254,7 +1343,7 @@ export class AuctionService {
     };
   }
 
-  private async buildFilters(query, filter = 'ending') {
+  private async buildFilters(query, filter: string) {
     switch (filter) {
       case 'recent':
         query.orderBy('auctions.id', 'DESC');
@@ -1263,17 +1352,19 @@ export class AuctionService {
       case 'ending':
         query.orderBy('auctions.endDate', 'ASC');
         break;
-      
+
       case 'highestBid':
-        query.leftJoin('auction_bid', 'ab', 'auctions.id = ab.auctionId').
-        query.groupBy('"auctions"."id", "user"."id"').
-        query.orderBy('MAX(ab.amount)', 'DESC');
+        query
+          .leftJoin('auction_bid', 'ab', 'auctions.id = ab.auctionId')
+          .query.groupBy('"auctions"."id", "user"."id"')
+          .query.orderBy('MAX(ab.amount)', 'DESC');
         break;
 
       case 'lowestBid':
-        query.leftJoin('auction_bid', 'ab', 'auctions.id = ab.auctionId').
-        query.groupBy('"auctions"."id", "user"."id"').
-        query.orderBy('MAX(ab.amount)', 'ASC');
+        query
+          .leftJoin('auction_bid', 'ab', 'auctions.id = ab.auctionId')
+          .query.groupBy('"auctions"."id", "user"."id"')
+          .query.orderBy('MAX(ab.amount)', 'ASC');
         break;
 
       case 'starting':
