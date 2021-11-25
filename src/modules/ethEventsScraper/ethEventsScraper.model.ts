@@ -15,7 +15,11 @@ import { AuctionCreatedEvent } from './domain/create-auction-event';
 import { Erc721DepositedEvent } from './domain/deposited-erc721-event';
 import { AuctionCanceledEvent } from './domain/auction-canceled-event';
 import { AuctionGateway } from '../auction/service-layer/auction.gateway';
-
+import { Erc721WithdrawnEvent } from './domain/withdrawn-erc721-event';
+import { Auction } from '../auction/domain/auction.entity';
+import { RewardTier } from '../auction/domain/reward-tier.entity';
+import { RewardTierNft } from '../auction/domain/reward-tier-nft.entity';
+import { BidSubmittedEvent } from './domain/submitted-bid-event';
 @Module({
   imports: [
     AppConfigModule,
@@ -30,8 +34,13 @@ import { AuctionGateway } from '../auction/service-layer/auction.gateway';
       MintingCollection,
       MintingNft,
       AuctionCreatedEvent,
+      RewardTier,
+      RewardTierNft,
       Erc721DepositedEvent,
+      Erc721WithdrawnEvent,
       AuctionCanceledEvent,
+      BidSubmittedEvent,
+      Auction,
     ]),
   ],
   providers: [EthEventsScraperService, AuctionEventsScraperService, AuctionGateway],

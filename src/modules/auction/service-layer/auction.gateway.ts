@@ -37,7 +37,15 @@ export class AuctionGateway implements OnGatewayInit, OnGatewayConnection, OnGat
   public notifyAuctionCanceled(auctionId: number) {
     this.server.emit(`auction_${auctionId}_canceled`);
   }
+
   public notifyAuctionDepositedNfts(auctionId: number) {
     this.server.emit(`auction_${auctionId}_depositedNfts`);
+  }
+
+  public notifyAuctionWithdrawnNfts(auctionId: number, hasWithdrawnAll: boolean) {
+    this.server.emit(`auction_${auctionId}_withdrawnNfts`, { hasWithdrawnAll });
+  }
+  public notifyAuctionBidSubmitted(auctionId: number, bidInfo: { user: any; amount: number }) {
+    this.server.emit(`auction_${auctionId}_bidSubmitted`, bidInfo);
   }
 }
