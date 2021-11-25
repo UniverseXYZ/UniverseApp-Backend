@@ -11,3 +11,8 @@ export class MarkRewardTierNftAsDepositedException extends ServiceError {
     super(message);
   }
 }
+export class MarkRewardTierNftAsWithdrawnException extends ServiceError {
+  constructor(message: string) {
+    super(message);
+  }
+}
