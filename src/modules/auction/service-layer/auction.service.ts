@@ -814,7 +814,7 @@ export class AuctionService {
     }
 
     if (search) {
-      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', {
+      query.andWhere('(LOWER(auctions.name) LIKE :auction OR LOWER(user.displayName) LIKE :name)', {
         auction: `${search}%`,
         name: `${search}%`,
       });
@@ -860,7 +860,7 @@ export class AuctionService {
     }
 
     if (search) {
-      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', {
+      query.andWhere('(LOWER(auctions.name) LIKE :auction OR LOWER(user.displayName) LIKE :name)', {
         auction: `${search}%`,
         name: `${search}%`,
       });
@@ -869,7 +869,7 @@ export class AuctionService {
     if (filter) {
       this.buildFilters(query, filter);
     }
-
+    
     const [auctions, count] = await query.getManyAndCount();
     const auctionsWithTiers = await this.formatMyAuctions(auctions);
 
@@ -907,7 +907,7 @@ export class AuctionService {
     }
 
     if (search) {
-      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', {
+      query.andWhere('(LOWER(auctions.name) LIKE :auction OR LOWER(user.displayName) LIKE :name)', {
         auction: `${search}%`,
         name: `${search}%`,
       });
