@@ -814,7 +814,7 @@ export class AuctionService {
     }
 
     if (search) {
-      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', {
+      query.andWhere('(LOWER(auctions.name) LIKE :auction OR LOWER(user.displayName) LIKE :name)', {
         auction: `${search}%`,
         name: `${search}%`,
       });
@@ -860,7 +860,7 @@ export class AuctionService {
     }
 
     if (search) {
-      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', {
+      query.andWhere('(LOWER(auctions.name) LIKE :auction OR LOWER(user.displayName) LIKE :name)', {
         auction: `${search}%`,
         name: `${search}%`,
       });
@@ -907,7 +907,7 @@ export class AuctionService {
     }
 
     if (search) {
-      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', {
+      query.andWhere('(LOWER(auctions.name) LIKE :auction OR LOWER(user.displayName) LIKE :name)', {
         auction: `${search}%`,
         name: `${search}%`,
       });

@@ -602,9 +602,13 @@ export class NftService {
       (
         await this.nftRepository.query(
           'WITH editions AS ' +
-            '(SELECT "editionUUID" FROM "universe-backend"."nft" WHERE "userId" = $1 GROUP BY "editionUUID" HAVING COUNT(*) >= $2)' +
+            '(SELECT "editionUUID" FROM "universe-backend"."nft" WHERE "userId" = $1 AND nft.id NOT IN (SELECT "nftId" FROM "universe-backend"."reward_tier_nft" WHERE "rewardTierId" IN (SELECT "id" FROM "universe-backend"."reward_tier" WHERE "userId" = $2 ' +
+            (auctionId ? 'AND "auctionId" != $3' : '') +
+            ')) GROUP BY "editionUUID" HAVING COUNT(*) >= ' +
+            (auctionId ? '$4' : '$3') +
+            ')' +
             'SELECT count(*) FROM editions',
-          [userId, size],
+          auctionId ? [userId, userId, auctionId, size] : [userId, userId, size],
         )
       )[0].count,
     );
@@ -612,14 +616,10 @@ export class NftService {
     const nfts = await this.nftRepository
       .createQueryBuilder('nft')
       .where(
-        'nft.id NOT IN (SELECT "nftId" FROM "universe-backend"."reward_tier_nft" WHERE "rewardTierId" IN (SELECT "id" FROM "universe-backend"."reward_tier" WHERE "userId" = :userId ' +
+        'nft.editionUUID IN (SELECT "editionUUID" FROM "universe-backend"."nft" WHERE "userId" = :userId AND nft.id NOT IN (SELECT "nftId" FROM "universe-backend"."reward_tier_nft" WHERE "rewardTierId" IN (SELECT "id" FROM "universe-backend"."reward_tier" WHERE "userId" = :userId ' +
           (auctionId ? 'AND "auctionId" != :auctionId' : '') +
-          '))',
-        { userId: userId, auctionId: auctionId },
-      )
-      .andWhere(
-        'nft.editionUUID IN (SELECT "editionUUID" FROM "universe-backend"."nft" WHERE "userId" = :userId GROUP BY "editionUUID" HAVING COUNT(*) > :size LIMIT :limit OFFSET :offset)',
-        { userId: userId, size: size, limit: limit, offset: start },
+          ')) GROUP BY "editionUUID" HAVING COUNT(*) > :size LIMIT :limit OFFSET :offset)',
+        { userId: userId, size: size, limit: limit, offset: start, auctionId: auctionId },
       )
       .groupBy('nft.editionUUID, nft.id')
       .orderBy('nft.createdAt', 'DESC')
@@ -662,7 +662,7 @@ export class NftService {
       nfts: mappedNfts,
       pagination: {
         page: start === 0 ? 1 : Math.ceil(start / limit + 1),
-        hasNextPage: editionsCount > start + limit,
+        hasNextPage: editionsCount > +start + +limit,
         totalPages: Math.ceil(editionsCount / limit),
       },
     };
