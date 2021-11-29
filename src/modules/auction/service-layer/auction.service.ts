@@ -869,7 +869,7 @@ export class AuctionService {
     if (filter) {
       this.buildFilters(query, filter);
     }
-    
+
     const [auctions, count] = await query.getManyAndCount();
     const auctionsWithTiers = await this.formatMyAuctions(auctions);
 
