@@ -3,6 +3,7 @@ import S3Client from 'aws-sdk/clients/s3';
 import { AppConfig } from '../configuration/configuration.service';
 import fs from 'fs';
 import { UploadResult } from './model/UploadResult';
+import { DeleteResult } from './model/DeleteResult';
 
 @Injectable()
 export class S3Service {
@@ -52,6 +53,25 @@ export class S3Service {
             reject(error);
           } else {
             resolve(UploadResult.fromAws(data));
+          }
+        },
+      );
+    });
+  }
+
+  public deleteImage(fileName: string) {
+    return new Promise<DeleteResult>((resolve, reject) => {
+      this.client.deleteObject(
+        {
+          Bucket: this.config.values.aws.bucketName,
+          Key: fileName,
+        },
+        (err, data) => {
+          if (err) {
+            Logger.log(err);
+            reject(err);
+          } else {
+            resolve(DeleteResult.fromAws(data));
           }
         },
       );
