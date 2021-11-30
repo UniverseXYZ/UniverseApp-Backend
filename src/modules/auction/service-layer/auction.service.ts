@@ -665,6 +665,10 @@ export class AuctionService {
     let auction = await this.validateAuctionPermissions(userId, auctionId);
 
     if (promoImageFile) {
+      if (auction.promoImageUrl) {
+        await this.s3Service.deleteImage(auction.promoImageUrl.split('/').pop());
+      }
+
       const uploadResult = await this.s3Service.uploadDocument(
         promoImageFile.path,
         `auctions/${promoImageFile.filename}`,
@@ -674,6 +678,10 @@ export class AuctionService {
     }
 
     if (backgroundImageFile) {
+      if (auction.backgroundImageUrl) {
+        await this.s3Service.deleteImage(auction.backgroundImageUrl.split('/').pop());
+      }
+
       const uploadResult = await this.s3Service.uploadDocument(
         backgroundImageFile.path,
         `auctions/${backgroundImageFile.filename}`,
@@ -814,7 +822,7 @@ export class AuctionService {
     }
 
     if (search) {
-      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', {
+      query.andWhere('(LOWER(auctions.name) LIKE :auction OR LOWER(user.displayName) LIKE :name)', {
         auction: `${search}%`,
         name: `${search}%`,
       });
@@ -838,7 +846,7 @@ export class AuctionService {
         offset,
         limit,
       },
-      auctions: auctionsWithBids,
+      auctions: auctionsWithBids.map((auction) => classToPlain(auction)),
     };
   }
 
@@ -860,7 +868,7 @@ export class AuctionService {
     }
 
     if (search) {
-      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', {
+      query.andWhere('(LOWER(auctions.name) LIKE :auction OR LOWER(user.displayName) LIKE :name)', {
         auction: `${search}%`,
         name: `${search}%`,
       });
@@ -884,7 +892,7 @@ export class AuctionService {
         offset,
         limit,
       },
-      auctions: auctionsWithBids,
+      auctions: auctionsWithBids.map((auction) => classToPlain(auction)),
     };
   }
 
@@ -907,7 +915,7 @@ export class AuctionService {
     }
 
     if (search) {
-      query.andWhere('auctions.name LIKE :auction OR user.displayName LIKE :name', {
+      query.andWhere('(LOWER(auctions.name) LIKE :auction OR LOWER(user.displayName) LIKE :name)', {
         auction: `${search}%`,
         name: `${search}%`,
       });
@@ -926,7 +934,7 @@ export class AuctionService {
         offset,
         limit,
       },
-      auctions: auctionsWithTiers,
+      auctions: auctionsWithTiers.map((auction) => classToPlain(auction)),
     };
   }
 
