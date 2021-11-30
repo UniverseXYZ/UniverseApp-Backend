@@ -838,7 +838,7 @@ export class AuctionService {
         offset,
         limit,
       },
-      auctions: auctionsWithBids,
+      auctions: auctionsWithBids.map((auction) => classToPlain(auction)),
     };
   }
 
@@ -884,7 +884,7 @@ export class AuctionService {
         offset,
         limit,
       },
-      auctions: auctionsWithBids,
+      auctions: auctionsWithBids.map((auction) => classToPlain(auction)),
     };
   }
 
@@ -926,7 +926,7 @@ export class AuctionService {
         offset,
         limit,
       },
-      auctions: auctionsWithTiers,
+      auctions: auctionsWithTiers.map((auction) => classToPlain(auction)),
     };
   }
 
