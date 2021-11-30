@@ -665,6 +665,10 @@ export class AuctionService {
     let auction = await this.validateAuctionPermissions(userId, auctionId);
 
     if (promoImageFile) {
+      if (auction.promoImageUrl) {
+        await this.s3Service.deleteImage(auction.promoImageUrl.split('/').pop());
+      }
+
       const uploadResult = await this.s3Service.uploadDocument(
         promoImageFile.path,
         `auctions/${promoImageFile.filename}`,
@@ -674,6 +678,10 @@ export class AuctionService {
     }
 
     if (backgroundImageFile) {
+      if (auction.backgroundImageUrl) {
+        await this.s3Service.deleteImage(auction.backgroundImageUrl.split('/').pop());
+      }
+
       const uploadResult = await this.s3Service.uploadDocument(
         backgroundImageFile.path,
         `auctions/${backgroundImageFile.filename}`,
