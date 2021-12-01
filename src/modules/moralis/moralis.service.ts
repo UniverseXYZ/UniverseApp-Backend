@@ -142,7 +142,7 @@ export class MoralisService {
     Moralis.serverURL = this.config.values.moralis.serverUrl;
     Moralis.masterKey = this.config.values.moralis.masterKey;
     Moralis.initialize(this.config.values.moralis.applicationId);
-    await this.queue.initQueue(MORALIS_NEW_NFT_QUEUE, this.moralisNewNFTOwnerHandler, 1);
+    this.queue.initQueue(MORALIS_NEW_NFT_QUEUE, this.moralisNewNFTOwnerHandler, 1);
   }
 
   addNewUserToWatchAddress = async (address: string) => {
