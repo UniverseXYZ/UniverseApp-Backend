@@ -13,8 +13,14 @@ import { DeployCollectionEvent } from '../ethEventsScraper/domain/deploy-collect
 import { MintingCollection } from '../nft/domain/minting-collection.entity';
 import { LoginChallenge } from '../auth/model/login-challenge.entity';
 import { MintingNft } from '../nft/domain/minting-nft.entity';
+import { AuctionBid } from '../auction/domain/auction.bid.entity';
 import { MonitoredNfts } from '../nft/domain/monitored-nfts';
 import { MoralisLog } from '../moralis/domain/moralis-log.entity';
+import { AuctionCreatedEvent } from '../ethEventsScraper/domain/create-auction-event';
+import { Erc721DepositedEvent } from '../ethEventsScraper/domain/deposited-erc721-event';
+import { AuctionCanceledEvent } from '../ethEventsScraper/domain/auction-canceled-event';
+import { Erc721WithdrawnEvent } from '../ethEventsScraper/domain/withdrawn-erc721-event';
+import { BidSubmittedEvent } from '../ethEventsScraper/domain/submitted-bid-event';
 
 // TODO: Add db entities here
 const entities = [
@@ -30,8 +36,14 @@ const entities = [
   MintingCollection,
   LoginChallenge,
   MintingNft,
+  AuctionBid,
   MonitoredNfts,
   MoralisLog,
+  AuctionCreatedEvent,
+  Erc721DepositedEvent,
+  AuctionCanceledEvent,
+  Erc721WithdrawnEvent,
+  BidSubmittedEvent,
 ];
 
 @Injectable()

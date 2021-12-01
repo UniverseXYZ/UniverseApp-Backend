@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ## [1.23.6](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.23.5...v1.23.6) (2021-10-29)
 
 
@@ -12,6 +13,8 @@
 
 * process nfts from moralis logs ([#127](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/127)) ([664a51e](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/664a51ee3d304a4115081ac0ed7e21ae34aebd35))
 
+=======
+>>>>>>> 3125d056220e72cefdd2f0d8d51319f8b4d68b62
 ## [1.23.4](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.23.3...v1.23.4) (2021-10-26)
 
 

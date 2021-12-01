@@ -8,6 +8,7 @@ import {
   IsNumberString,
   IsOptional,
   IsString,
+  IsInt,
   Length,
   Max,
   Min,
@@ -19,16 +20,8 @@ import { ApiProperty } from '@nestjs/swagger';
 export class NftSlots {
   nftIds: number[];
   slot: number;
-}
-
-class RewardTierBodyParams {
-  name: string;
-  numberOfWinners: number;
   minimumBid: number;
-  nftsPerWinner: number;
-  nftIds: number[];
 }
-
 export class UpdateRewardTierParams {
   @IsNumberString()
   id: string;
@@ -71,28 +64,19 @@ export class UpdateRewardTierBody {
   numberOfWinners: number;
 
   @ApiProperty({
-    description: 'The number of allocated nfts per winner',
-    example: 1,
+    description: 'The range of allocated nfts per winner',
+    example: '1-3',
   })
-  @IsNumber()
+  @IsString()
   @IsOptional()
-  nftsPerWinner: number;
-
-  @ApiProperty({
-    description: 'The minimum bid associated with the reward tier',
-    example: 0.1,
-    required: false,
-  })
-  @IsNumber()
-  @IsOptional()
-  minimumBid: number;
+  nftsPerWinner: string;
 
   @ApiProperty({
     description: 'The nft slot configuration',
     example: [
-      { nftIds: [1, 4], slot: 1 },
-      { nftIds: [2, 5], slot: 2 },
-      { nftIds: [3, 6], slot: 3 },
+      { nftIds: [1, 4], slot: 1, minimumBid: 0.1 },
+      { nftIds: [2, 5], slot: 2, minimumBid: 0.2 },
+      { nftIds: [3, 6], slot: 3, minimumBid: 0.3 },
     ],
   })
   @IsArray()
@@ -120,13 +104,6 @@ export class CreateAuctionBody {
   @IsString()
   @Length(1, 100)
   name: string;
-
-  @ApiProperty({
-    description: 'Starting bid of the auction',
-    example: 0.1,
-  })
-  @IsNumber()
-  startingBid: number;
 
   @ApiProperty({
     description: 'Address of the bidding token',
@@ -198,14 +175,6 @@ export class EditAuctionBody {
   @IsOptional()
   @Length(1, 100)
   name: string;
-
-  @ApiProperty({
-    description: 'Starting bid of the auction',
-    example: 0.1,
-  })
-  @IsNumber()
-  @IsOptional()
-  startingBid: number;
 
   @ApiProperty({
     description: 'Address of the bidding token',
@@ -280,29 +249,12 @@ export class EditAuctionBody {
   @IsNumber()
   @IsOptional()
   onChainId: number;
-}
 
-export class DeployAuctionBody {
-  @ApiProperty({
-    description: `The auction's id from the back end`,
-    example: 1,
-  })
-  @IsNumber()
-  auctionId: number;
-
-  @ApiProperty({
-    description: `The auction's id from the smart contract`,
-    example: 1,
-  })
-  @IsNumber()
-  onChainId: number;
-
-  @ApiProperty({
-    description: `The tx hash of the create auction contract call`,
-    example: '0xb4bc263278d3ф82a652a8d73a6bfd8ec0ba1a63923bbb4f38147fb8a943da26d',
-  })
   @IsString()
-  txHash: string;
+  @IsOptional()
+  @Length(1, 255)
+  @ApiProperty({ description: 'The hash of the createAuction transaction', example: `0x0000000000` })
+  createAuctionTxHash: string;
 }
 
 export class DepositNftsBody {
@@ -356,26 +308,18 @@ export class CreateRewardTierBody {
   numberOfWinners: number;
 
   @ApiProperty({
-    description: 'The number of allocated nfts per winner',
-    example: 1,
+    description: 'The range of allocated nfts per winner',
+    example: '1-3',
   })
-  @IsNumber()
-  nftsPerWinner: number;
-
-  @ApiProperty({
-    description: 'The minimum bid associated with the reward tier',
-    example: 0.1,
-    required: false,
-  })
-  @IsNumber()
-  minimumBid: number;
+  @IsString()
+  nftsPerWinner: string;
 
   @ApiProperty({
     description: 'The nft slot configuration',
     example: [
-      { nftIds: [1, 4], slot: 1 },
-      { nftIds: [2, 5], slot: 2 },
-      { nftIds: [3, 6], slot: 3 },
+      { nftIds: [1, 4], slot: 1, minimumBid: 0.1 },
+      { nftIds: [2, 5], slot: 2, minimumBid: 0.2 },
+      { nftIds: [3, 6], slot: 3, minimumBid: 0.3 },
     ],
   })
   @IsArray()
@@ -423,10 +367,6 @@ export class UpdateAuctionBody {
   @IsOptional()
   bidCurrency: string;
 
-  @IsNumber()
-  @IsOptional()
-  startingBid: number;
-
   @IsString()
   @IsOptional()
   txHash: string;
@@ -472,14 +412,9 @@ export class EditRewardTierResponse {
   numberOfWinners: number;
 
   @ApiProperty({
-    example: 1,
+    example: '1-3',
   })
-  nftsPerWinner: number;
-
-  @ApiProperty({
-    example: '0.1',
-  })
-  minimumBid: string;
+  nftsPerWinner: string;
 
   @ApiProperty({
     example: 1,
@@ -555,9 +490,6 @@ export class AuctionResponse {
   headline: string;
 
   @ApiProperty()
-  startingBid: number;
-
-  @ApiProperty()
   tokenAddress: string;
 
   @ApiProperty()
@@ -608,10 +540,7 @@ export class RewardTierResponse {
   numberOfWinners: number;
 
   @ApiProperty()
-  nftsPerWinner: number;
-
-  @ApiProperty()
-  minimumBid: number;
+  nftsPerWinner: string;
 
   @ApiProperty()
   tierPosition: number;
@@ -647,9 +576,123 @@ export class GetMyAuctionsResponse {
 
 export class GetAuctionPageParams {
   @ApiProperty({
-    example: '1',
-    description: 'The id of the auction to be fetched',
+    example: 'username1',
+    description: 'The username of the artist',
   })
+  @IsString()
+  username: string;
+
+  @ApiProperty({
+    example: 'auctionName1',
+    description: 'The unique name of the auction',
+  })
+  @IsString()
+  auctionName: string;
+}
+
+export class PlaceBidBody {
+  @ApiProperty({
+    example: 1,
+    description: 'The id of the auction to which the user is bidding',
+  })
+  @IsNumber()
+  auctionId: number;
+
+  @ApiProperty({
+    example: '0.1',
+    description: 'Amount of crypto the user is bidding',
+  })
+  @IsNumber()
+  amount: number;
+}
+
+export class ChangeAuctionStatus {
+  @ApiProperty({
+    example: 1,
+    description: 'The id of the auction that the status will be changing',
+  })
+  @IsNumber()
+  auctionId: number;
+
+  @ApiProperty({
+    example: [
+      { name: 'canceled', value: true },
+      { name: 'depositing', value: false },
+    ],
+    description: 'Array of statuses that need to be changed',
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  statuses: StatusChange[];
+}
+
+class StatusChange {
+  name: string;
+  value: boolean;
+}
+export class AddRewardTierBodyParams {
+  @ApiProperty({
+    description: 'The id of the Auction on which the tier should be added',
+    example: '1',
+  })
+  @IsInt()
+  auctionId: number;
+
+  @ApiProperty({
+    type: CreateRewardTierBody,
+  })
+  @Type(() => CreateRewardTierBody)
+  rewardTier: CreateRewardTierBody;
+}
+
+export class GetAuctionsQuery {
   @IsNumberString()
-  id: string;
+  @IsOptional()
+  @ApiProperty({
+    example: 8,
+    description: 'The number of returned auction items ',
+    type: 'number',
+    required: false,
+  })
+  limit: string;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    example: 0,
+    description: 'The number of auction items to be skipped',
+    type: 'number',
+    required: false,
+  })
+  offset: string;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    example: 1,
+    description: 'User id',
+    type: 'number',
+    required: false,
+  })
+  userId: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    example: 'ending',
+    description: 'The filter in which the actions should be ordered by',
+    type: 'string',
+    required: false,
+  })
+  filters: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    example: 'universe',
+    description: 'Searching by auction or artist name',
+    type: 'string',
+    required: false,
+  })
+  search: string;
 }

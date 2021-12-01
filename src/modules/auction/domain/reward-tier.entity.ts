@@ -21,11 +21,11 @@ export class RewardTier {
   @Column({ type: 'integer' })
   numberOfWinners: number;
 
-  @Column({ type: 'integer' })
-  nftsPerWinner: number;
+  @Column()
+  nftsPerWinner: string;
 
-  @Column({ type: 'decimal', nullable: true })
-  minimumBid: number;
+  @Column({ type: 'jsonb', nullable: true })
+  slots: { index: number; minimumBid: number }[];
 
   @Column()
   tierPosition: number;

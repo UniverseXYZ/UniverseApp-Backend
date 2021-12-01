@@ -12,14 +12,14 @@ export class Auction {
   @Exclude()
   userId: number;
 
+  @Column({ nullable: true })
+  owner: string;
+
   @Column()
   name: string;
 
   @Column({ nullable: true })
   headline: string;
-
-  @Column({ type: 'decimal' })
-  startingBid: number;
 
   @Column()
   tokenAddress: string;
@@ -52,16 +52,36 @@ export class Auction {
   backgroundImageBlur: boolean;
 
   @Column({ default: false })
-  @Exclude()
   onChain: boolean;
 
+  @Column({ default: true })
+  initialised: boolean;
+
+  @Column({ default: false })
+  depositedNfts: boolean;
+
+  @Column({ default: false })
+  canceled: boolean;
+
+  @Column({ default: false })
+  finalised: boolean;
+
   @Column({ nullable: true })
-  @Exclude()
   onChainId: number;
 
   @Column({ nullable: true })
   @Exclude()
   txHash: string;
+
+  @Column({ nullable: true })
+  @Exclude()
+  createAuctionTxHash: string;
+
+  @Column({ type: 'bigint', nullable: true })
+  onChainStartTime: string;
+
+  @Column({ type: 'bigint', nullable: true })
+  onChainEndTime: string;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -22,14 +22,17 @@ import {
   GetAuctionPageParams,
   GetMyAuctionsQuery,
   GetMyAuctionsResponse,
+  PlaceBidBody,
   UpdateAuctionExtraBody,
   UpdateRewardTierBody,
   UpdateRewardTierExtraBody,
   UpdateRewardTierParams,
   UploaductionLandingImagesParams,
-  DeployAuctionBody,
   WithdrawNftsBody,
   DepositNftsBody,
+  ChangeAuctionStatus,
+  AddRewardTierBodyParams,
+  GetAuctionsQuery,
 } from './dto';
 import { AuctionService } from '../service-layer/auction.service';
 import { JwtAuthGuard, OptionalJwtAuthGuard } from '../../auth/jwt-auth.guard';
@@ -49,12 +52,12 @@ export class AuctionController {
     return await this.auctionService.createAuction(req.user.sub, createAuctionBody);
   }
 
-  @Post('/auctions/deploy')
+  @Post('/auctions/cancel/:auctionId')
   @ApiTags('auction')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Set on chain properies of auction' })
-  async deployAuction(@Req() req, @Body() deployAuctionBody: DeployAuctionBody) {
-    return await this.auctionService.deployAuction(req.user.sub, deployAuctionBody);
+  async cancelOnChainAuction(@Req() req, @Param('auctionId') auctionId: number) {
+    return await this.auctionService.cancelOnChainAuction(req.user.sub, auctionId);
   }
 
   @Post('/auctions/depositNfts')
@@ -156,7 +159,7 @@ export class AuctionController {
     );
   }
 
-  @Get('pages/my-auctions/past')
+  @Get('/pages/my-auctions/past')
   @UseGuards(JwtAuthGuard)
   @ApiTags('auction')
   @ApiOperation({ summary: 'Get my past auctions' })
@@ -169,12 +172,53 @@ export class AuctionController {
     );
   }
 
-  @Get('pages/auctions/:id')
-  @UseGuards(OptionalJwtAuthGuard)
+  @Get('/pages/auctions/past')
+  @ApiTags('auction')
+  @ApiOperation({ summary: 'Get past auctions' })
+  @ApiResponse({ type: GetMyAuctionsResponse, status: 200 })
+  async getPastAuctions(@Query() query: GetAuctionsQuery) {
+    return await this.auctionService.getPastAuctions(
+      parseInt(query.userId),
+      parseInt(query.limit) || undefined,
+      parseInt(query.offset) || undefined,
+      query.filters,
+      query.search,
+    );
+  }
+
+  @Get('/pages/auctions/active')
+  @ApiTags('auction')
+  @ApiOperation({ summary: 'Get active auctions' })
+  @ApiResponse({ type: GetMyAuctionsResponse, status: 200 })
+  async getActiveAuctions(@Query() query: GetAuctionsQuery) {
+    return await this.auctionService.getActiveAuctions(
+      parseInt(query.userId),
+      parseInt(query.limit) || undefined,
+      parseInt(query.offset) || undefined,
+      query.filters,
+      query.search,
+    );
+  }
+
+  @Get('/pages/auctions/future')
+  @ApiTags('auction')
+  @ApiOperation({ summary: 'Get future auctions' })
+  @ApiResponse({ type: GetMyAuctionsResponse, status: 200 })
+  async getFutureAuctions(@Query() query: GetAuctionsQuery) {
+    return await this.auctionService.getFutureAuctions(
+      parseInt(query.userId),
+      parseInt(query.limit) || undefined,
+      parseInt(query.offset) || undefined,
+      query.filters,
+      query.search,
+    );
+  }
+
+  @Get('pages/auctions/:username/:auctionName')
   @ApiTags('auction')
   @ApiOperation({ summary: 'Get the public page of the auction' })
   async getAuctionPage(@Req() req, @Param() params: GetAuctionPageParams) {
-    return await this.auctionService.getAuctionPage(req.user.sub, parseInt(params.id));
+    return await this.auctionService.getAuctionPage(params.username, params.auctionName);
   }
 
   @Delete('auctions/:id')
@@ -185,22 +229,22 @@ export class AuctionController {
     return await this.auctionService.cancelFutureAuction(req.user.sub, id);
   }
 
-  /**
-   * old endpoints
-   */
-  //Todo: add endpoint to get reward tier ?
-  //Todo: needs to check that there are enough nfts, and that the nfts are not already set as rewards in other tiers
-  @Post('reward-tier')
+  @Post('/add-reward-tier')
   @UseGuards(JwtAuthGuard)
-  async createRewardTier(@Req() req, @Body() createRewardTierBody: CreateRewardTierBody) {
-    // return await this.auctionService.createRewardTier(req.user.sub, createRewardTierBody.auctionId, {
-    //   name: createRewardTierBody.name,
-    //   numberOfWinners: createRewardTierBody.numberOfWinners,
-    //   nftsPerWinner: createRewardTierBody.nftsPerWinner,
-    //   nftIds: createRewardTierBody.nftIds,
-    //   minimumBid: createRewardTierBody.minimumBid,
-    //   tierPosition: createRewardTierBody.tierPosition,
-    // });
+  @ApiTags('auction')
+  @ApiOperation({ summary: 'Add a Reward Tier to a Specific Auction' })
+  @ApiResponse({ type: EditRewardTierResponse, status: 200 })
+  async createRewardTier(@Req() req, @Body() addRewardTierBodyParams: AddRewardTierBodyParams) {
+    return await this.auctionService.createRewardTier(req.user.sub, addRewardTierBodyParams);
+  }
+
+  @Delete('/reward-tiers/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiTags('auction')
+  @ApiOperation({ summary: 'Remove a Reward Tier from a specific Auction' })
+  @ApiResponse({ type: EditRewardTierResponse, status: 200 })
+  async removeRewardTier(@Req() req, @Param('id') id) {
+    return await this.auctionService.removeRewardTier(req.user.sub, id);
   }
 
   @Patch('reward-tier-extra-data')
@@ -285,10 +329,34 @@ export class AuctionController {
     return await this.auctionService.listAuctionsByStatus(status, page, limit);
   }
 
+  @Post('auction/placeBid')
+  @UseGuards(JwtAuthGuard)
+  async placeAuctionBid(@Req() req, @Body() placeBidBody: PlaceBidBody) {
+    return await this.auctionService.placeAuctionBid(req.user.sub, placeBidBody);
+  }
+
+  @Delete('auction/:id/cancelBid')
+  @UseGuards(JwtAuthGuard)
+  async cancelAuctionBid(@Req() req, @Param('id') auctionId = 0) {
+    return await this.auctionService.cancelAuctionBid(req.user.sub, auctionId);
+  }
+
+  @Get('pages/my-bids')
+  @UseGuards(JwtAuthGuard)
+  async getUserBids(@Req() req) {
+    return await this.auctionService.getUserBids(req.user.sub);
+  }
+
   //Todo: add tier info
   @Get('auction/{:id}')
   @UseGuards(JwtAuthGuard)
   async getAuction(@Req() req, @Param('id') id = 0) {
     return await this.auctionService.getAuction(id);
+  }
+
+  @Patch('auction/status')
+  @UseGuards(JwtAuthGuard)
+  async changeAuctionStatus(@Req() req, @Body() changeAuctionStatusBody: ChangeAuctionStatus) {
+    return await this.auctionService.changeAuctionStatus(req.user.sub, changeAuctionStatusBody);
   }
 }
