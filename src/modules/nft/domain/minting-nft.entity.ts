@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { Exclude } from 'class-transformer';
-import { TokenUriStorageEnum } from './saved-nft.entity';
+import { MetadataStorageEnum } from './saved-nft.entity';
 
 type TxStatus = 'pending' | 'failed' | 'succeded';
 
@@ -27,10 +27,10 @@ export class MintingNft {
 
   @Column({ 
     type: 'enum',
-    enum: TokenUriStorageEnum,
-    default: TokenUriStorageEnum.OFFCHAIN,
+    enum: MetadataStorageEnum,
+    default: MetadataStorageEnum.ONCHAIN,
   })
-  tokenUriStorage: TokenUriStorageEnum;
+  metadataStorage: MetadataStorageEnum;
 
   @Column()
   name: string;
