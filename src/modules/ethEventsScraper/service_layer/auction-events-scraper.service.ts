@@ -498,14 +498,14 @@ export class AuctionEventsScraperService {
             return;
           }
 
-          const revenueClaimed = utils.formatUnits(event.data.amount, auction.tokenDecimals);
-          auction.revenueClaimed += +revenueClaimed;
+          const revenueClaimed = parseFloat(utils.formatUnits(event.data.amount, auction.tokenDecimals));
+          auction.revenueClaimed = +auction.revenueClaimed + revenueClaimed;
           await transactionalEntityManager.save(auction);
 
           event.processed = true;
           await transactionalEntityManager.save(event);
 
-          this.auctionGateway.notifyAuctionRevenueWithdraw(auction.id, auction.revenueClaimed);
+          this.auctionGateway.notifyAuctionRevenueWithdraw(auction.id, auction.revenueClaimed, event.data.recipient);
         })
         .catch((error) => {
           this.logger.error(error);
