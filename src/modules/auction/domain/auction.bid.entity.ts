@@ -8,9 +8,9 @@ export class AuctionBid {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ nullable: true })
   @Exclude()
-  userId: number;
+  bidder: string;
 
   @Column()
   @Exclude()
@@ -18,6 +18,9 @@ export class AuctionBid {
 
   @Column({ type: 'decimal' })
   amount: number;
+
+  @Column({ nullable: true })
+  onChainSlotIndex: number;
 
   @CreateDateColumn()
   createdAt: Date;

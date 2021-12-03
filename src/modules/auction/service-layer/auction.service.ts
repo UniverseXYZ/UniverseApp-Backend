@@ -165,12 +165,11 @@ export class AuctionService {
 
     const bids = await this.auctionBidRepository
       .createQueryBuilder('bid')
-      .leftJoinAndMapOne('bid.user', User, 'bidder', 'bidder.id = bid.userId')
+      .leftJoinAndMapOne('bid.user', User, 'bidder', 'bidder.address = bid.bidder')
       .where({ auctionId: auction.id })
       .orderBy('bid.amount', 'DESC')
+      .addOrderBy('bid.id', 'ASC')
       .getMany();
-
-    bids.sort((a, b) => b.amount - a.amount);
 
     return {
       auction: classToPlain(auction),
@@ -199,12 +198,12 @@ export class AuctionService {
 
     await this.validateAuctionPermissions(userId, auctionId);
 
-    const { depositedNfts, canceled, finalised, startDate } = auction;
+    const { depositedNfts, canceled, finalised, startDate, onChain } = auction;
 
     const now = new Date();
     const started = now >= startDate;
 
-    if (depositedNfts || canceled || finalised || started) {
+    if (started || finalised || depositedNfts || (onChain && !canceled)) {
       throw new AuctionCannotBeModifiedException();
     }
 
@@ -226,7 +225,7 @@ export class AuctionService {
     this.validateSlotIndexOrder(nftSlots);
     this.validateSlotsMinimumBid(nftSlots);
 
-    const slots = nftSlots.map((data) => ({ index: data.slot, minimumBid: data.minimumBid }));
+    const slots = nftSlots.map((data) => ({ index: data.slot, minimumBid: data.minimumBid, capturedRevenue: false }));
     tier.slots = slots;
     tier.auctionId = auction.id;
     tier.userId = userId;
@@ -266,9 +265,9 @@ export class AuctionService {
 
     const auction = await this.auctionRepository.findOne({ where: { id: auctionId } });
 
-    const { onChainId } = auction;
+    const { canceled, onChain, depositedNfts, finalised } = auction;
 
-    if (onChainId) {
+    if (finalised || depositedNfts || (onChain && !canceled)) {
       // If the auction has already been created on smart contract level we cannot modify it
       throw new AuctionCannotBeModifiedException();
     }
@@ -378,7 +377,11 @@ export class AuctionService {
           await transactionalEntityManager.save(adjacentTier);
         }
 
-        const slots = params.nftSlots.map((data) => ({ index: data.slot, minimumBid: data.minimumBid }));
+        const slots = params.nftSlots.map((data) => ({
+          index: data.slot,
+          minimumBid: data.minimumBid,
+          capturedRevenue: false,
+        }));
         tier.slots = slots;
       }
 
@@ -537,7 +540,11 @@ export class AuctionService {
       rewardTier.name = rewardTierBody.name;
       rewardTier.numberOfWinners = rewardTierBody.numberOfWinners;
       rewardTier.nftsPerWinner = rewardTierBody.nftsPerWinner;
-      const slots = rewardTierBody.nftSlots.map((data) => ({ index: data.slot, minimumBid: data.minimumBid }));
+      const slots = rewardTierBody.nftSlots.map((data) => ({
+        index: data.slot,
+        minimumBid: data.minimumBid,
+        capturedRevenue: false,
+      }));
       rewardTier.slots = slots;
       rewardTier.tierPosition = index;
       await rewardTierRepository.save(rewardTier);
@@ -637,9 +644,8 @@ export class AuctionService {
   async cancelFutureAuction(userId: number, auctionId: number) {
     const auction = await this.validateAuctionPermissions(userId, auctionId);
     let canceled = false;
-    const now = new Date();
     // TODO: Add more validations if needed
-    if (now < auction.startDate) {
+    if (!(auction.depositedNfts || (!auction.canceled && auction.onChain))) {
       await getManager().transaction(async (transactionalEntityManager) => {
         await transactionalEntityManager.delete(Auction, { id: auctionId });
         const rewardTiers = await this.rewardTierRepository.find({ auctionId: auction.id });
@@ -769,9 +775,29 @@ export class AuctionService {
     const user = await this.usersService.getById(userId, true);
     const { count, auctions } = await this.getMyPastAuctions(userId, limit, offset);
     const auctionsWithTiers = await this.formatMyAuctions(auctions);
-    let auctionsWithBids = [];
+    let auctionsWithBidders = [];
     if (auctionsWithTiers.length) {
-      auctionsWithBids = await this.attachBidsInfo(auctionsWithTiers);
+      const auctionsWithBidsInfo = await this.attachBidsInfo(auctionsWithTiers);
+
+      const bids = await this.auctionBidRepository
+        .createQueryBuilder('bid')
+        .leftJoinAndMapOne('bid.user', User, 'bidder', 'bidder.address = bid.bidder')
+        .where({ auctionId: In(auctionsWithBidsInfo.map((a) => a.id)) })
+        .orderBy('bid.amount', 'DESC')
+        .addOrderBy('bid.id', 'ASC')
+        .getMany();
+
+      const bidsByAuctionId = bids.reduce((acc, bid) => {
+        const group = acc[bid.auctionId] || [];
+        group.push(bid);
+        acc[bid.auctionId] = group;
+        return acc;
+      }, {});
+
+      auctionsWithBidders = auctionsWithBidsInfo.map((auction) => ({
+        ...auction,
+        bidders: bidsByAuctionId[auction.id],
+      }));
     }
 
     return {
@@ -780,7 +806,7 @@ export class AuctionService {
         offset,
         limit,
       },
-      auctions: auctionsWithBids,
+      auctions: auctionsWithBidders,
     };
   }
 
@@ -1178,11 +1204,11 @@ export class AuctionService {
     };
   }
 
-  public async getUserBids(userId: number) {
+  public async getUserBids(address: string) {
     //TODO: Add Pagination as this request can get quite computation heavy
 
     // User should have only one bid per auction -> if user places multiple bids their amount should be accumulated into a single bid (That's how smart contract works)
-    const bids = await this.auctionBidRepository.find({ where: { userId: userId }, order: { createdAt: 'DESC' } });
+    const bids = await this.auctionBidRepository.find({ where: { bidder: address }, order: { createdAt: 'DESC' } });
     const auctionIds = bids.map((bid) => bid.auctionId);
 
     const [auctions, rewardTiers, bidsQuery] = await Promise.all([

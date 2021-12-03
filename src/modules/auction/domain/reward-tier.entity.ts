@@ -25,7 +25,7 @@ export class RewardTier {
   nftsPerWinner: string;
 
   @Column({ type: 'jsonb', nullable: true })
-  slots: { index: number; minimumBid: number }[];
+  slots: { index: number; minimumBid: number; capturedRevenue: boolean }[];
 
   @Column()
   tierPosition: number;

@@ -341,10 +341,10 @@ export class AuctionController {
     return await this.auctionService.cancelAuctionBid(req.user.sub, auctionId);
   }
 
-  @Get('pages/my-bids')
+  @Get('pages/my-bids/:address')
   @UseGuards(JwtAuthGuard)
-  async getUserBids(@Req() req) {
-    return await this.auctionService.getUserBids(req.user.sub);
+  async getUserBids(@Req() req, @Param('address') address) {
+    return await this.auctionService.getUserBids(address);
   }
 
   //Todo: add tier info
