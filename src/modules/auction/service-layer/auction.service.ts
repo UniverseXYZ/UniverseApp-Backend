@@ -1185,11 +1185,11 @@ export class AuctionService {
     };
   }
 
-  public async getUserBids(userId: number) {
+  public async getUserBids(address: string) {
     //TODO: Add Pagination as this request can get quite computation heavy
 
     // User should have only one bid per auction -> if user places multiple bids their amount should be accumulated into a single bid (That's how smart contract works)
-    const bids = await this.auctionBidRepository.find({ where: { userId: userId }, order: { createdAt: 'DESC' } });
+    const bids = await this.auctionBidRepository.find({ where: { bidder: address }, order: { createdAt: 'DESC' } });
     const auctionIds = bids.map((bid) => bid.auctionId);
 
     const [auctions, rewardTiers, bidsQuery] = await Promise.all([
