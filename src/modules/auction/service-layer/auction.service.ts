@@ -168,9 +168,8 @@ export class AuctionService {
       .leftJoinAndMapOne('bid.user', User, 'bidder', 'bidder.address = bid.bidder')
       .where({ auctionId: auction.id })
       .orderBy('bid.amount', 'DESC')
+      .addOrderBy('bid.id', 'ASC')
       .getMany();
-
-    bids.sort((a, b) => b.amount - a.amount);
 
     return {
       auction: classToPlain(auction),

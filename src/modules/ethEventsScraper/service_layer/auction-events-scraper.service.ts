@@ -60,6 +60,8 @@ export class AuctionEventsScraperService {
     private bidWithdrawnEventRepository: Repository<BidWithdrawnEvent>,
     @InjectRepository(WithdrawnRevenueEvent)
     private withdrawnRevenueEventRepository: Repository<WithdrawnRevenueEvent>,
+    @InjectRepository(AuctionBid)
+    private auctionBidRepository: Repository<AuctionBid>,
 
     private connection: Connection,
     private auctionGateway: AuctionGateway,
@@ -395,16 +397,67 @@ export class AuctionEventsScraperService {
     }
   }
 
-  // TODO: Implement logic
   private async syncBidMatchedEvents() {
     const events = await this.matchedBidEventRepository.find({ where: { processed: false } });
     this.logger.log(`found ${events.length} BidMatched events`);
     for (const event of events) {
+      let auctionId = 0;
       await this.connection
-        .transaction(async (transactionalEntityManager) => {})
+        .transaction(async (transactionalEntityManager) => {
+          const auction = await transactionalEntityManager.findOne(Auction, {
+            where: { onChainId: event.data?.auctionId },
+          });
+
+          if (!auction) {
+            this.logger.warn(`auction not found with onChainId: ${event.data?.auctionId}`);
+            return;
+          }
+
+          const bids = await transactionalEntityManager.find(AuctionBid, {
+            where: { auctionId: auction.id },
+            order: { amount: 'DESC', id: 'ASC' },
+          });
+
+          const parsedAmount = utils.formatUnits(event.data.winningBidAmount, auction.tokenDecimals);
+
+          if (event.data.slotIndex > bids.length) {
+            this.logger.warn(`didn't find matching bid to slotIndex ${event.data.slotIndex}`);
+            await transactionalEntityManager.create(AuctionBid, {
+              amount: +parsedAmount,
+              bidder: event.data.winner,
+              auctionId: auction.id,
+              onChainSlotIndex: event.data.slotIndex,
+            });
+          } else {
+            const bid = bids[event.data.slotIndex];
+            await transactionalEntityManager.update(AuctionBid, bid.id, {
+              amount: +parsedAmount,
+              bidder: event.data.winner,
+              auctionId: auction.id,
+              onChainSlotIndex: event.data.slotIndex,
+            });
+          }
+
+          event.processed = true;
+          await transactionalEntityManager.save(event);
+
+          auctionId = auction.id;
+        })
         .catch((error) => {
           this.logger.error(error);
         });
+
+      if (auctionId) {
+        const bids = await this.auctionBidRepository
+          .createQueryBuilder('bid')
+          .leftJoinAndMapOne('bid.user', User, 'bidder', 'bidder.address = bid.bidder')
+          .where({ auctionId })
+          .orderBy('bid.amount', 'DESC')
+          .addOrderBy('bid.id', 'ASC')
+          .getMany();
+
+        this.auctionGateway.notifyBidMatched(auctionId, bids);
+      }
     }
   }
 

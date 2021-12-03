@@ -8,6 +8,7 @@ import {
 import { Server } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
+import { AuctionBid } from '../domain/auction.bid.entity';
 
 @WebSocketGateway({ namespace: 'auctions-socket' })
 export class AuctionGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
@@ -59,5 +60,9 @@ export class AuctionGateway implements OnGatewayInit, OnGatewayConnection, OnGat
 
   public notifyAuctionBidWithdrawn(auctionId: number, bidInfo: { user: any; amount: number }) {
     this.server.emit(`auction_${auctionId}_bidWithdrawn`, bidInfo);
+  }
+
+  public notifyBidMatched(auctionId: number, bids: AuctionBid[]) {
+    this.server.emit(`auction_${auctionId}_bidMatched`, bids);
   }
 }
