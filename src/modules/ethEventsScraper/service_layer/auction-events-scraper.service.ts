@@ -498,7 +498,7 @@ export class AuctionEventsScraperService {
             return;
           }
 
-          const revenueClaimed = parseFloat(utils.formatUnits(event.data.amount, auction.tokenDecimals));
+          const revenueClaimed = +utils.formatUnits(event.data.amount.toString(), auction.tokenDecimals);
           auction.revenueClaimed = +auction.revenueClaimed + revenueClaimed;
           await transactionalEntityManager.save(auction);
 
