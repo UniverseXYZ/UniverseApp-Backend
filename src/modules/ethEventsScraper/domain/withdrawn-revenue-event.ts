@@ -1,11 +1,9 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 type WithdrawnRevenueEventData = {
+  recipient: string;
   auctionId: number;
-  slotIndex: number;
-  slotReservePrice: number;
-  winningBidAmount: number;
-  winner: string;
+  amount: string;
   time: number;
 };
 

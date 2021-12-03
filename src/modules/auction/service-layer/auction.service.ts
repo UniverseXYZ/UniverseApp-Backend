@@ -226,7 +226,7 @@ export class AuctionService {
     this.validateSlotIndexOrder(nftSlots);
     this.validateSlotsMinimumBid(nftSlots);
 
-    const slots = nftSlots.map((data) => ({ index: data.slot, minimumBid: data.minimumBid }));
+    const slots = nftSlots.map((data) => ({ index: data.slot, minimumBid: data.minimumBid, capturedRevenue: false }));
     tier.slots = slots;
     tier.auctionId = auction.id;
     tier.userId = userId;
@@ -378,7 +378,11 @@ export class AuctionService {
           await transactionalEntityManager.save(adjacentTier);
         }
 
-        const slots = params.nftSlots.map((data) => ({ index: data.slot, minimumBid: data.minimumBid }));
+        const slots = params.nftSlots.map((data) => ({
+          index: data.slot,
+          minimumBid: data.minimumBid,
+          capturedRevenue: false,
+        }));
         tier.slots = slots;
       }
 
@@ -537,7 +541,11 @@ export class AuctionService {
       rewardTier.name = rewardTierBody.name;
       rewardTier.numberOfWinners = rewardTierBody.numberOfWinners;
       rewardTier.nftsPerWinner = rewardTierBody.nftsPerWinner;
-      const slots = rewardTierBody.nftSlots.map((data) => ({ index: data.slot, minimumBid: data.minimumBid }));
+      const slots = rewardTierBody.nftSlots.map((data) => ({
+        index: data.slot,
+        minimumBid: data.minimumBid,
+        capturedRevenue: false,
+      }));
       rewardTier.slots = slots;
       rewardTier.tierPosition = index;
       await rewardTierRepository.save(rewardTier);
