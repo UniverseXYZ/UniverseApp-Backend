@@ -198,12 +198,12 @@ export class AuctionService {
 
     await this.validateAuctionPermissions(userId, auctionId);
 
-    const { depositedNfts, canceled, finalised, startDate } = auction;
+    const { depositedNfts, canceled, finalised, startDate, onChain } = auction;
 
     const now = new Date();
     const started = now >= startDate;
 
-    if (depositedNfts || canceled || finalised || started) {
+    if (started || finalised || depositedNfts || (onChain && !canceled)) {
       throw new AuctionCannotBeModifiedException();
     }
 
@@ -265,9 +265,9 @@ export class AuctionService {
 
     const auction = await this.auctionRepository.findOne({ where: { id: auctionId } });
 
-    const { onChainId } = auction;
+    const { canceled, onChain, depositedNfts, finalised } = auction;
 
-    if (onChainId) {
+    if (finalised || depositedNfts || (onChain && !canceled)) {
       // If the auction has already been created on smart contract level we cannot modify it
       throw new AuctionCannotBeModifiedException();
     }
@@ -644,9 +644,8 @@ export class AuctionService {
   async cancelFutureAuction(userId: number, auctionId: number) {
     const auction = await this.validateAuctionPermissions(userId, auctionId);
     let canceled = false;
-    const now = new Date();
     // TODO: Add more validations if needed
-    if (now < auction.startDate) {
+    if (!(auction.depositedNfts || (!auction.canceled && auction.onChain))) {
       await getManager().transaction(async (transactionalEntityManager) => {
         await transactionalEntityManager.delete(Auction, { id: auctionId });
         const rewardTiers = await this.rewardTierRepository.find({ auctionId: auction.id });
