@@ -71,6 +71,6 @@ export class AuctionGateway implements OnGatewayInit, OnGatewayConnection, OnGat
   }
 
   public notifyERC721Claimed(auctionId: number, nftInfo: { claimer: string; slotIndex: number }) {
-    this.server.emit(`auction_${auctionId}_ERC721Claimed`, nftInfo);
+    this.server.emit(`auction_${auctionId}_claimedNft`, nftInfo);
   }
 }
