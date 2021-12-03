@@ -776,9 +776,29 @@ export class AuctionService {
     const user = await this.usersService.getById(userId, true);
     const { count, auctions } = await this.getMyPastAuctions(userId, limit, offset);
     const auctionsWithTiers = await this.formatMyAuctions(auctions);
-    let auctionsWithBids = [];
+    let auctionsWithBidders = [];
     if (auctionsWithTiers.length) {
-      auctionsWithBids = await this.attachBidsInfo(auctionsWithTiers);
+      const auctionsWithBidsInfo = await this.attachBidsInfo(auctionsWithTiers);
+
+      const bids = await this.auctionBidRepository
+        .createQueryBuilder('bid')
+        .leftJoinAndMapOne('bid.user', User, 'bidder', 'bidder.address = bid.bidder')
+        .where({ auctionId: In(auctionsWithBidsInfo.map((a) => a.id)) })
+        .orderBy('bid.amount', 'DESC')
+        .addOrderBy('bid.id', 'ASC')
+        .getMany();
+
+      const bidsByAuctionId = bids.reduce((acc, bid) => {
+        const group = acc[bid.auctionId] || [];
+        group.push(bid);
+        acc[bid.auctionId] = group;
+        return acc;
+      }, {});
+
+      auctionsWithBidders = auctionsWithBidsInfo.map((auction) => ({
+        ...auction,
+        bidders: bidsByAuctionId[auction.id],
+      }));
     }
 
     return {
@@ -787,7 +807,7 @@ export class AuctionService {
         offset,
         limit,
       },
-      auctions: auctionsWithBids,
+      auctions: auctionsWithBidders,
     };
   }
 
