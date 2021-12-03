@@ -304,35 +304,25 @@ export class AuctionEventsScraperService {
             return;
           }
 
-          const user = await transactionalEntityManager.findOne(User, { address: event.data?.sender });
-          if (!user) {
-            this.logger.warn(`user not found with address: ${event.data?.sender}`);
-            return;
-          }
-
-          const existingBid = await transactionalEntityManager.findOne(AuctionBid, {
-            where: { auctionId: auction.id, userId: user.id },
-          });
-          let bid = null;
-          const parsedAmount = utils.formatUnits(event.data.totalBid.toString(), auction.tokenDecimals);
-          if (!existingBid) {
-            bid = {
+          const bid =
+            (await transactionalEntityManager.findOne(AuctionBid, {
+              where: { auctionId: auction.id, bidder: event.data.sender },
+            })) ||
+            (await transactionalEntityManager.create(AuctionBid, {
               auctionId: auction.id,
-              userId: user.id,
-              amount: +parsedAmount,
-            };
-            await transactionalEntityManager.save(AuctionBid, bid);
-          } else {
-            existingBid.amount = +parsedAmount;
-            await transactionalEntityManager.save(AuctionBid, existingBid);
-          }
+              bidder: event.data.sender,
+            }));
+
+          const parsedAmount = utils.formatUnits(event.data.totalBid.toString(), auction.tokenDecimals);
+          bid.amount = +parsedAmount;
+          await transactionalEntityManager.save(AuctionBid, bid);
 
           event.processed = true;
           await transactionalEntityManager.save(event);
 
           this.auctionGateway.notifyAuctionBidSubmitted(auction.id, {
-            amount: +(bid || existingBid).amount,
-            user: classToPlain(user),
+            amount: bid.amount,
+            user: bid.bidder,
           });
         })
         .catch((error) => {

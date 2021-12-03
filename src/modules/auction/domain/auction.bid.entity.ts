@@ -8,9 +8,9 @@ export class AuctionBid {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ nullable: true })
   @Exclude()
-  userId: number;
+  bidder: string;
 
   @Column()
   @Exclude()
