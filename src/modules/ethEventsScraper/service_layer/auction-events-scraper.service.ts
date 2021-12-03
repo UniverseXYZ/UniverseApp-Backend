@@ -390,6 +390,8 @@ export class AuctionEventsScraperService {
           await transactionalEntityManager.save(Auction, auction);
           event.processed = true;
           await transactionalEntityManager.save(event);
+
+          this.auctionGateway.notifyAuctionExtended(auction.id, auction.endDate);
         })
         .catch((error) => {
           this.logger.error(error);
@@ -402,6 +404,7 @@ export class AuctionEventsScraperService {
     this.logger.log(`found ${events.length} BidMatched events`);
     for (const event of events) {
       let auctionId = 0;
+      let finalised = false;
       await this.connection
         .transaction(async (transactionalEntityManager) => {
           const auction = await transactionalEntityManager.findOne(Auction, {
@@ -417,8 +420,7 @@ export class AuctionEventsScraperService {
             where: { auctionId: auction.id },
             order: { amount: 'DESC', id: 'ASC' },
           });
-
-          const parsedAmount = utils.formatUnits(event.data.winningBidAmount, auction.tokenDecimals);
+          const parsedAmount = utils.formatUnits(event.data.winningBidAmount.toString(), auction.tokenDecimals);
 
           if (event.data.slotIndex > bids.length) {
             this.logger.warn(`didn't find matching bid to slotIndex ${event.data.slotIndex}`);
@@ -429,7 +431,8 @@ export class AuctionEventsScraperService {
               onChainSlotIndex: event.data.slotIndex,
             });
           } else {
-            const bid = bids[event.data.slotIndex];
+            // Slot indexes are 1 based
+            const bid = bids[event.data.slotIndex - 1];
             await transactionalEntityManager.update(AuctionBid, bid.id, {
               amount: +parsedAmount,
               bidder: event.data.winner,
@@ -438,9 +441,16 @@ export class AuctionEventsScraperService {
             });
           }
 
-          event.processed = true;
           await transactionalEntityManager.save(event);
 
+          //TODO: Set finalised only if this is the last slot of the auction
+          finalised = true;
+          if (finalised) {
+            auction.finalised = true;
+            await transactionalEntityManager.save(auction);
+          }
+          event.processed = true;
+          await transactionalEntityManager.save(event);
           auctionId = auction.id;
         })
         .catch((error) => {
@@ -456,7 +466,7 @@ export class AuctionEventsScraperService {
           .addOrderBy('bid.id', 'ASC')
           .getMany();
 
-        this.auctionGateway.notifyBidMatched(auctionId, bids);
+        this.auctionGateway.notifyBidMatched(auctionId, { bids, finalised });
       }
     }
   }
@@ -521,6 +531,9 @@ export class AuctionEventsScraperService {
                 slotCaptured = true;
                 slot.capturedRevenue = true;
                 await transactionalEntityManager.save(RewardTier, tier);
+
+                event.processed = true;
+                await transactionalEntityManager.save(event);
                 this.auctionGateway.notifyAuctionSlotCaptured(auction.id, { tierId: tier.id, slotIndex: slot.index });
                 break;
               }
