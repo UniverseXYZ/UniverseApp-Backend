@@ -21,6 +21,12 @@ import { Erc721DepositedEvent } from '../ethEventsScraper/domain/deposited-erc72
 import { AuctionCanceledEvent } from '../ethEventsScraper/domain/auction-canceled-event';
 import { Erc721WithdrawnEvent } from '../ethEventsScraper/domain/withdrawn-erc721-event';
 import { BidSubmittedEvent } from '../ethEventsScraper/domain/submitted-bid-event';
+import { CapturedRevenueEvent } from '../ethEventsScraper/domain/captured-revenue-event';
+import { Erc721ClaimedEvent } from '../ethEventsScraper/domain/claimed-erc721-event';
+import { AuctionExtendedEvent } from '../ethEventsScraper/domain/extended-auction-event';
+import { MatchedBidEvent } from '../ethEventsScraper/domain/matched-bids-event';
+import { WithdrawnRevenueEvent } from '../ethEventsScraper/domain/withdrawn-revenue-event';
+import { BidWithdrawnEvent } from '../ethEventsScraper/domain/withdrawn-bid-event';
 
 // TODO: Add db entities here
 const entities = [
@@ -44,6 +50,12 @@ const entities = [
   AuctionCanceledEvent,
   Erc721WithdrawnEvent,
   BidSubmittedEvent,
+  CapturedRevenueEvent,
+  Erc721ClaimedEvent,
+  AuctionExtendedEvent,
+  MatchedBidEvent,
+  WithdrawnRevenueEvent,
+  BidWithdrawnEvent,
 ];
 
 @Injectable()
