@@ -2,6 +2,7 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsEnum,
   IsNumber,
   IsNumberString,
   IsOptional,
@@ -14,6 +15,7 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { NftSource } from '../domain/nft.entity';
+import { MetadataStorageEnum } from '../domain/saved-nft.entity';
 
 export class EditCollectionBody {
   @IsString()
@@ -84,6 +86,17 @@ export class SaveNftBody {
     required: false,
   })
   collectionId: number;
+
+  @IsEnum(MetadataStorageEnum)
+  @ApiProperty({
+    enum: MetadataStorageEnum, 
+    example: [
+      MetadataStorageEnum.ONCHAIN, 
+      MetadataStorageEnum.OFFCHAIN
+    ],
+    required: true,
+  })
+  metadataStorage: MetadataStorageEnum;
 }
 
 export class SaveNftRoyalty {
@@ -215,6 +228,17 @@ export class EditSavedNftBody {
     required: false,
   })
   collectionId?: number;
+
+  @IsEnum(MetadataStorageEnum)
+  @ApiProperty({
+    enum: MetadataStorageEnum, 
+    example: [
+      MetadataStorageEnum.ONCHAIN, 
+      MetadataStorageEnum.OFFCHAIN
+    ],
+    required: true,
+  })
+  metadataStorage: MetadataStorageEnum;
 }
 
 export class GetNftTokenUriBody {

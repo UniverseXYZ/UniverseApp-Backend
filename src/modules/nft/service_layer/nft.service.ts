@@ -10,7 +10,8 @@ import { S3Service } from '../../file-storage/s3.service';
 import { AppConfig } from '../../configuration/configuration.service';
 import { FileSystemService } from '../../file-system/file-system.service';
 import { ArweaveService } from '../../file-storage/arweave.service';
-import { SavedNft } from '../domain/saved-nft.entity';
+// import { FleekService } from '../../file-storage/fleek.service';
+import { SavedNft, MetadataStorageEnum } from '../domain/saved-nft.entity';
 import { classToPlain, plainToClass } from 'class-transformer';
 import {
   CreateCollectionBody,
@@ -42,6 +43,7 @@ type SaveNftParams = {
   properties?: any;
   royalties: { address: string; amount: number }[];
   collectionId?: number;
+  metadataStorage: MetadataStorageEnum;
 };
 
 type EditSavedNftParams = {
@@ -52,6 +54,7 @@ type EditSavedNftParams = {
   royalties: { address: string; amount: number }[];
   txHash?: string;
   collectionId: number;
+  metadataStorage: MetadataStorageEnum;
 };
 
 type SaveCollectibleParams = {
@@ -101,6 +104,7 @@ export class NftService {
     private fileProcessingService: FileProcessingService,
     private s3Service: S3Service,
     private arweaveService: ArweaveService,
+    // private fleekService: FleekService,
     private config: AppConfig,
     private fileSystemService: FileSystemService,
   ) {}
@@ -114,6 +118,7 @@ export class NftService {
       royalties: params.royalties,
       userId: params.userId,
       collectionId: params.collectionId,
+      metadataStorage: params.metadataStorage,
     });
     const dbSavedNft = await this.savedNftRepository.save(savedNft);
     const collection = await this.nftCollectionRepository.findOne({ id: params.collectionId });
@@ -162,7 +167,7 @@ export class NftService {
       this.s3Service.uploadDocument(file.path, `${file.filename}`),
       ...uniqueFiles.map((fileItem) => this.s3Service.uploadDocument(fileItem.path, `${fileItem.fullFilename()}`)),
     ]);
-    const data = await fs.readFile(file.path);
+    const data = await fs.readFile(file.path);  
     const arweaveUrl = await this.arweaveService.storeData(data, file.mimetype);
 
     await Promise.all(
@@ -408,6 +413,7 @@ export class NftService {
       'royalties',
       'txHash',
       'collectionId',
+      'metadataStorage',
     ]);
 
     for (const param in filteredParams) {
