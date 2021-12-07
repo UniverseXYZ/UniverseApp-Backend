@@ -294,6 +294,9 @@ export class AuctionEventsScraperService {
   private async syncBidSubmittedEvents() {
     const events = await this.bidSubmittedEventRepository.find({ where: { processed: false } });
     this.logger.log(`found ${events.length} BidSubmitted events`);
+
+    let bid = null;
+    let auctionId = 0;
     for (const event of events) {
       await this.connection
         .transaction(async (transactionalEntityManager) => {
@@ -306,7 +309,9 @@ export class AuctionEventsScraperService {
             return;
           }
 
-          const bid =
+          auctionId = auction.id;
+
+          bid =
             (await transactionalEntityManager.findOne(AuctionBid, {
               where: { auctionId: auction.id, bidder: event.data.sender },
             })) ||
@@ -321,15 +326,19 @@ export class AuctionEventsScraperService {
 
           event.processed = true;
           await transactionalEntityManager.save(event);
-
-          this.auctionGateway.notifyAuctionBidSubmitted(auction.id, {
-            amount: bid.amount,
-            user: bid.bidder,
-          });
         })
         .catch((error) => {
           this.logger.error(error);
         });
+
+      if (bid && auctionId) {
+        const bids = await this.attachBidsInfo(auctionId);
+        this.auctionGateway.notifyAuctionBidSubmitted(auctionId, {
+          amount: bid.amount,
+          user: bid.bidder,
+          bids,
+        });
+      }
     }
   }
 
@@ -609,5 +618,30 @@ export class AuctionEventsScraperService {
       },
       { claimed: true },
     );
+  }
+
+  private async attachBidsInfo(auctionId: number) {
+    const bidsQuery = await this.auctionBidRepository
+      .createQueryBuilder('bid')
+      .select([
+        'bid.auctionId',
+        'MIN(bid.amount) as min',
+        'MAX(bid.amount) as max',
+        'SUM(bid.amount) as totalBidsAmount',
+        'COUNT(*) as bidCount',
+      ])
+      .addGroupBy('bid.auctionId')
+      .addGroupBy('bid.id')
+      .where('bid.auctionId = :auctionId', { auctionId })
+      .getRawOne();
+
+    const bids = {
+      bidsCount: +bidsQuery['bidCount'] || 0,
+      highestBid: +bidsQuery['max'] || 0,
+      lowestBid: +bidsQuery['min'] || 0,
+      totalBids: +bidsQuery['totalbidsamount'] || 0,
+    };
+
+    return bids;
   }
 }
