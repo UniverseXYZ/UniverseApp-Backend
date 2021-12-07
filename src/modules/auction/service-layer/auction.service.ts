@@ -652,6 +652,7 @@ export class AuctionService {
         const rewardTiersIdsToDelete = rewardTiers.map((tier) => tier.id);
         await transactionalEntityManager.delete(RewardTier, { id: In(rewardTiersIdsToDelete) });
         await transactionalEntityManager.delete(RewardTierNft, { rewardTierId: In(rewardTiersIdsToDelete) });
+        await transactionalEntityManager.delete(AuctionBid, { auctionId: auction.id });
       });
       canceled = true;
     }
@@ -1209,8 +1210,12 @@ export class AuctionService {
 
     // User should have only one bid per auction -> if user places multiple bids their amount should be accumulated into a single bid (That's how smart contract works)
     const bids = await this.auctionBidRepository.find({ where: { bidder: address }, order: { createdAt: 'DESC' } });
-    const auctionIds = bids.map((bid) => bid.auctionId);
 
+    if (!bids.length) {
+      return { bids: [], pagination: {} };
+    }
+
+    const auctionIds = bids.map((bid) => bid.auctionId);
     const [auctions, rewardTiers, bidsQuery] = await Promise.all([
       this.auctionRepository
         .createQueryBuilder('auction')
