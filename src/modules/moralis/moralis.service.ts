@@ -226,7 +226,7 @@ export class MoralisService {
     _apiCallType: MetaDataApiCallType = MetaDataApiCallType.TOKEN_URI,
   ) {
     if (!!token.token_uri) {
-      const { apiCallType, metadata } = await this.getTokenUriMetadata(existingNft.tokenUri, token, _apiCallType);
+      const { apiCallType, metadata } = await this.getTokenUriMetaData(existingNft.tokenUri, token, _apiCallType);
       existingNft.name = metadata.name;
       existingNft.description = metadata.description;
 
@@ -411,7 +411,7 @@ export class MoralisService {
     }
   }
 
-  private async getTokenUriMetadata(
+  private async getTokenUriMetaData(
     tokenUri: string,
     token: MoralisNft,
     apiCallType: MetaDataApiCallType = MetaDataApiCallType.TOKEN_URI,
