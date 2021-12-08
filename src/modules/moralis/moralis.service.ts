@@ -396,7 +396,7 @@ export class MoralisService {
     if (token.token_id == undefined || token.token_address == undefined) {
       throw new TokenAssertAddressNotSupportedError();
     } else {
-      const openSeaApiKey = this.config.values.opensea.apiKey || '1379b4994aa64cd09752e705f3f263c0';
+      const openSeaApiKey = this.config.values.opensea.apiKey;
       const openSeaApiUri =
         this.config.values.ethereum.ethereumNetwork === 'rinkeby' ? OPENSEA_RINKEBY_API_URL : OPENSEA_ETH_API_URL;
       const headers = this.config.values.ethereum.ethereumNetwork === 'rinkeby' ? {} : { 'X-API-KEY': openSeaApiKey };
