@@ -34,6 +34,9 @@ export const configValues = {
     masterKey: process.env.MORALIS_MASTER_KEY,
     applicationId: process.env.MORALIS_APPLICATION_ID,
   },
+  opensea: {
+    apiKey: process.env.OPEN_SEA_X_API_KEY,
+  },
 };
 
 export default registerAs('config', () => {

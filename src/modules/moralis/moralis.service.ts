@@ -23,11 +23,21 @@ import {
   SkippedUniverseNftError,
   TokenUriFormatNotSupportedError,
   ImageUriFormatNotSupportedError,
+  TokenAssertAddressNotSupportedError,
+  OpenSeaNftImageSupportedError,
 } from './service/exceptions';
 import { FileSystemService } from '../file-system/file-system.service';
 import { NftValidator } from './service/nft-validator';
 
 const MORALIS_NEW_NFT_QUEUE = 'MORALIS_NEW_NFT_QUEUE';
+const OPENSEA_RINKEBY_API_URL = 'https://rinkeby-api.opensea.io/api/v1/asset';
+const OPENSEA_ETH_API_URL = 'https://api.opensea.io/api/v1/asset';
+const MORALIS_IPFS_SERVER_URL = 'https://ipfs.moralis.io:2053/ipfs/';
+
+enum MetaDataApiCallType {
+  TOKEN_URI = 1,
+  OPENSEA = 2,
+}
 
 @Injectable()
 export class MoralisService {
@@ -51,6 +61,20 @@ export class MoralisService {
     @InjectRepository(MoralisLog)
     private moralisLogRepository: Repository<MoralisLog>,
   ) {}
+
+  private routeIpfsUrlImageIpfs(url: string) {
+    if (url.includes('ipfs://ipfs/')) {
+      return 'https://ipfs.io/ipfs/' + url.split('ipfs://ipfs/').slice(-1)[0];
+    }
+    return 'https://ipfs.io/ipfs/' + url.split('ipfs://').slice(-1)[0];
+  }
+
+  private routeIpfsUrlToMoralisIpfs(url: string) {
+    if (url.includes('ipfs://ipfs/')) {
+      return MORALIS_IPFS_SERVER_URL + url.split('ipfs://ipfs/').slice(-1)[0];
+    }
+    return MORALIS_IPFS_SERVER_URL + url.split('ipfs://').slice(-1)[0];
+  }
 
   async retryAll() {
     const take = 100;
@@ -144,7 +168,9 @@ export class MoralisService {
       if (
         error instanceof NftMissingAttributesError ||
         error instanceof TokenUriFormatNotSupportedError ||
-        error instanceof ImageUriFormatNotSupportedError
+        error instanceof ImageUriFormatNotSupportedError ||
+        error instanceof OpenSeaNftImageSupportedError ||
+        error instanceof TokenAssertAddressNotSupportedError
       ) {
         const newMoralisLog = this.moralisLogRepository.create();
         newMoralisLog.name = error.name;
@@ -193,34 +219,19 @@ export class MoralisService {
     }
   }
 
-  private async createNewNft(token: MoralisNft, existingCollection: NftCollection) {
-    let existingNft = this.nftRepository.create();
-    const user = await this.userRepository.findOne({ where: { address: token.owner_of.toLowerCase() } });
-    existingNft.userId = user?.id;
-    if (token.contract_type === 'ERC1155') {
-      existingNft.amount = Number(token.amount);
-    }
-    existingNft.collectionId = existingCollection.id;
-    existingNft.source = NftSource.SCRAPER;
-    const editionUUID = customAlphabet('1234567890abcdefghijklmnopqrstuvwxyz', 10)();
-
-    const nftWithSimilarTokenUuid = await this.nftRepository.findOne({ where: { tokenUri: token.token_uri } });
-    const numberOfEditions = nftWithSimilarTokenUuid ? nftWithSimilarTokenUuid.numberOfEditions + 1 : 1;
-    existingNft.editionUUID = nftWithSimilarTokenUuid?.editionUUID || editionUUID;
-    existingNft.numberOfEditions = numberOfEditions;
-
-    existingNft.owner = token.owner_of.toLowerCase();
-    existingNft.tokenId = token.token_id;
-    existingNft.standard = token.contract_type;
-    existingNft.tokenUri = this.getTokenUri(token);
-
+  private async parseNewNFTMetaData(
+    existingNft: Nft,
+    token: MoralisNft,
+    numberOfEditions,
+    _apiCallType: MetaDataApiCallType = MetaDataApiCallType.TOKEN_URI,
+  ) {
     if (!!token.token_uri) {
-      const metadata = await this.getTokenUriMetadata(existingNft.tokenUri);
+      const { apiCallType, metadata } = await this.getTokenUriMetaData(existingNft.tokenUri, token, _apiCallType);
       existingNft.name = metadata.name;
       existingNft.description = metadata.description;
 
       if (metadata.isImageOnIPFS()) {
-        const ipfsImageUrl = this.routeIpfsUrlToMoralisIpfs(metadata.getImage());
+        const ipfsImageUrl = this.routeIpfsUrlImageIpfs(metadata.getImage());
         const filename = `${await this.generateRandomHash()}${metadata.getFileExtension()}`;
         const downloadPath = `uploads/${filename}`;
         const downloader = new Downloader({
@@ -229,7 +240,15 @@ export class MoralisService {
           fileName: filename,
         });
 
-        await downloader.download();
+        try {
+          await downloader.download();
+        } catch (err) {
+          if (apiCallType !== MetaDataApiCallType.OPENSEA) {
+            return await this.parseNewNFTMetaData(existingNft, token, numberOfEditions, MetaDataApiCallType.OPENSEA);
+          } else {
+            throw new OpenSeaNftImageSupportedError();
+          }
+        }
         const s3Result = await this.s3Service.uploadDocument(downloadPath, filename);
         existingNft.artworkType = metadata.getFileExtension() && metadata.getFileExtension().split('.').slice(-1)[0];
         existingNft.url = s3Result.url;
@@ -252,7 +271,16 @@ export class MoralisService {
           directory: 'uploads',
           fileName: filename,
         });
-        await downloader.download();
+
+        try {
+          await downloader.download();
+        } catch (err) {
+          if (apiCallType !== MetaDataApiCallType.OPENSEA) {
+            return await this.parseNewNFTMetaData(existingNft, token, numberOfEditions, MetaDataApiCallType.OPENSEA);
+          } else {
+            throw new OpenSeaNftImageSupportedError();
+          }
+        }
         const s3Result = await this.s3Service.uploadDocument(downloadPath, filename);
         existingNft.artworkType = metadata.getFileExtension() && metadata.getFileExtension().split('.').slice(-1)[0];
         existingNft.url = s3Result.url;
@@ -265,7 +293,16 @@ export class MoralisService {
           await this.nftRepository.update({ tokenUri: token.token_uri }, { numberOfEditions });
         }
       } else if (metadata.isImageBase64Image) {
-        const decoded = this.fileSystemService.decodeBase64(metadata.getImage());
+        let decoded;
+        try {
+          decoded = this.fileSystemService.decodeBase64(metadata.getImage());
+        } catch (err) {
+          if (apiCallType !== MetaDataApiCallType.OPENSEA) {
+            return await this.parseNewNFTMetaData(existingNft, token, numberOfEditions, MetaDataApiCallType.OPENSEA);
+          } else {
+            throw new OpenSeaNftImageSupportedError();
+          }
+        }
         const extension = decoded.type.split('/')[1].split('+')[0];
         const filename = `${await this.generateRandomHash()}.${extension}`;
         const s3Result = await this.s3Service.uploadBuffer(decoded.data, filename);
@@ -287,8 +324,33 @@ export class MoralisService {
     return existingNft;
   }
 
+  private async createNewNft(token: MoralisNft, existingCollection: NftCollection) {
+    const existingNft = this.nftRepository.create();
+    const user = await this.userRepository.findOne({ where: { address: token.owner_of.toLowerCase() } });
+    existingNft.userId = user?.id;
+    if (token.contract_type === 'ERC1155') {
+      existingNft.amount = Number(token.amount);
+    }
+    existingNft.collectionId = existingCollection.id;
+    existingNft.source = NftSource.SCRAPER;
+    const editionUUID = customAlphabet('1234567890abcdefghijklmnopqrstuvwxyz', 10)();
+
+    const nftWithSimilarTokenUuid = await this.nftRepository.findOne({ where: { tokenUri: token.token_uri } });
+    const numberOfEditions = nftWithSimilarTokenUuid ? nftWithSimilarTokenUuid.numberOfEditions + 1 : 1;
+    existingNft.editionUUID = nftWithSimilarTokenUuid?.editionUUID || editionUUID;
+    existingNft.numberOfEditions = numberOfEditions;
+
+    existingNft.owner = token.owner_of.toLowerCase();
+    existingNft.tokenId = token.token_id;
+    existingNft.standard = token.contract_type;
+    existingNft.tokenUri = this.getTokenUri(token);
+
+    return this.parseNewNFTMetaData(existingNft, token, numberOfEditions);
+  }
+
   private async changeNftOwner(existingNft: Nft, token: MoralisNft) {
     existingNft.owner = token.owner_of.toLowerCase();
+    existingNft.amount = Number(token.amount);
     existingNft = await this.nftRepository.save(existingNft);
     return existingNft;
   }
@@ -330,31 +392,59 @@ export class MoralisService {
     }
   }
 
-  private routeIpfsUrlToMoralisIpfs(url: string) {
-    if (url.includes('ipfs://ipfs/')) {
-      return 'https://ipfs.moralis.io:2053/ipfs/' + url.split('ipfs://ipfs/').slice(-1)[0];
+  private async getTokenMetaDataWithOpenSeaAPI(token: MoralisNft) {
+    if (token.token_id == undefined || token.token_address == undefined) {
+      throw new TokenAssertAddressNotSupportedError();
     } else {
-      return 'https://ipfs.moralis.io:2053/ipfs/' + url.split('ipfs://').slice(-1)[0];
+      const openSeaApiKey = this.config.values.opensea.apiKey || '1379b4994aa64cd09752e705f3f263c0';
+      const openSeaApiUri =
+        this.config.values.ethereum.ethereumNetwork === 'rinkeby' ? OPENSEA_RINKEBY_API_URL : OPENSEA_ETH_API_URL;
+      const headers = this.config.values.ethereum.ethereumNetwork === 'rinkeby' ? {} : { 'X-API-KEY': openSeaApiKey };
+      const { data } = await this.httpService
+        .get(`${openSeaApiUri}/${token.token_address}/${token.token_id}`, {
+          headers,
+        })
+        .toPromise();
+
+      const metadata = new StandardNftMetadata(data);
+      return metadata;
     }
   }
 
-  private async getTokenUriMetadata(tokenUri: string) {
-    if (tokenUri.startsWith('ipfs')) {
-      const normalizedTokenUri = this.routeIpfsUrlToMoralisIpfs(tokenUri);
-      const { data } = await this.httpService.get(normalizedTokenUri).toPromise();
-      const metadata = new StandardNftMetadata(data);
-      return metadata;
-    } else if (tokenUri.startsWith('http')) {
-      const normalizedTokenUri = tokenUri;
-      const { data } = await this.httpService.get(normalizedTokenUri).toPromise();
-      const metadata = new StandardNftMetadata(data);
-      return metadata;
-    } else if (tokenUri.startsWith('data:application/json;base64,')) {
-      const data = this.nftValidator.parseBase64TokenUri(tokenUri);
-      const metadata = new StandardNftMetadata(data);
-      return metadata;
-    } else {
-      throw new TokenUriFormatNotSupportedError(tokenUri);
+  private async getTokenUriMetaData(
+    tokenUri: string,
+    token: MoralisNft,
+    apiCallType: MetaDataApiCallType = MetaDataApiCallType.TOKEN_URI,
+  ) {
+    if (apiCallType === MetaDataApiCallType.OPENSEA) {
+      return {
+        apiCallType: MetaDataApiCallType.OPENSEA,
+        metadata: await this.getTokenMetaDataWithOpenSeaAPI(token),
+      };
+    }
+    try {
+      if (tokenUri.startsWith('ipfs')) {
+        const normalizedTokenUri = this.routeIpfsUrlToMoralisIpfs(tokenUri);
+        const { data } = await this.httpService.get(normalizedTokenUri).toPromise();
+        const metadata = new StandardNftMetadata(data);
+        return { apiCallType: MetaDataApiCallType.TOKEN_URI, metadata };
+      } else if (tokenUri.startsWith('http')) {
+        const normalizedTokenUri = tokenUri;
+        const { data } = await this.httpService.get(normalizedTokenUri).toPromise();
+        const metadata = new StandardNftMetadata(data);
+        return { apiCallType: MetaDataApiCallType.TOKEN_URI, metadata };
+      } else if (tokenUri.startsWith('data:application/json;base64,')) {
+        const data = this.nftValidator.parseBase64TokenUri(tokenUri);
+        const metadata = new StandardNftMetadata(data);
+        return { apiCallType: MetaDataApiCallType.TOKEN_URI, metadata };
+      } else {
+        throw new TokenUriFormatNotSupportedError(tokenUri);
+      }
+    } catch {
+      return {
+        apiCallType: MetaDataApiCallType.OPENSEA,
+        metadata: await this.getTokenMetaDataWithOpenSeaAPI(token),
+      };
     }
   }
 
