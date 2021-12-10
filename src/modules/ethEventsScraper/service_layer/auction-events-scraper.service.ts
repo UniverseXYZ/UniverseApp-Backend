@@ -25,6 +25,7 @@ import { AuctionExtendedEvent } from '../domain/extended-auction-event';
 import { MatchedBidEvent } from '../domain/matched-bids-event';
 import { BidWithdrawnEvent } from '../domain/withdrawn-bid-event';
 import { WithdrawnRevenueEvent } from '../domain/withdrawn-revenue-event';
+import { FinalisedAuctionEvent } from '../domain/finalised-auction-event';
 
 @Injectable()
 export class AuctionEventsScraperService {
@@ -56,6 +57,8 @@ export class AuctionEventsScraperService {
     private auctionExtendedEventRepository: Repository<AuctionExtendedEvent>,
     @InjectRepository(MatchedBidEvent)
     private matchedBidEventRepository: Repository<MatchedBidEvent>,
+    @InjectRepository(FinalisedAuctionEvent)
+    private auctionFinalisedEventRepository: Repository<FinalisedAuctionEvent>,
     @InjectRepository(BidWithdrawnEvent)
     private bidWithdrawnEventRepository: Repository<BidWithdrawnEvent>,
     @InjectRepository(WithdrawnRevenueEvent)
@@ -82,6 +85,7 @@ export class AuctionEventsScraperService {
       await this.syncBidSubmittedEvents();
       await this.syncBidWithdrawnEvents();
       await this.syncAuctionExtendedEvents();
+      await this.syncAuctionFinalisedEvents();
       await this.syncBidMatchedEvents();
       await this.syncRevenueWithdrawnEvents();
       await this.syncRevenueCapturedEvents();
@@ -418,12 +422,39 @@ export class AuctionEventsScraperService {
     }
   }
 
+  private async syncAuctionFinalisedEvents() {
+    const events = await this.auctionFinalisedEventRepository.find({ where: { processed: false } });
+    this.logger.log(`found ${events.length} Auction Finalised events`);
+    for (const event of events) {
+      await this.connection
+        .transaction(async (transactionalEntityManager) => {
+          const auction = await transactionalEntityManager.findOne(Auction, {
+            where: { onChainId: event.data?.auctionId },
+          });
+
+          if (!auction) {
+            this.logger.warn(`auction not found with onChainId: ${event.data?.auctionId}`);
+            return;
+          }
+
+          auction.finalised = true;
+          event.processed = true;
+          await transactionalEntityManager.save(auction);
+          await transactionalEntityManager.save(event);
+
+          this.auctionGateway.notifyAuctionFinalised(auction.id);
+        })
+        .catch((error) => {
+          this.logger.error(error);
+        });
+    }
+  }
+
   private async syncBidMatchedEvents() {
     const events = await this.matchedBidEventRepository.find({ where: { processed: false } });
     this.logger.log(`found ${events.length} BidMatched events`);
     for (const event of events) {
       let auctionId = 0;
-      let finalised = false;
       await this.connection
         .transaction(async (transactionalEntityManager) => {
           const auction = await transactionalEntityManager.findOne(Auction, {
@@ -462,24 +493,6 @@ export class AuctionEventsScraperService {
 
           await transactionalEntityManager.save(event);
 
-          // Set finalised only if this is the last slot of the auction
-          let biggestSlotIdx = 0;
-          const rewardTiers = await transactionalEntityManager.find(RewardTier, { where: { auctionId: auction.id } });
-          rewardTiers.forEach((tier) => {
-            const slots = tier.slots;
-            slots.forEach((slot) => {
-              if (slot.index > biggestSlotIdx) {
-                biggestSlotIdx = slot.index;
-              }
-            });
-          });
-
-          if (event.data.slotIndex === biggestSlotIdx) {
-            finalised = true;
-            auction.finalised = true;
-            await transactionalEntityManager.save(auction);
-          }
-
           event.processed = true;
           await transactionalEntityManager.save(event);
           auctionId = auction.id;
@@ -497,7 +510,7 @@ export class AuctionEventsScraperService {
           .addOrderBy('bid.id', 'ASC')
           .getMany();
 
-        this.auctionGateway.notifyBidMatched(auctionId, { bids, finalised });
+        this.auctionGateway.notifyBidMatched(auctionId, { bids });
       }
     }
   }
