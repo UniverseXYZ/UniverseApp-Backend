@@ -30,6 +30,9 @@ import { FileSystemService } from '../file-system/file-system.service';
 import { NftValidator } from './service/nft-validator';
 
 const MORALIS_NEW_NFT_QUEUE = 'MORALIS_NEW_NFT_QUEUE';
+const OPENSEA_RINKEBY_API_URL = 'https://rinkeby-api.opensea.io/api/v1/asset';
+const OPENSEA_ETH_API_URL = 'https://api.opensea.io/api/v1/asset';
+const MORALIS_IPFS_SERVER_URL = 'https://ipfs.moralis.io:2053/ipfs/';
 
 enum MetaDataApiCallType {
   TOKEN_URI = 1,
@@ -62,17 +65,15 @@ export class MoralisService {
   private routeIpfsUrlImageIpfs(url: string) {
     if (url.includes('ipfs://ipfs/')) {
       return 'https://ipfs.io/ipfs/' + url.split('ipfs://ipfs/').slice(-1)[0];
-    } else {
-      return 'https://ipfs.io/ipfs/' + url.split('ipfs://').slice(-1)[0];
     }
+    return 'https://ipfs.io/ipfs/' + url.split('ipfs://').slice(-1)[0];
   }
 
   private routeIpfsUrlToMoralisIpfs(url: string) {
     if (url.includes('ipfs://ipfs/')) {
-      return 'https://ipfs.moralis.io:2053/ipfs/' + url.split('ipfs://ipfs/').slice(-1)[0];
-    } else {
-      return 'https://ipfs.moralis.io:2053/ipfs/' + url.split('ipfs://').slice(-1)[0];
+      return MORALIS_IPFS_SERVER_URL + url.split('ipfs://ipfs/').slice(-1)[0];
     }
+    return MORALIS_IPFS_SERVER_URL + url.split('ipfs://').slice(-1)[0];
   }
 
   async retryAll() {
@@ -397,9 +398,7 @@ export class MoralisService {
     } else {
       const openSeaApiKey = this.config.values.opensea.apiKey || '1379b4994aa64cd09752e705f3f263c0';
       const openSeaApiUri =
-        this.config.values.ethereum.ethereumNetwork === 'rinkeby'
-          ? 'https://rinkeby-api.opensea.io/api/v1/asset'
-          : 'https://api.opensea.io/api/v1/asset';
+        this.config.values.ethereum.ethereumNetwork === 'rinkeby' ? OPENSEA_RINKEBY_API_URL : OPENSEA_ETH_API_URL;
       const headers = this.config.values.ethereum.ethereumNetwork === 'rinkeby' ? {} : { 'X-API-KEY': openSeaApiKey };
       const { data } = await this.httpService
         .get(`${openSeaApiUri}/${token.token_address}/${token.token_id}`, {
