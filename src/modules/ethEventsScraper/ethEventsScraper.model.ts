@@ -14,6 +14,7 @@ import { AuctionEventsScraperService } from './service_layer/auction-events-scra
 import { AuctionCreatedEvent } from './domain/create-auction-event';
 import { Erc721DepositedEvent } from './domain/deposited-erc721-event';
 import { AuctionCanceledEvent } from './domain/auction-canceled-event';
+import { AuctionGateway } from '../auction/service-layer/auction.gateway';
 
 @Module({
   imports: [
@@ -33,7 +34,7 @@ import { AuctionCanceledEvent } from './domain/auction-canceled-event';
       AuctionCanceledEvent,
     ]),
   ],
-  providers: [EthEventsScraperService, AuctionEventsScraperService],
+  providers: [EthEventsScraperService, AuctionEventsScraperService, AuctionGateway],
   exports: [EthEventsScraperService],
 })
 export class EthEventsScraperModule {}

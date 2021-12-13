@@ -476,18 +476,14 @@ export class AuctionService {
     };
   }
 
-  public async deployAuction(userId: number, deployBody: DeployAuctionBody) {
-    // TODO: This is a temporary endpoint to create auction. In the future the scraper should fill in these fields
-    const auction = await this.validateAuctionPermissions(userId, deployBody.auctionId);
-    //TODO: We need some kind of validation that this on chain id really exists
-    const deployedAuction = await this.auctionRepository.update(auction.id, {
-      onChain: true,
-      onChainId: deployBody.onChainId,
-      txHash: deployBody.txHash,
+  public async appendTxHash(userId: number, auctionId: number, deployBody: DeployAuctionBody) {
+    const auction = await this.validateAuctionPermissions(userId, auctionId);
+    const updatedAuction = await this.auctionRepository.update(auction.id, {
+      createAuctionTxHash: deployBody.txHash,
     });
 
     return {
-      auction: classToPlain(deployedAuction),
+      auction: classToPlain(updatedAuction),
     };
   }
 
@@ -1208,8 +1204,12 @@ export class AuctionService {
     });
 
     auction = await this.auctionRepository.save(auction);
+    const eventStatuses = [];
+    changeAuctionStatusBody.statuses.forEach((status) => {
+      eventStatuses.push({ status: status.name, value: status.value });
+    });
 
-    // this.gateway.notifyAuctionStatus(auction);
+    this.gateway.notifyAuctionStatus(auction.id, eventStatuses);
 
     return {
       auction,

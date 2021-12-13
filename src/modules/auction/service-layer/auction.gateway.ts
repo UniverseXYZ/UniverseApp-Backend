@@ -1,36 +1,37 @@
-
-import { 
+import {
   WebSocketGateway,
   OnGatewayInit,
   WebSocketServer,
-  OnGatewayConnection
+  OnGatewayConnection,
+  OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
-import { User } from 'src/modules/users/user.entity';
-import { Auction } from '../domain/auction.entity';
 import { configValues } from '../../configuration';
+import { Logger } from '@nestjs/common';
+import { Socket } from 'socket.io';
 
-
-
-@WebSocketGateway(configValues.app.auctionsPort)
-export class AuctionGateway implements OnGatewayInit, OnGatewayConnection {
-
+@WebSocketGateway(configValues.app.auctionsPort, { namespace: 'auction' })
+export class AuctionGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-   server: Server;
-
+  server: Server;
+  private logger: Logger = new Logger('MessageGateway');
   afterInit() {
-    console.log('Gateway is up and running')
+    console.log('Gateway is up and running');
   }
 
-  handleConnection(client: any, ...args: any[]) {
-      client.emit('connection', 'Successfully connected.')
+  public handleDisconnect(client: Socket): void {
+    return this.logger.log(`Client disconnected: ${client.id}`);
   }
 
-  public notifyBids(auctionId: number, bids: { user: User; auctionId: number; amount: number; }): void {
-      this.server.sockets.emit('bids_' + auctionId, bids);
+  public handleConnection(client: Socket): void {
+    return this.logger.log(`Client connected: ${client.id}`);
   }
 
-  public notifyAuctionStatus(auction: Auction) {
-      this.server.sockets.emit('auction_' + auction.id, auction); 
+  public notifyAuctionStatus(auctionId: number, statuses: { status: string; value: boolean }[]) {
+    this.server.emit(`auction_${auctionId}_status`, { statuses: statuses });
+  }
+
+  public notifyAuctionCreated(auctionId: number, onChainId: number) {
+    this.server.emit(`auction_${auctionId}_created`, { onChainId: onChainId });
   }
 }
