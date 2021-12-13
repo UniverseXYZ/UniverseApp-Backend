@@ -1044,10 +1044,11 @@ export class AuctionService {
       }, {} as Record<string, any[]>);
 
     return auctions.map((auction) => {
-      let nfts = [];
+      const nfts = [];
       const rewardTiers = auctionRewardTiersMap[auction.id].map((rewardTier) => {
-        nfts = rewardTierNftsMap[rewardTier.id].map((nft) => classToPlain(nft));
-        return { ...classToPlain(rewardTier), nfts: nfts };
+        const tierNfts = rewardTierNftsMap[rewardTier.id].map((nft) => classToPlain(nft));
+        nfts.push(...tierNfts);
+        return { ...classToPlain(rewardTier), nfts: tierNfts };
       });
 
       const auctionCollections = collections.filter((coll) => nfts.map((nft) => nft.collectionId).includes(coll.id));
