@@ -95,7 +95,7 @@ export class AuctionService {
       .orderBy('bid.amount', 'DESC')
       .getMany();
 
-    bids.sort((a, b) => b.amount - a.amount).slice(0, 5);
+    bids.sort((a, b) => b.amount - a.amount);
 
     return {
       auction: classToPlain(auction),
