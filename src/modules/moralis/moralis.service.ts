@@ -38,17 +38,6 @@ enum MetaDataApiCallType {
   TOKEN_URI = 1,
   OPENSEA = 2,
 }
-
-import { MoralisNft } from './model/moralis-nft';
-import {
-  NftMissingAttributesError,
-  SkippedUniverseNftError,
-  TokenUriFormatNotSupportedError,
-} from './service/exceptions';
-import { FileSystemService } from '../file-system/file-system.service';
-
-const MORALIS_NEW_NFT_QUEUE = 'MORALIS_NEW_NFT_QUEUE';
-
 @Injectable()
 export class MoralisService {
   private logger = new Logger(MoralisService.name);
