@@ -102,6 +102,7 @@ export class AuctionEventsScraperService {
 
           event.processed = true;
           await transactionalEntityManager.save(event);
+          this.auctionGateway.notifyAuctionCanceled(auction.id);
         })
         .catch((error) => {
           this.logger.error(error);
@@ -128,10 +129,11 @@ export class AuctionEventsScraperService {
           auction.depositedNfts = true;
           await transactionalEntityManager.save(auction);
 
-          await this.markRewardTierNftAsDeposited(transactionalEntityManager, event);
+          await this.markRewardTierNftAsDeposited(transactionalEntityManager, event, auction.id);
 
           event.processed = true;
           await transactionalEntityManager.save(event);
+          this.auctionGateway.notifyAuctionDepositedNfts(auction.id);
         })
         .catch((error) => {
           this.logger.error(error);
@@ -139,7 +141,11 @@ export class AuctionEventsScraperService {
     }
   }
 
-  private async markRewardTierNftAsDeposited(transactionalEntityManager: EntityManager, event: Erc721DepositedEvent) {
+  private async markRewardTierNftAsDeposited(
+    transactionalEntityManager: EntityManager,
+    event: Erc721DepositedEvent,
+    auctionId: number,
+  ) {
     const collection = await transactionalEntityManager.findOne(NftCollection, {
       where: { address: event.data?.tokenAddress?.toLowerCase() },
     });
@@ -152,7 +158,7 @@ export class AuctionEventsScraperService {
     if (!nft) throw new MarkRewardTierNftAsDepositedException('Nft not found');
 
     const rewardTiers = await transactionalEntityManager.find(RewardTier, {
-      where: { auctionId: event.data?.auctionId },
+      where: { auctionId: auctionId },
     });
     if (rewardTiers.length === 0) throw new MarkRewardTierNftAsDepositedException('Reward Tiers not found');
 
