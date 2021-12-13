@@ -89,6 +89,6 @@ export class Auction {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Column({ nullable: true, default: 0 })
+  @Column({ type: 'decimal', nullable: true, default: 0 })
   revenueClaimed: number;
 }

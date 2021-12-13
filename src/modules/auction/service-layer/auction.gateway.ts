@@ -50,8 +50,8 @@ export class AuctionGateway implements OnGatewayInit, OnGatewayConnection, OnGat
     this.server.emit(`auction_${auctionId}_bidSubmitted`, bidInfo);
   }
 
-  public notifyAuctionRevenueWithdraw(auctionId, totalRevenue: number) {
-    this.server.emit(`auction_${auctionId}_withdrawnRevenue`, { totalRevenue });
+  public notifyAuctionRevenueWithdraw(auctionId, totalRevenue: number, recipient: string) {
+    this.server.emit(`auction_${auctionId}_withdrawnRevenue`, { totalRevenue, recipient });
   }
 
   public notifyAuctionSlotCaptured(auctionId, captureInfo: { tierId: number; slotIndex: number }) {
