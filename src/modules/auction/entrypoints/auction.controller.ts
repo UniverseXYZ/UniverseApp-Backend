@@ -186,14 +186,6 @@ export class AuctionController {
   @ApiOperation({ summary: 'Get past auctions' })
   @ApiResponse({ type: GetMyAuctionsResponse, status: 200 })
   async getPastAuctions(@Query() query: GetAuctionsQuery) {
-
-
-    console.log([parseInt(query.userId),
-      parseInt(query.limit),
-      parseInt(query.offset),
-      query.filters,]);
-
-
     return await this.auctionService.getPastAuctions(
       parseInt(query.userId),
       parseInt(query.limit) || undefined,
