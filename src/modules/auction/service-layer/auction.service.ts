@@ -256,10 +256,25 @@ export class AuctionService {
       throw new AuctionCannotBeModifiedException();
     }
 
-    // TODO:: We should update the tierPosition property of the other tiers in this auction
     await getManager().transaction(async (transactionalEntityManager) => {
+      const currentTiers = await this.rewardTierRepository.find({ where: { auctionId } });
+      const removedTierIndex = currentTiers.findIndex((t) => t.id.toString() === id);
+      const adjacentTiers = currentTiers.slice(removedTierIndex + 1);
+
       await transactionalEntityManager.delete(RewardTier, { id });
       await transactionalEntityManager.delete(RewardTierNft, { rewardTierId: id });
+
+      // After deleting a tier we have to decrease other tiers, slots indexes that are adjacent to the deleted one
+      for (const tier of adjacentTiers) {
+        const updatedSlots = tier.slots.map((s) => {
+          const slot = { ...s };
+          slot.index -= 1;
+          return slot;
+        });
+
+        tier.slots = updatedSlots;
+        await transactionalEntityManager.save(tier);
+      }
     });
 
     return tier;
