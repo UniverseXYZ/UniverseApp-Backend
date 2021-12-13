@@ -9,13 +9,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AuctionStatus } from '../domain/types';
 import {
   CreateAuctionBody,
-  DeployAuctionBody,
   EditAuctionBody,
   UpdateRewardTierBody,
   DepositNftsBody,
   PlaceBidBody,
   ChangeAuctionStatus,
   AddRewardTierBodyParams,
+  WithdrawNftsBody,
 } from '../entrypoints/dto';
 import { Nft } from 'src/modules/nft/domain/nft.entity';
 import { AuctionNotFoundException } from './exceptions/AuctionNotFoundException';
@@ -376,6 +376,21 @@ export class AuctionService {
     };
   }
 
+  public async cancelOnChainAuction(userId: number, auctionId: number) {
+    // TODO: This is a temporary endpoint to create auction. In the future the scraper should fill in these fields
+    const auction = await this.validateAuctionPermissions(userId, auctionId);
+    //TODO: We need some kind of validation that this on chain id really exists
+    const deployedAuction = await this.auctionRepository.update(auctionId, {
+      onChain: false,
+      onChainId: null,
+      txHash: '',
+    });
+
+    return {
+      auction: classToPlain(deployedAuction),
+    };
+  }
+
   public async depositNfts(userId: number, depositNftsBody: DepositNftsBody) {
     // TODO: This is a temporary endpoint to deposit nfts. In the future the scraper should fill in these fields
     await this.validateAuctionPermissions(userId, depositNftsBody.auctionId);
@@ -390,7 +405,7 @@ export class AuctionService {
     };
   }
 
-  public async withdrawNfts(userId: number, withdrawNftsBody: DepositNftsBody) {
+  public async withdrawNfts(userId: number, withdrawNftsBody: WithdrawNftsBody) {
     // TODO: This is a temporary endpoint to withdraw nfts. In the future the scraper should fill in these fields
     await this.validateAuctionPermissions(userId, withdrawNftsBody.auctionId);
     //TODO: We need some kind of validation that this on chain id really exists
@@ -645,7 +660,7 @@ export class AuctionService {
           ...acc,
           [rewardTierNft.rewardTierId]: [
             ...(acc[rewardTierNft.rewardTierId] || []),
-            { ...idNftMap[rewardTierNft.nftId], slot: rewardTierNft.slot },
+            { ...idNftMap[rewardTierNft.nftId], slot: rewardTierNft.slot, deposited: rewardTierNft.deposited },
           ],
         };
       }, {} as Record<string, any[]>);

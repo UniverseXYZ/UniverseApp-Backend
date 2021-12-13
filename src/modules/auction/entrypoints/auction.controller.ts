@@ -60,6 +60,14 @@ export class AuctionController {
     return await this.auctionService.deployAuction(req.user.sub, deployAuctionBody);
   }
 
+  @Post('/auctions/cancel/:auctionId')
+  @ApiTags('auction')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Set on chain properies of auction' })
+  async cancelOnChainAuction(@Req() req, @Param('auctionId') auctionId: number) {
+    return await this.auctionService.cancelOnChainAuction(req.user.sub, auctionId);
+  }
+
   @Post('/auctions/depositNfts')
   @ApiTags('auction')
   @UseGuards(JwtAuthGuard)
