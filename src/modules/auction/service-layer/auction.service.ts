@@ -719,18 +719,13 @@ export class AuctionService {
     const [auctions, count] = await query.getManyAndCount();
     const auctionsWithTiers = await this.formatMyAuctions(auctions);
 
-    let auctionsWithBids = [];
-    if (auctionsWithTiers.length) {
-      auctionsWithBids = await this.attachBidsInfo(auctionsWithTiers);
-    }
-
     return {
       pagination: {
         total: count,
         offset,
         limit,
       },
-      auctions: auctionsWithBids,
+      auctions: auctionsWithTiers,
     };
   }
 
