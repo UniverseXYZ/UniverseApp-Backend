@@ -6,11 +6,10 @@ import {
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
-import { configValues } from '../../configuration';
 import { Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
 
-@WebSocketGateway(configValues.app.auctionsPort, { namespace: 'auction' })
+@WebSocketGateway({ namespace: 'auctions-socket' })
 export class AuctionGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
