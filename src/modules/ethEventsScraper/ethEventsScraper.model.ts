@@ -12,6 +12,7 @@ import { MintingCollection } from '../nft/domain/minting-collection.entity';
 import { MintingNft } from '../nft/domain/minting-nft.entity';
 import { AuctionEventsScraperService } from './service_layer/auction-events-scraper.service';
 import { AuctionCreatedEvent } from './domain/create-auction-event';
+import { Erc721DepositedEvent } from './domain/deposited-erc721-event';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { AuctionCreatedEvent } from './domain/create-auction-event';
       MintingCollection,
       MintingNft,
       AuctionCreatedEvent,
+      Erc721DepositedEvent,
     ]),
   ],
   providers: [EthEventsScraperService, AuctionEventsScraperService],
