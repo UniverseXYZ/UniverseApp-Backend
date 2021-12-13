@@ -676,3 +676,28 @@ export class PlaceBidBody {
   @IsNumber()
   amount: number;
 }
+
+export class ChangeAuctionStatus {
+  @ApiProperty({
+    example: 1,
+    description: 'The id of the auction that the status will be changing',
+  })
+  @IsNumber()
+  auctionId: number;
+
+  @ApiProperty({
+    example: [
+      { name: 'canceled', value: true },
+      { name: 'depositing', value: false },
+    ],
+    description: 'Array of statuses that need to be changed',
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  statuses: StatusChange[];
+}
+
+class StatusChange {
+  name: string;
+  value: boolean;
+}
