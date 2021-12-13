@@ -39,6 +39,14 @@ enum MetaDataApiCallType {
   OPENSEA = 2,
 }
 
+function fixURL(url) {
+  if (url.startsWith('ipfs')) {
+    return 'https://ipfs.moralis.io:2053/ipfs/' + url.split('ipfs://ipfs/').slice(-1)[0];
+  } else {
+    return url + '?format=json';
+  }
+}
+
 @Injectable()
 export class MoralisService {
   private logger = new Logger(MoralisService.name);
