@@ -125,24 +125,19 @@ export class AuctionService {
       throw new AuctionNotFoundException();
     }
 
-    const isOwner = auction.userId === userId;
-
-    if (!isOwner) {
-      throw new AuctionBadOwnerException();
-    }
+    await this.validateAuctionPermissions(userId, auctionId);
 
     const { depositedNfts, canceled, finalised, startDate } = auction;
 
     const now = new Date();
-    const stared = now >= startDate;
+    const started = now >= startDate;
 
-    if (depositedNfts || canceled || finalised || stared) {
+    if (depositedNfts || canceled || finalised || started) {
       throw new AuctionCannotBeModifiedException();
     }
 
     const currentTiers = await this.rewardTierRepository.findAndCount({ where: { auctionId } });
-    // Tiers are 0 index based
-    const nextTierIndex = currentTiers.length - 1 || 0;
+    const nextTierIndex = currentTiers[1];
 
     const tier = this.rewardTierRepository.create();
     tier.auctionId = auction.id;
