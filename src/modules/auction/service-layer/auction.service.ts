@@ -756,7 +756,11 @@ export class AuctionService {
     const auctionIds = bids.map((bid) => bid.auctionId);
 
     const [auctions, rewardTiers, minBidsQuery, maxBidsQuery, bidsCountQuery] = await Promise.all([
-      this.auctionRepository.find({ where: { id: In(auctionIds) } }),
+      this.auctionRepository
+        .createQueryBuilder('auction')
+        .leftJoinAndMapOne('auction.creator', User, 'creator', 'creator.id = auction.userId')
+        .where('auction.id IN (:...auctionIds)', { auctionIds: auctionIds })
+        .getMany(),
       this.rewardTierRepository.find({ where: { auctionId: In(auctionIds) } }),
       this.auctionBidRepository
         .createQueryBuilder('bid')
