@@ -21,6 +21,7 @@ import { Nft } from 'src/modules/nft/domain/nft.entity';
 import { AuctionNotFoundException } from './exceptions/AuctionNotFoundException';
 import { AuctionBadOwnerException } from './exceptions/AuctionBadOwnerException';
 import { AuctionCannotBeModifiedException } from './exceptions/AuctionCannotBeModifiedException';
+import { RewardTierNFTUsedInOtherTierException } from './exceptions/RewardTierNFTUsedInOtherTierException';
 import { FileSystemService } from '../../file-system/file-system.service';
 import { RewardTierNotFoundException } from './exceptions/RewardTierNotFoundException';
 import { RewardTierBadOwnerException } from './exceptions/RewardTierBadOwnerException';
@@ -151,6 +152,11 @@ export class AuctionService {
 
     for (const nftSlot of nftSlots) {
       for (const nftId of nftSlot.nftIds) {
+        const nftUsedInOtherTier = await this.rewardTierNftRepository.findOne({ where: { nftId } });
+        if (nftUsedInOtherTier) {
+          throw new RewardTierNFTUsedInOtherTierException();
+        }
+
         const rewardTierNft = this.rewardTierNftRepository.create();
         rewardTierNft.nftId = nftId;
         rewardTierNft.slot = nftSlot.slot;
