@@ -660,3 +660,26 @@ export class GetAuctionPageParams {
   @IsString()
   auctionName: string;
 }
+
+export class PlaceBidBody {
+  @ApiProperty({
+    example: 1,
+    description: 'The id of the auction to which the user is bidding',
+  })
+  @IsNumber()
+  auctionId: number;
+
+  @ApiProperty({
+    example: '0.1',
+    description: 'Amount of crypto the user is bidding',
+  })
+  @IsString()
+  amount: string;
+
+  @ApiProperty({
+    example: '0.1',
+    description: 'The crypto currency the user is bidding',
+  })
+  @IsString()
+  currency: string;
+}

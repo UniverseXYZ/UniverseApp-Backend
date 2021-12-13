@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { getManager, In, LessThan, MoreThan, Repository, Transaction, TransactionRepository } from 'typeorm';
+import { getManager, In, LessThan, MoreThan, Not, Repository, Transaction, TransactionRepository } from 'typeorm';
 import { RewardTier } from '../domain/reward-tier.entity';
 import { RewardTierNft } from '../domain/reward-tier-nft.entity';
 import { Auction } from '../domain/auction.entity';
@@ -13,6 +13,7 @@ import {
   EditAuctionBody,
   UpdateRewardTierBody,
   DepositNftsBody,
+  PlaceBidBody,
 } from '../entrypoints/dto';
 import { Nft } from 'src/modules/nft/domain/nft.entity';
 import { AuctionNotFoundException } from './exceptions/AuctionNotFoundException';
@@ -24,6 +25,7 @@ import { UsersService } from '../../users/users.service';
 import { classToPlain } from 'class-transformer';
 import { UploadResult } from 'src/modules/file-storage/model/UploadResult';
 import { NftCollection } from 'src/modules/nft/domain/collection.entity';
+import { AuctionBid } from '../domain/auction.bid.entity';
 
 @Injectable()
 export class AuctionService {
@@ -39,6 +41,8 @@ export class AuctionService {
     private nftCollectionRepository: Repository<NftCollection>,
     @InjectRepository(Nft)
     private nftRepository: Repository<Nft>,
+    @InjectRepository(AuctionBid)
+    private auctionBidRepository: Repository<AuctionBid>,
     private s3Service: S3Service,
     private fileSystemService: FileSystemService,
     private readonly config: AppConfig,
@@ -726,6 +730,15 @@ export class AuctionService {
     return {
       count: auctionCount['auctionCount'],
       data: auctions,
+    };
+  }
+
+  public async getAuctionBids(auctionId: number) {
+    //TODO: Add results limit to get only (reward tiers * reward tier slots)
+    const bids = await this.auctionBidRepository.find({ where: { auctionId: auctionId }, order: { amount: 'DESC' } });
+
+    return {
+      bids: bids.map((bid) => classToPlain(bid)),
     };
   }
 
