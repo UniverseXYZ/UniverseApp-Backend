@@ -291,7 +291,7 @@ export class AuctionController {
     return await this.auctionService.placeAuctionBid(req.user.sub, placeBidBody);
   }
 
-  @Post('auctions/bids')
+  @Get('auctions/bids')
   @UseGuards(JwtAuthGuard)
   async getAuctionBids(@Req() req, @Query('auctionId') auctionId: number) {
     return await this.auctionService.getAuctionBids(auctionId);
