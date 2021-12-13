@@ -188,7 +188,6 @@ export class AuctionEventsScraperService {
   private async syncErc721WithdrawEvents() {
     const events = await this.erc721WithdrawEventRepository.find({ where: { processed: false } });
     this.logger.log(`found ${events.length} Erc721Withdrawn events`);
-
     for (const event of events) {
       const auction = await this.auctionsRepository.findOne({
         where: { onChainId: event.data.auctionId },
@@ -209,18 +208,19 @@ export class AuctionEventsScraperService {
           this.logger.error(error);
         });
 
-      const auctionRewardTiers = await this.rewardTiersRepository.find({ auctionId: auction.id });
+      if (auction && auction.id) {
+        const auctionRewardTiers = await this.rewardTiersRepository.find({ auctionId: auction.id });
 
-      const depositedNfts = await this.rewardTierNftsRepository.find({
-        where: { deposited: true, rewardTierId: In(auctionRewardTiers.map((tier) => tier.id)) },
-      });
-
-      if (!depositedNfts.length) {
-        auction.depositedNfts = false;
-        await this.auctionsRepository.save(auction);
-        this.auctionGateway.notifyAuctionWithdrawnNfts(auction.id, true);
-      } else {
-        this.auctionGateway.notifyAuctionWithdrawnNfts(auction.id, false);
+        const depositedNfts = await this.rewardTierNftsRepository.find({
+          where: { deposited: true, rewardTierId: In(auctionRewardTiers.map((tier) => tier.id)) },
+        });
+        if (!depositedNfts.length) {
+          auction.depositedNfts = false;
+          await this.auctionsRepository.save(auction);
+          this.auctionGateway.notifyAuctionWithdrawnNfts(auction.id, true);
+        } else {
+          this.auctionGateway.notifyAuctionWithdrawnNfts(auction.id, false);
+        }
       }
     }
   }
