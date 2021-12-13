@@ -1,3 +1,10 @@
+## [1.23.4](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.23.3...v1.23.4) (2021-10-26)
+
+
+### Bug Fixes
+
+* don't update db if Moralis request fails ([#123](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/123)) ([d293bb3](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/d293bb3b128a9a02e946145fc81506e07cd30c72))
+
 ## [1.23.3](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.23.2...v1.23.3) (2021-10-21)
 
 
