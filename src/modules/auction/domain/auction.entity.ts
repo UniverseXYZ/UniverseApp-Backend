@@ -52,27 +52,21 @@ export class Auction {
   backgroundImageBlur: boolean;
 
   @Column({ default: false })
-  @Exclude()
   onChain: boolean;
 
   @Column({ default: true })
-  @Exclude()
   initialised: boolean;
 
   @Column({ default: false })
-  @Exclude()
   depositedNfts: boolean;
 
   @Column({ default: false })
-  @Exclude()
   canceled: boolean;
 
   @Column({ default: false })
-  @Exclude()
   finalised: boolean;
 
   @Column({ nullable: true })
-  @Exclude()
   onChainId: number;
 
   @Column({ nullable: true })

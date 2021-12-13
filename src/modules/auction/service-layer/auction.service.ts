@@ -51,10 +51,9 @@ export class AuctionService {
 
   async getAuctionPage(username: string, auctionName: string) {
     const artist = await this.usersService.getByUsername(username);
-    const link = `universe.xyz/${username}/${auctionName}`;
 
     //TODO: add a check if the auction has started
-    const auction = await this.auctionRepository.findOne({ link: link });
+    const auction = await this.auctionRepository.findOne({ link: auctionName });
 
     if (!auction) {
       throw new AuctionNotFoundException();
@@ -96,8 +95,12 @@ export class AuctionService {
       .orderBy('bid.amount', 'DESC')
       .getMany();
 
+    const bidders = this.groupBidsByUser(bids);
+
+    bidders.sort((a, b) => b.amount - a.amount).slice(0, 5);
+
     return {
-      auction: auction,
+      auction: classToPlain(auction),
       artist: classToPlain(artist),
       collections: classToPlain(collections),
       rewardTiers: rewardTiers.map((rewardTier) => ({
@@ -105,8 +108,27 @@ export class AuctionService {
         nfts: rewardTierNftsMap[rewardTier.id].map((nft) => classToPlain(nft)),
       })),
       moreActiveAuctions: moreActiveAuctions.map((a) => classToPlain(a)),
-      bids: bids,
+      bidders: bidders,
     };
+  }
+
+  private groupBidsByUser(bids: AuctionBid[]) {
+    const bidders = [];
+    bids.forEach((bid) => {
+      const existingBidder = bidders.find((bidder) => bidder.userId === bid.userId);
+      if (!existingBidder) {
+        const newBidder = {
+          ...bid,
+          amount: +bid.amount,
+        };
+
+        bidders.push(newBidder);
+      } else {
+        existingBidder.amount = +existingBidder.amount + +bid.amount;
+      }
+    });
+
+    return bidders;
   }
 
   async createRewardTier(
@@ -747,31 +769,125 @@ export class AuctionService {
     };
   }
 
-  public async getAuctionBids(auctionId: number) {
-    //TODO: Add results limit to get only (reward tiers * reward tier slots)
-    const bids = await this.auctionBidRepository.find({ where: { auctionId: auctionId }, order: { amount: 'DESC' } });
+  public async getUserBids(userId: number) {
+    //TODO: Add Pagination as this request can get quite computation heavy
 
-    return {
-      bids: bids.map((bid) => classToPlain(bid)),
-    };
+    // User should have only one bid per auction -> if user places multiple bids their amount should be accumulated into a single bid (That's how smart contract works)
+    const bids = await this.auctionBidRepository.find({ where: { userId: userId }, order: { createdAt: 'DESC' } });
+    const auctionIds = bids.map((bid) => bid.auctionId);
+
+    const [auctions, allAuctionBids, rewardTiers] = await Promise.all([
+      this.auctionRepository.find({ where: { id: In(auctionIds) } }),
+      this.auctionBidRepository.find({ where: { auctionId: In(auctionIds) } }),
+      this.rewardTierRepository.find({ where: { auctionId: In(auctionIds) } }),
+    ]);
+
+    const auctionsById = auctions.reduce((acc, auction) => {
+      acc[auction.id] = auction;
+      return acc;
+    }, {});
+
+    const allAuctionBidders = this.groupBidsByUser(allAuctionBids);
+
+    const bidsByAuctionId = allAuctionBidders.reduce((acc, bid) => {
+      const group = acc[bid.auctionId] || [];
+      group.push(bid.amount);
+      acc[bid.auctionId] = group;
+      return acc;
+    }, {});
+
+    const rewardTierIds = rewardTiers.map((nft) => nft.id);
+    const rewardTiersNfts = await this.rewardTierNftRepository.find({ where: { rewardTierId: In(rewardTierIds) } });
+
+    const rewardTierNftsByRewardTierId = rewardTiersNfts.reduce((acc, rewardTierNft) => {
+      const group = acc[rewardTierNft.rewardTierId] || [];
+      group.push(rewardTierNft);
+      acc[rewardTierNft.rewardTierId] = group;
+      return acc;
+    }, {});
+
+    const rewardTiersByAuctionId = rewardTiers.reduce((acc, tier) => {
+      const group = acc[tier.auctionId] || [];
+      group.push(tier);
+      acc[tier.auctionId] = group;
+      return acc;
+    }, {});
+
+    const mappedBids = bids.map((bid) => {
+      const auctionBids = bidsByAuctionId[bid.auctionId];
+      const highestBid = Math.max(...auctionBids);
+      const lowestBid = Math.min(...auctionBids);
+
+      const tiers = rewardTiersByAuctionId[bid.auctionId];
+
+      // If auction has 5 winning slots but received only one bid -> numberOfWinners should be 1)
+      let numberOfWinners = tiers.reduce((acc, tier) => (acc += tier.numberOfWinners), 0);
+      numberOfWinners = Math.min(numberOfWinners, auctionBids.length);
+
+      const nftsBySlot = rewardTiersNfts
+        .filter((tierNft) =>
+          Object.keys(rewardTierNftsByRewardTierId)
+            .map((key) => +key)
+            .includes(tierNft.rewardTierId),
+        )
+        .reduce((acc, item) => {
+          const group = acc[item.slot] || [];
+          group.push(item);
+          acc[item.slot] = group;
+          return acc;
+        }, {});
+
+      let maxNfts = Number.MIN_SAFE_INTEGER;
+      let minNfts = Number.MAX_SAFE_INTEGER;
+
+      Object.keys(nftsBySlot).forEach((slot) => {
+        if (nftsBySlot[slot].length > maxNfts) {
+          maxNfts = nftsBySlot[slot].length;
+        }
+        if (nftsBySlot[slot].length < minNfts) {
+          minNfts = nftsBySlot[slot].length;
+        }
+      });
+
+      return {
+        bid: classToPlain(bid),
+        auction: classToPlain(auctionsById[bid.auctionId]),
+        highestBid: highestBid,
+        lowestBid: lowestBid,
+        numberOfWinners,
+        maxNfts,
+        minNfts,
+      };
+    });
+    return { bids: mappedBids, pagination: {} };
   }
 
   public async placeAuctionBid(userId: number, placeBidBody: PlaceBidBody) {
-    //TODO: This is a temporartu endpoint until the scraper functionality is finished
-    const bidder = await this.usersService.getById(userId);
+    //TODO: This is a temporary endpoint until the scraper functionality is finished
     const auction = await this.auctionRepository.findOne(placeBidBody.auctionId);
 
     if (!auction) {
       throw new AuctionNotFoundException();
     }
 
-    const bid = await this.auctionBidRepository.save({
-      userId: userId,
-      amount: placeBidBody.amount,
-      auctionId: placeBidBody.auctionId,
+    const bidder = await this.usersService.getById(userId);
+
+    const bid = await this.auctionBidRepository.findOne({
+      where: { userId, auctionId: placeBidBody.auctionId },
     });
 
-    const response = { ...bid, user: bidder };
+    if (bid) {
+      await this.auctionBidRepository.update(bid.id, {
+        amount: +bid.amount + +placeBidBody.amount,
+      });
+    } else {
+      await this.auctionBidRepository.save({
+        userId: userId,
+        amount: placeBidBody.amount,
+        auctionId: placeBidBody.auctionId,
+      });
+    }
+    const response = { ...placeBidBody, user: bidder };
     return {
       bid: response,
     };
