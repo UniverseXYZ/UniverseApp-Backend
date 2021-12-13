@@ -776,28 +776,22 @@ export class AuctionService {
     const bids = await this.auctionBidRepository.find({ where: { userId: userId }, order: { createdAt: 'DESC' } });
     const auctionIds = bids.map((bid) => bid.auctionId);
 
-    const [auctions, allAuctionBids, rewardTiers] = await Promise.all([
+    const [auctions, rewardTiers, minBidQuery, maxBidQuery, bidsCountQuery] = await Promise.all([
       this.auctionRepository.find({ where: { id: In(auctionIds) } }),
-      this.auctionBidRepository.find({ where: { auctionId: In(auctionIds) } }),
       this.rewardTierRepository.find({ where: { auctionId: In(auctionIds) } }),
+      this.auctionBidRepository.createQueryBuilder('bid').select('MIN(bid.amount)', 'min').getRawOne(),
+      this.auctionBidRepository.createQueryBuilder('bid').select('MAX(bid.amount)', 'max').getRawOne(),
+      this.auctionBidRepository
+        .createQueryBuilder('bid')
+        .select(['bid.auctionId', 'COUNT(*) as bidCount'])
+        .groupBy('bid.auctionId')
+        .where('bid.auctionId IN (:...auctionIds)', { auctionIds: auctionIds })
+        .getRawMany(),
     ]);
 
-    const auctionsById = auctions.reduce((acc, auction) => {
-      acc[auction.id] = auction;
-      return acc;
-    }, {});
-
-    const allAuctionBidders = this.groupBidsByUser(allAuctionBids);
-
-    const bidsByAuctionId = allAuctionBidders.reduce((acc, bid) => {
-      const group = acc[bid.auctionId] || [];
-      group.push(bid.amount);
-      acc[bid.auctionId] = group;
-      return acc;
-    }, {});
-
-    const rewardTierIds = rewardTiers.map((nft) => nft.id);
-    const rewardTiersNfts = await this.rewardTierNftRepository.find({ where: { rewardTierId: In(rewardTierIds) } });
+    const rewardTiersNfts = await this.rewardTierNftRepository.find({
+      where: { rewardTierId: In(rewardTiers.map((nft) => nft.id)) },
+    });
 
     const rewardTierNftsByRewardTierId = rewardTiersNfts.reduce((acc, rewardTierNft) => {
       const group = acc[rewardTierNft.rewardTierId] || [];
@@ -813,23 +807,23 @@ export class AuctionService {
       return acc;
     }, {});
 
+    const auctionsById = auctions.reduce((acc, auction) => {
+      acc[auction.id] = auction;
+      return acc;
+    }, {});
+
     const mappedBids = bids.map((bid) => {
-      const auctionBids = bidsByAuctionId[bid.auctionId];
-      const highestBid = Math.max(...auctionBids);
-      const lowestBid = Math.min(...auctionBids);
+      const auctionBidsCount = +bidsCountQuery.find((b) => b['bid_auctionId'] === bid.auctionId)['bidCount'];
 
       const tiers = rewardTiersByAuctionId[bid.auctionId];
 
       // If auction has 5 winning slots but received only one bid -> numberOfWinners should be 1)
-      let numberOfWinners = tiers.reduce((acc, tier) => (acc += tier.numberOfWinners), 0);
-      numberOfWinners = Math.min(numberOfWinners, auctionBids.length);
+      const totalAuctionNumberOfWinners = tiers.reduce((acc, tier) => (acc += tier.numberOfWinners), 0);
+      const numberOfWinners = Math.min(totalAuctionNumberOfWinners, auctionBidsCount);
 
+      const tierNftIds = Object.keys(rewardTierNftsByRewardTierId).map((key) => +key);
       const nftsBySlot = rewardTiersNfts
-        .filter((tierNft) =>
-          Object.keys(rewardTierNftsByRewardTierId)
-            .map((key) => +key)
-            .includes(tierNft.rewardTierId),
-        )
+        .filter((tierNft) => tierNftIds.includes(tierNft.rewardTierId))
         .reduce((acc, item) => {
           const group = acc[item.slot] || [];
           group.push(item);
@@ -852,8 +846,8 @@ export class AuctionService {
       return {
         bid: classToPlain(bid),
         auction: classToPlain(auctionsById[bid.auctionId]),
-        highestBid: highestBid,
-        lowestBid: lowestBid,
+        highestBid: +maxBidQuery.max,
+        lowestBid: +minBidQuery.min,
         numberOfWinners,
         maxNfts,
         minNfts,
