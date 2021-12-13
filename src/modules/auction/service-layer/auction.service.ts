@@ -476,17 +476,6 @@ export class AuctionService {
     };
   }
 
-  public async appendTxHash(userId: number, auctionId: number, deployBody: DeployAuctionBody) {
-    const auction = await this.validateAuctionPermissions(userId, auctionId);
-    const updatedAuction = await this.auctionRepository.update(auction.id, {
-      createAuctionTxHash: deployBody.txHash,
-    });
-
-    return {
-      auction: classToPlain(updatedAuction),
-    };
-  }
-
   public async cancelOnChainAuction(userId: number, auctionId: number) {
     // TODO: This is a temporary endpoint to create auction. In the future the scraper should fill in these fields
     const auction = await this.validateAuctionPermissions(userId, auctionId);
