@@ -395,12 +395,12 @@ export class MoralisService {
     if (token.token_id == undefined || token.token_address == undefined) {
       throw new TokenAssertAddressNotSupportedError();
     } else {
+      const openSeaApiKey = this.config.values.opensea.apiKey || '1379b4994aa64cd09752e705f3f263c0';
       const openSeaApiUri =
-        this.config.values.ethereum.ethereumNetwork === 'rinkeby' ? OPENSEA_RINKEBY_API_URL : OPENSEA_ETH_API_URL;
-      const headers =
         this.config.values.ethereum.ethereumNetwork === 'rinkeby'
-          ? {}
-          : { 'X-API-KEY': this.config.values.opensea.apiKey };
+          ? 'https://rinkeby-api.opensea.io/api/v1/asset'
+          : 'https://api.opensea.io/api/v1/asset';
+      const headers = this.config.values.ethereum.ethereumNetwork === 'rinkeby' ? {} : { 'X-API-KEY': openSeaApiKey };
       const { data } = await this.httpService
         .get(`${openSeaApiUri}/${token.token_address}/${token.token_id}`, {
           headers,
