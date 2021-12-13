@@ -39,17 +39,15 @@ enum MetaDataApiCallType {
   OPENSEA = 2,
 }
 
-Moralis.serverURL = process.env.MORALIS_SERVERURL;
-Moralis.masterKey = process.env.MORALIS_MASTER_KEY;
-Moralis.initialize(process.env.MORALIS_APPLICATION_ID);
+import { MoralisNft } from './model/moralis-nft';
+import {
+  NftMissingAttributesError,
+  SkippedUniverseNftError,
+  TokenUriFormatNotSupportedError,
+} from './service/exceptions';
+import { FileSystemService } from '../file-system/file-system.service';
 
-function fixURL(url) {
-  if (url.startsWith('ipfs')) {
-    return 'https://ipfs.moralis.io:2053/ipfs/' + url.split('ipfs://ipfs/').slice(-1)[0];
-  } else {
-    return url + '?format=json';
-  }
-}
+const MORALIS_NEW_NFT_QUEUE = 'MORALIS_NEW_NFT_QUEUE';
 
 @Injectable()
 export class MoralisService {
