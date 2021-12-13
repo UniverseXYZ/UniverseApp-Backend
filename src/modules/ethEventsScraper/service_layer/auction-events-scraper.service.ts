@@ -340,7 +340,6 @@ export class AuctionEventsScraperService {
         });
 
       if (bid && auctionId) {
-        //TODO: Add bidder profile info
         const bidder = await this.usersRepository.findOne({ where: { address: bid.bidder, isActive: true } });
         const bids = await this.attachBidsInfo(auctionId);
         this.auctionGateway.notifyAuctionBidSubmitted(auctionId, {
