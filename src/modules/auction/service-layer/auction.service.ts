@@ -31,6 +31,7 @@ import { UploadResult } from 'src/modules/file-storage/model/UploadResult';
 import { NftCollection } from 'src/modules/nft/domain/collection.entity';
 import { AuctionBid } from '../domain/auction.bid.entity';
 import { User } from 'src/modules/users/user.entity';
+import { AuctionGateway } from './auction.gateway';
 
 @Injectable()
 export class AuctionService {
@@ -50,6 +51,7 @@ export class AuctionService {
     private auctionBidRepository: Repository<AuctionBid>,
     private s3Service: S3Service,
     private fileSystemService: FileSystemService,
+    private gateway: AuctionGateway,
     private readonly config: AppConfig,
   ) {}
 
@@ -927,6 +929,8 @@ export class AuctionService {
       });
     }
     const response = { ...placeBidBody, user: bidder };
+    this.gateway.notifyBids(placeBidBody.auctionId, response);
+
     return {
       bid: response,
     };

@@ -15,6 +15,7 @@ import { AuctionService } from './service-layer/auction.service';
 import { FileSystemModule } from '../file-system/file-system.module';
 import { UsersModule } from '../users/users.module';
 import { NftCollection } from '../nft/domain/collection.entity';
+import { AuctionGateway } from './service-layer/auction.gateway';
 
 @Module({
   imports: [
@@ -29,6 +30,6 @@ import { NftCollection } from '../nft/domain/collection.entity';
   ],
   controllers: [AuctionController],
   exports: [AuctionService],
-  providers: [AuctionService],
+  providers: [AuctionService, AuctionGateway],
 })
 export class AuctionModule {}
