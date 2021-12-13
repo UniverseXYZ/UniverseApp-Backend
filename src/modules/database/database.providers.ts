@@ -16,7 +16,7 @@ import { MintingNft } from '../nft/domain/minting-nft.entity';
 import { AuctionBid } from '../auction/domain/auction.bid.entity';
 import { MonitoredNfts } from '../nft/domain/monitored-nfts';
 import { MoralisLog } from '../moralis/domain/moralis-log.entity';
-import { AuctionBid } from '../auction/domain/auction.bid.entity';
+import { AuctionCreatedEvent } from '../ethEventsScraper/domain/create-auction-event';
 
 // TODO: Add db entities here
 const entities = [
@@ -36,6 +36,7 @@ const entities = [
   MonitoredNfts,
   MoralisLog,
   AuctionBid,
+  AuctionCreatedEvent,
 ];
 
 @Injectable()
