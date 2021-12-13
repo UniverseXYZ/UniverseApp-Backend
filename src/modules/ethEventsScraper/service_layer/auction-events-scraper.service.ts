@@ -85,8 +85,8 @@ export class AuctionEventsScraperService {
       await this.syncBidSubmittedEvents();
       await this.syncBidWithdrawnEvents();
       await this.syncAuctionExtendedEvents();
-      await this.syncAuctionFinalisedEvents();
       await this.syncBidMatchedEvents();
+      await this.syncAuctionFinalisedEvents();
       await this.syncRevenueWithdrawnEvents();
       await this.syncRevenueCapturedEvents();
       await this.syncErc721ClaimedEvents();
