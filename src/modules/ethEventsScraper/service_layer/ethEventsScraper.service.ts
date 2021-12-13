@@ -62,7 +62,12 @@ export class EthEventsScraperService {
 
       if (!mintingCollection) continue;
 
-      const collection = this.nftCollectionRepository.create();
+      let collection = await this.nftCollectionRepository.findOne({
+        where: { address: event.contract_address?.toLowerCase() },
+      });
+      if (!collection) {
+        collection = this.nftCollectionRepository.create();
+      }
       collection.txHash = event.tx_hash;
       collection.address = event.contract_address?.toLowerCase();
       collection.owner = event.owner.toLowerCase();
