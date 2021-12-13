@@ -165,7 +165,7 @@ export class AuctionService {
 
     const bids = await this.auctionBidRepository
       .createQueryBuilder('bid')
-      .leftJoinAndMapOne('bid.user', User, 'bidder', 'bidder.id = bid.userId')
+      .leftJoinAndMapOne('bid.user', User, 'bidder', 'bidder.address = bid.bidder')
       .where({ auctionId: auction.id })
       .orderBy('bid.amount', 'DESC')
       .getMany();

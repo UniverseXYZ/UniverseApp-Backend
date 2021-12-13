@@ -331,13 +331,40 @@ export class AuctionEventsScraperService {
     }
   }
 
-  // TODO: Implement logic
   private async syncBidWithdrawnEvents() {
     const events = await this.bidWithdrawnEventRepository.find({ where: { processed: false } });
     this.logger.log(`found ${events.length} BidWithdrawn events`);
     for (const event of events) {
       await this.connection
-        .transaction(async (transactionalEntityManager) => {})
+        .transaction(async (transactionalEntityManager) => {
+          const auction = await transactionalEntityManager.findOne(Auction, {
+            where: { onChainId: event.data?.auctionId },
+          });
+
+          if (!auction) {
+            this.logger.warn(`auction not found with onChainId: ${event.data?.auctionId}`);
+            return;
+          }
+
+          const bid = await transactionalEntityManager.findOne(AuctionBid, {
+            where: { auctionId: auction.id, bidder: event.data.recipient },
+          });
+
+          if (!bid) {
+            this.logger.warn(`No bid has been made to this auction from this user: ${event.data?.recipient}`);
+            return;
+          }
+
+          await transactionalEntityManager.remove(AuctionBid, bid);
+
+          event.processed = true;
+          await transactionalEntityManager.save(event);
+
+          this.auctionGateway.notifyAuctionBidWithdrawn(auction.id, {
+            amount: bid.amount,
+            user: bid.bidder,
+          });
+        })
         .catch((error) => {
           this.logger.error(error);
         });
