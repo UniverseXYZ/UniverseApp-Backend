@@ -623,6 +623,117 @@ export class AuctionService {
     };
   }
 
+  async getPastAuctions(userId: number, limit = 8, offset = 0, filters = []) {
+    const now = new Date().toISOString();
+
+    const query = this.auctionRepository
+    .createQueryBuilder('auctions')
+    .where('auctions.endDate < :now', {now: now})
+    .orderBy('id', 'DESC')
+    .limit(limit)
+    .offset(offset);
+
+    if (userId) {
+      const user = await this.usersService.getById(userId, true);
+      query.andWhere('auctions.userId = :userId', {userId: user.id});
+    }
+
+    if (filters) {
+      //todo filters
+    }
+
+    const [auctions, count] = await query.getManyAndCount();
+    const auctionsWithTiers = await this.formatMyAuctions(auctions);
+
+    let auctionsWithBids = [];
+    if (auctionsWithTiers.length) {
+      auctionsWithBids = await this.attachBidsInfo(auctionsWithTiers);
+    }
+
+    return {
+      pagination: {
+        total: count,
+        offset,
+        limit,
+      },
+      auctions: auctionsWithBids,
+    };
+  }
+
+  async getActiveAuctions(userId: number, limit = 8, offset = 0, filters = []) {
+    const now = new Date().toISOString();
+
+    const query = this.auctionRepository
+    .createQueryBuilder('auctions')
+    .where('auctions.startDate < :now AND auctions.endDate > :now', {now: now})
+    .orderBy('id', 'DESC')
+    .limit(limit)
+    .offset(offset);
+
+    if (userId) {
+      const user = await this.usersService.getById(userId, true);
+      query.andWhere('auctions.userId = :userId', {userId: user.id});
+    }
+
+    if (filters) {
+      //todo filters
+    }
+
+    const [auctions, count] = await query.getManyAndCount();
+    const auctionsWithTiers = await this.formatMyAuctions(auctions);
+
+    let auctionsWithBids = [];
+    if (auctionsWithTiers.length) {
+      auctionsWithBids = await this.attachBidsInfo(auctionsWithTiers);
+    }
+
+    return {
+      pagination: {
+        total: count,
+        offset,
+        limit,
+      },
+      auctions: auctionsWithBids,
+    };
+  }
+
+  async getFutureAuctions(userId: number, limit = 8, offset = 0, filters = []) {
+    const now = new Date().toISOString();
+
+    const query = this.auctionRepository
+    .createQueryBuilder('auctions')
+    .where('auctions.startDate > :now', {now: now})
+    .orderBy('id', 'DESC')
+    .limit(limit)
+    .offset(offset);
+
+    if (userId) {
+      const user = await this.usersService.getById(userId, true);
+      query.andWhere('auctions.userId = :userId', {userId: user.id});
+    }
+
+    if (filters) {
+      //todo filters
+    }
+
+    const [auctions, count] = await query.getManyAndCount();
+    const auctionsWithTiers = await this.formatMyAuctions(auctions);
+
+    let auctionsWithBids = [];
+    if (auctionsWithTiers.length) {
+      auctionsWithBids = await this.attachBidsInfo(auctionsWithTiers);
+    }
+
+    return {
+      pagination: {
+        total: count,
+        offset,
+        limit,
+      },
+      auctions: auctionsWithBids,
+    };
+  }
+
   private async attachBidsInfo(auctions: Auction[]) {
     const auctionIds = auctions.map((auction) => auction.id);
     const bidsQuery = await this.auctionBidRepository
