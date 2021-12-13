@@ -89,11 +89,8 @@ export class SaveNftBody {
 
   @IsEnum(MetadataStorageEnum)
   @ApiProperty({
-    enum: MetadataStorageEnum, 
-    example: [
-      MetadataStorageEnum.ONCHAIN, 
-      MetadataStorageEnum.OFFCHAIN
-    ],
+    enum: MetadataStorageEnum,
+    example: [MetadataStorageEnum.ONCHAIN, MetadataStorageEnum.OFFCHAIN],
     required: true,
   })
   metadataStorage: MetadataStorageEnum;
@@ -231,11 +228,8 @@ export class EditSavedNftBody {
 
   @IsEnum(MetadataStorageEnum)
   @ApiProperty({
-    enum: MetadataStorageEnum, 
-    example: [
-      MetadataStorageEnum.ONCHAIN, 
-      MetadataStorageEnum.OFFCHAIN
-    ],
+    enum: MetadataStorageEnum,
+    example: [MetadataStorageEnum.ONCHAIN, MetadataStorageEnum.OFFCHAIN],
     required: true,
   })
   metadataStorage: MetadataStorageEnum;
@@ -464,6 +458,60 @@ export class GetUserNftsParams {
   username: string;
 }
 
+export class GetUserNftsQueryParams {
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The offset for getting nfts',
+    example: '8',
+  })
+  offset: number;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The amount of editions to get',
+    example: '1',
+  })
+  limit: number;
+}
+
+export class GetSavedNftsParams {
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The offset for getting nfts',
+    example: '8',
+  })
+  offset: number;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The amount of editions to get',
+    example: '1',
+  })
+  limit: number;
+}
+
+export class GetMyNftsParams {
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The offset for getting nfts',
+    example: '8',
+  })
+  offset: number;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The amount of editions to get',
+    example: '1',
+  })
+  limit: number;
+}
+
 export class EditMintingCollectionBody {
   @IsString()
   @IsOptional()
@@ -520,6 +568,42 @@ export class GetNftParams {
   })
   tokenId: number;
 }
+
+export class GetMyCollectionsPendingParams {
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The offset for getting nfts',
+    example: '8',
+  })
+  offset: number;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The amount of editions to get',
+    example: '1',
+  })
+  limit: number;
+}
+
+export class GetMyNftsPendingParams {
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The offset for getting nfts',
+    example: '8',
+  })
+  offset: number;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The amount of editions to get',
+    example: '1',
+  })
+  limit: number;
+}
 export class GetMyNftsAvailabilityParams {
   @IsNumberString()
   @IsOptional()
@@ -561,6 +645,22 @@ export class GetMyCollectionsParams {
     example: 'true',
   })
   mintable: string;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The offset for getting nfts',
+    example: '8',
+  })
+  offset: number;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The amount of editions to get',
+    example: '1',
+  })
+  limit: number;
 }
 
 export class GetCollectionQueryParams {
@@ -573,6 +673,24 @@ export class GetCollectionQueryParams {
   })
   name: string;
 
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The offset for getting nfts',
+    example: '8',
+  })
+  offset: number;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The amount of editions to get',
+    example: '1',
+  })
+  limit: number;
+}
+
+export class GetMyNftsPageParams {
   @IsNumberString()
   @IsOptional()
   @ApiProperty({
