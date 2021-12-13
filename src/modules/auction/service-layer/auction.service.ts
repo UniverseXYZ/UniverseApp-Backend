@@ -755,7 +755,7 @@ export class AuctionService {
     const bids = await this.auctionBidRepository.find({ where: { userId: userId }, order: { createdAt: 'DESC' } });
     const auctionIds = bids.map((bid) => bid.auctionId);
 
-    const [auctions, rewardTiers, minBidsQuery, maxBidsQuery, bidsCountQuery] = await Promise.all([
+    const [auctions, rewardTiers, bidsQuery] = await Promise.all([
       this.auctionRepository
         .createQueryBuilder('auction')
         .leftJoinAndMapOne('auction.creator', User, 'creator', 'creator.id = auction.userId')
@@ -764,19 +764,7 @@ export class AuctionService {
       this.rewardTierRepository.find({ where: { auctionId: In(auctionIds) } }),
       this.auctionBidRepository
         .createQueryBuilder('bid')
-        .select(['bid.auctionId', 'MIN(bid.amount) as min'])
-        .groupBy('bid.auctionId')
-        .where('bid.auctionId IN (:...auctionIds)', { auctionIds: auctionIds })
-        .getRawMany(),
-      this.auctionBidRepository
-        .createQueryBuilder('bid')
-        .select(['bid.auctionId', 'MAX(bid.amount) as max'])
-        .groupBy('bid.auctionId')
-        .where('bid.auctionId IN (:...auctionIds)', { auctionIds: auctionIds })
-        .getRawMany(),
-      this.auctionBidRepository
-        .createQueryBuilder('bid')
-        .select(['bid.auctionId', 'COUNT(*) as bidCount'])
+        .select(['bid.auctionId', 'MIN(bid.amount) as min', 'MAX(bid.amount) as max', 'COUNT(*) as bidCount'])
         .groupBy('bid.auctionId')
         .where('bid.auctionId IN (:...auctionIds)', { auctionIds: auctionIds })
         .getRawMany(),
@@ -806,9 +794,9 @@ export class AuctionService {
     }, {});
 
     const mappedBids = bids.map((bid) => {
-      const auctionBidsCount = +bidsCountQuery.find((b) => b['bid_auctionId'] === bid.auctionId)['bidCount'];
-      const highestBid = +maxBidsQuery.find((b) => b['bid_auctionId'] === bid.auctionId)['max'];
-      const lowestBid = +minBidsQuery.find((b) => b['bid_auctionId'] === bid.auctionId)['min'];
+      const auctionBidsCount = +bidsQuery.find((b) => b['bid_auctionId'] === bid.auctionId)['bidcount'];
+      const highestBid = +bidsQuery.find((b) => b['bid_auctionId'] === bid.auctionId)['max'];
+      const lowestBid = +bidsQuery.find((b) => b['bid_auctionId'] === bid.auctionId)['min'];
       const tiers = rewardTiersByAuctionId[bid.auctionId];
 
       // If auction has 5 winning slots but received only one bid -> numberOfWinners should be 1)
