@@ -33,6 +33,7 @@ import {
   DepositNftsBody,
   ChangeAuctionStatus,
   AddRewardTierBodyParams,
+  RemoveRewardTierParams,
 } from './dto';
 import { AuctionService } from '../service-layer/auction.service';
 import { JwtAuthGuard, OptionalJwtAuthGuard } from '../../auth/jwt-auth.guard';
@@ -202,6 +203,15 @@ export class AuctionController {
   @ApiResponse({ type: EditRewardTierResponse, status: 200 })
   async createRewardTier(@Req() req, @Body() addRewardTierBodyParams: AddRewardTierBodyParams) {
     return await this.auctionService.createRewardTier(req.user.sub, addRewardTierBodyParams);
+  }
+
+  @Post('/remove-reward-tier')
+  @UseGuards(JwtAuthGuard)
+  @ApiTags('auction')
+  @ApiOperation({ summary: 'Remove a Reward Tier from a specific Auction' })
+  @ApiResponse({ type: EditRewardTierResponse, status: 200 })
+  async removeRewardTier(@Req() req, @Body() removeRewardTierParamsparams: RemoveRewardTierParams) {
+    return await this.auctionService.removeRewardTier(req.user.sub, removeRewardTierParamsparams);
   }
 
   @Patch('reward-tier-extra-data')
