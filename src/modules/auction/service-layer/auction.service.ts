@@ -32,6 +32,7 @@ import { NftCollection } from 'src/modules/nft/domain/collection.entity';
 import { AuctionBid } from '../domain/auction.bid.entity';
 import { User } from 'src/modules/users/user.entity';
 import { AuctionGateway } from './auction.gateway';
+import { AuctionBidNotFoundException } from './exceptions/AuctionBidNotFoundException';
 
 @Injectable()
 export class AuctionService {
@@ -944,11 +945,29 @@ export class AuctionService {
       });
     }
     const response = { ...placeBidBody, user: bidder };
-    this.gateway.notifyBids(placeBidBody.auctionId, response);
+    // this.gateway.notifyBids(placeBidBody.auctionId, response);
 
     return {
       bid: response,
     };
+  }
+
+  public async cancelAuctionBid(userId: number, auctionId: number) {
+    //TODO: This is a temporary endpoint until the scraper functionality is finished
+    await this.validateAuctionPermissions(userId, auctionId);
+
+    const bid = await this.auctionBidRepository.findOne({
+      where: { userId, auctionId: auctionId },
+    });
+
+    if (bid) {
+      const deleteResult = await this.auctionBidRepository.delete(bid.id);
+      return {
+        deleted: deleteResult.affected,
+      };
+    }
+
+    throw new AuctionBidNotFoundException();
   }
 
   private setPagination(query, page: number, limit: number) {
@@ -967,7 +986,7 @@ export class AuctionService {
 
     auction = await this.auctionRepository.save(auction);
 
-    this.gateway.notifyAuctionStatus(auction);
+    // this.gateway.notifyAuctionStatus(auction);
 
     return {
       auction,
