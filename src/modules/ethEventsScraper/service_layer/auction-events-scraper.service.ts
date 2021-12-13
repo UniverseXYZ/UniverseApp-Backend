@@ -579,6 +579,11 @@ export class AuctionEventsScraperService {
 
           event.processed = true;
           await transactionalEntityManager.save(event);
+
+          this.auctionGateway.notifyERC721Claimed(auction.id, {
+            claimer: event.data.claimer,
+            slotIndex: event.data.slotIndex,
+          });
         })
         .catch((error) => {
           this.logger.error(error);
