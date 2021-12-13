@@ -62,6 +62,8 @@ export class AuctionEventsScraperService {
     private withdrawnRevenueEventRepository: Repository<WithdrawnRevenueEvent>,
     @InjectRepository(AuctionBid)
     private auctionBidRepository: Repository<AuctionBid>,
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
 
     private connection: Connection,
     private auctionGateway: AuctionGateway,
@@ -179,7 +181,10 @@ export class AuctionEventsScraperService {
 
           event.processed = true;
           await transactionalEntityManager.save(event);
-          this.auctionGateway.notifyAuctionDepositedNfts(auction.id);
+          this.auctionGateway.notifyAuctionDepositedNfts(auction.id, {
+            tokenId: event.data.tokenId.toString(),
+            collectionAddress: event.data.tokenAddress,
+          });
         })
         .catch((error) => {
           this.logger.error(error);
@@ -191,6 +196,7 @@ export class AuctionEventsScraperService {
     const events = await this.erc721WithdrawEventRepository.find({ where: { processed: false } });
     this.logger.log(`found ${events.length} Erc721Withdrawn events`);
     for (const event of events) {
+      let tokenId = 0;
       const auction = await this.auctionsRepository.findOne({
         where: { onChainId: event.data.auctionId },
       });
@@ -204,6 +210,8 @@ export class AuctionEventsScraperService {
           await this.markRewardTierNftAsWithdrawn(transactionalEntityManager, event, auction.id);
 
           event.processed = true;
+          tokenId = event.data.tokenId;
+          //TODO: we need collection address from event in order to prevent token id collision in FE
           await transactionalEntityManager.save(event);
         })
         .catch((error) => {
@@ -219,9 +227,9 @@ export class AuctionEventsScraperService {
         if (!depositedNfts.length) {
           auction.depositedNfts = false;
           await this.auctionsRepository.save(auction);
-          this.auctionGateway.notifyAuctionWithdrawnNfts(auction.id, true);
+          this.auctionGateway.notifyAuctionWithdrawnNfts(auction.id, true, tokenId.toString());
         } else {
-          this.auctionGateway.notifyAuctionWithdrawnNfts(auction.id, false);
+          this.auctionGateway.notifyAuctionWithdrawnNfts(auction.id, false, tokenId.toString());
         }
       }
     }
@@ -332,10 +340,13 @@ export class AuctionEventsScraperService {
         });
 
       if (bid && auctionId) {
+        //TODO: Add bidder profile info
+        const bidder = await this.usersRepository.findOne({ where: { address: bid.bidder, isActive: true } });
         const bids = await this.attachBidsInfo(auctionId);
         this.auctionGateway.notifyAuctionBidSubmitted(auctionId, {
           amount: bid.amount,
           user: bid.bidder,
+          userProfile: bidder,
           bids,
         });
       }
