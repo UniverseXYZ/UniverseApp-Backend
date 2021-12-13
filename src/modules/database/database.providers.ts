@@ -13,6 +13,7 @@ import { DeployCollectionEvent } from '../ethEventsScraper/domain/deploy-collect
 import { MintingCollection } from '../nft/domain/minting-collection.entity';
 import { LoginChallenge } from '../auth/model/login-challenge.entity';
 import { MintingNft } from '../nft/domain/minting-nft.entity';
+import { AuctionBid } from '../auction/domain/auction.bid.entity';
 import { MonitoredNfts } from '../nft/domain/monitored-nfts';
 import { MoralisLog } from '../moralis/domain/moralis-log.entity';
 import { AuctionBid } from '../auction/domain/auction.bid.entity';
@@ -31,6 +32,7 @@ const entities = [
   MintingCollection,
   LoginChallenge,
   MintingNft,
+  AuctionBid,
   MonitoredNfts,
   MoralisLog,
   AuctionBid,
