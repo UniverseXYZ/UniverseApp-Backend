@@ -443,12 +443,24 @@ export class AuctionEventsScraperService {
 
           await transactionalEntityManager.save(event);
 
-          //TODO: Set finalised only if this is the last slot of the auction
-          finalised = true;
-          if (finalised) {
+          // Set finalised only if this is the last slot of the auction
+          let biggestSlotIdx = 0;
+          const rewardTiers = await transactionalEntityManager.find(RewardTier, { where: { auctionId: auction.id } });
+          rewardTiers.forEach((tier) => {
+            const slots = tier.slots;
+            slots.forEach((slot) => {
+              if (slot.index > biggestSlotIdx) {
+                biggestSlotIdx = slot.index;
+              }
+            });
+          });
+
+          if (event.data.slotIndex === biggestSlotIdx) {
+            finalised = true;
             auction.finalised = true;
             await transactionalEntityManager.save(auction);
           }
+
           event.processed = true;
           await transactionalEntityManager.save(event);
           auctionId = auction.id;
