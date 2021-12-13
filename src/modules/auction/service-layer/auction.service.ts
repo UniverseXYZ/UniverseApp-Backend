@@ -85,7 +85,7 @@ export class AuctionService {
     // https://github.com/UniverseXYZ/UniverseApp-Backend/issues/100
     const now = new Date().toISOString();
     const moreActiveAuctions = await this.auctionRepository.find({
-      where: { userId: artist.id, id: Not(auction.id), startDate: MoreThan(now), endDate: LessThan(now) },
+      where: { userId: artist.id, id: Not(auction.id), startDate: LessThan(now), endDate: MoreThan(now) },
     });
 
     const bids = await this.auctionBidRepository
