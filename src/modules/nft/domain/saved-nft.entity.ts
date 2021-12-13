@@ -23,13 +23,13 @@ export class SavedNft {
   @Column({ nullable: true })
   tokenUri: string;
 
-  // @Column({ 
-  //   type: 'enum',
-  //   enum: MetadataStorageEnum,
-  //   default: null,
-  //   nullable: true,
-  // })
-  // metadataStorage: MetadataStorageEnum;
+  @Column({ 
+    type: 'enum',
+    enum: MetadataStorageEnum,
+    default: null,
+    nullable: true,
+  })
+  metadataStorage: MetadataStorageEnum;
 
   @Column()
   name: string;
