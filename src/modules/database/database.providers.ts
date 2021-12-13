@@ -19,6 +19,8 @@ import { MoralisLog } from '../moralis/domain/moralis-log.entity';
 import { AuctionCreatedEvent } from '../ethEventsScraper/domain/create-auction-event';
 import { Erc721DepositedEvent } from '../ethEventsScraper/domain/deposited-erc721-event';
 import { AuctionCanceledEvent } from '../ethEventsScraper/domain/auction-canceled-event';
+import { Erc721WithdrawnEvent } from '../ethEventsScraper/domain/withdrawn-erc721-event';
+import { BidSubmittedEvent } from '../ethEventsScraper/domain/submitted-bid-event';
 
 // TODO: Add db entities here
 const entities = [
@@ -41,6 +43,8 @@ const entities = [
   AuctionCreatedEvent,
   Erc721DepositedEvent,
   AuctionCanceledEvent,
+  Erc721WithdrawnEvent,
+  BidSubmittedEvent,
 ];
 
 @Injectable()
