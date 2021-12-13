@@ -36,6 +36,12 @@ import {
   SaveNftBody,
   UploadNftMediaFileParams,
   GetCollectionQueryParams,
+  GetMyNftsParams,
+  GetSavedNftsParams,
+  GetMyNftsPendingParams,
+  GetMyCollectionsPendingParams,
+  GetUserNftsQueryParams,
+  GetMyNftsPageParams,
 } from './dto';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { NftService } from '../service_layer/nft.service';
@@ -216,8 +222,8 @@ export class NftController {
   @ApiTags('nfts')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get the saved NFTs of an user' })
-  async getSavedNfts(@Req() req) {
-    return await this.nftService.getSavedNfts(req.user.sub);
+  async getSavedNfts(@Req() req, @Query() params: GetSavedNftsParams) {
+    return await this.nftService.getSavedNfts(req.user.sub, params.limit, params.offset);
   }
 
   @Get('nfts/my-nfts')
@@ -226,16 +232,16 @@ export class NftController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get my nfts' })
   @ApiResponse({ type: GetMyNftsResponse, status: 200, isArray: true })
-  async getMyNfts(@Req() req) {
-    return await this.nftService.getMyNfts(req.user.sub);
+  async getMyNfts(@Req() req, @Query() params: GetMyNftsParams) {
+    return await this.nftService.getMyNfts(req.user.sub, params.limit, params.offset);
   }
 
   @Get('pages/user-profile/:username/nfts')
   @ApiTags('nfts')
   @ApiOperation({ summary: 'Get user NFTs' })
   @ApiResponse({ type: GetUserNftsResponse, status: 200, isArray: true })
-  async getUserNfts(@Param() params: GetUserNftsParams) {
-    return await this.nftService.getUserNfts(params.username);
+  async getUserNfts(@Param() params: GetUserNftsParams, @Query() query: GetUserNftsQueryParams) {
+    return await this.nftService.getUserNfts(params.username, query.limit, query.offset);
   }
 
   @Get('nfts/my-nfts/availability')
@@ -255,9 +261,9 @@ export class NftController {
   @ApiOperation({ summary: 'Get the list of all my collections' })
   async getMyCollections(@Req() req, @Query() params: GetMyCollectionsParams) {
     if (params.mintable === 'true') {
-      return await this.nftService.getMyMintableCollections(req.user.sub);
+      return await this.nftService.getMyMintableCollections(req.user.sub, params.limit, params.offset);
     }
-    return await this.nftService.getMyNftsCollections(req.user.sub);
+    return await this.nftService.getMyNftsCollections(req.user.sub, params.limit, params.offset);
   }
 
   @Delete('saved-nfts/:id')
@@ -281,8 +287,8 @@ export class NftController {
   @ApiTags('nfts')
   @ApiOperation({ summary: 'My NFTs page' })
   @ApiBearerAuth()
-  async getMyNftsPage(@Req() req) {
-    return this.nftService.getMyNftsPage(req.user.sub);
+  async getMyNftsPage(@Req() req, @Query() params: GetMyNftsPageParams) {
+    return this.nftService.getMyNftsPage(req.user.sub, params.limit, params.offset);
   }
 
   @Get('pages/my-collections/pending')
@@ -290,8 +296,8 @@ export class NftController {
   @ApiTags('nfts')
   @ApiOperation({ summary: 'Get data to populate the pending section of My Collections page' })
   @ApiBearerAuth()
-  async getMyCollectionsPending(@Req() req) {
-    return this.nftService.getMyCollectionsPendingPage(req.user.sub);
+  async getMyCollectionsPending(@Req() req, @Query() params: GetMyCollectionsPendingParams) {
+    return this.nftService.getMyCollectionsPendingPage(req.user.sub, params.limit, params.offset);
   }
 
   @Get('pages/my-collections/pending/count')
@@ -308,8 +314,8 @@ export class NftController {
   @ApiTags('nfts')
   @ApiOperation({ summary: 'Pending NFTs for My NFTs page' })
   @ApiBearerAuth()
-  async getMyNftsPendingPage(@Req() req) {
-    return this.nftService.getMyNftsPendingPage(req.user.sub);
+  async getMyNftsPendingPage(@Req() req, @Query() params: GetMyNftsPendingParams) {
+    return this.nftService.getMyNftsPendingPage(req.user.sub, params.limit, params.offset);
   }
 
   @Get('pages/my-nfts/pending/count')
@@ -326,5 +332,14 @@ export class NftController {
   @ApiOperation({ summary: 'Get data for NFT page' })
   async getNFTPage(@Param() params: GetNftParams) {
     return this.nftService.getNftPage(params.collectionAddress, params.tokenId);
+  }
+
+  @Get('pages/my-nfts/summary')
+  @UseGuards(JwtAuthGuard)
+  @ApiTags('nfts')
+  @ApiOperation({ summary: 'Get count of the nfts, collections, saved nfts' })
+  @ApiBearerAuth()
+  async getMyNftsSummary(@Req() req) {
+    return this.nftService.getMyNftsSummary(req.user.sub);
   }
 }
