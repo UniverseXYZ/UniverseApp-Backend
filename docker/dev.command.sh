@@ -2,4 +2,4 @@
 
 npm i
 npm run db:migration:run
-npm run start:debug
+npm run start:dev
