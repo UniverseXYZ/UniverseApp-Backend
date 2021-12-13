@@ -762,5 +762,5 @@ export class GetAuctionsQuery {
     type: Array,
     required: false,
   })
-  filters: []
+  filters: [];
 }
