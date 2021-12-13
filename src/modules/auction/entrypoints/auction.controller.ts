@@ -28,7 +28,6 @@ import {
   UpdateRewardTierExtraBody,
   UpdateRewardTierParams,
   UploaductionLandingImagesParams,
-  TxHashBody,
   WithdrawNftsBody,
   DepositNftsBody,
   ChangeAuctionStatus,
