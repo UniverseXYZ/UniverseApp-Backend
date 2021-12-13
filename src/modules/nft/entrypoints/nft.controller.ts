@@ -24,7 +24,6 @@ import {
   EditSavedNftBody,
   GetCollectionParams,
   GetMyCollectionsParams,
-  GetMyNftsAvailabilityParams,
   GetMyNftsResponse,
   GetNftParams,
   GetMyNftsAvailabilityParams,
