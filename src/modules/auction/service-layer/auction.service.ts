@@ -84,7 +84,10 @@ export class AuctionService {
     const rewardTierNftsMap = rewardTierNfts.reduce(
       (acc, rewardTierNft) => ({
         ...acc,
-        [rewardTierNft.rewardTierId]: [...(acc[rewardTierNft.rewardTierId] || []), idNftMap[rewardTierNft.nftId]],
+        [rewardTierNft.rewardTierId]: [
+          ...(acc[rewardTierNft.rewardTierId] || []),
+          { ...idNftMap[rewardTierNft.nftId], slot: rewardTierNft.slot },
+        ],
       }),
       {} as Record<string, Nft[]>,
     );
