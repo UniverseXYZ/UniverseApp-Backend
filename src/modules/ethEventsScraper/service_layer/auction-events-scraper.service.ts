@@ -380,42 +380,123 @@ export class AuctionEventsScraperService {
     }
   }
 
-  // TODO: Implement logic
   private async syncRevenueWithdrawnEvents() {
     const events = await this.withdrawnRevenueEventRepository.find({ where: { processed: false } });
     this.logger.log(`found ${events.length} RevenueWithdrawn events`);
     for (const event of events) {
       await this.connection
-        .transaction(async (transactionalEntityManager) => {})
+        .transaction(async (transactionalEntityManager) => {
+          const auction = await transactionalEntityManager.findOne(Auction, {
+            where: { onChainId: event.data?.auctionId },
+          });
+
+          if (!auction) {
+            this.logger.warn(`auction not found with onChainId: ${event.data?.auctionId}`);
+            return;
+          }
+
+          const revenueClaimed = utils.formatUnits(event.data.amount, auction.tokenDecimals);
+          auction.revenueClaimed += +revenueClaimed;
+          await transactionalEntityManager.save(auction);
+
+          event.processed = true;
+          await transactionalEntityManager.save(event);
+
+          this.auctionGateway.notifyAuctionRevenueWithdraw(auction.id, auction.revenueClaimed);
+        })
         .catch((error) => {
           this.logger.error(error);
         });
     }
   }
 
-  // TODO: Implement logic
   private async syncRevenueCapturedEvents() {
     const events = await this.capturedRevenueEventRepository.find({ where: { processed: false } });
     this.logger.log(`found ${events.length} RevenueCaptured events`);
     for (const event of events) {
       await this.connection
-        .transaction(async (transactionalEntityManager) => {})
+        .transaction(async (transactionalEntityManager) => {
+          const auction = await transactionalEntityManager.findOne(Auction, {
+            where: { onChainId: event.data?.auctionId },
+          });
+
+          if (!auction) {
+            this.logger.warn(`auction not found with onChainId: ${event.data?.auctionId}`);
+            return;
+          }
+
+          const rewardTiers = await transactionalEntityManager.find(RewardTier, {
+            where: { auctionId: auction.id },
+          });
+
+          if (!rewardTiers.length) {
+            this.logger.warn(`Reward tiers not found for auction id: ${auction.id}`);
+            return;
+          }
+          let slotCaptured = false;
+          for (const tier of rewardTiers) {
+            for (const slot of tier.slots) {
+              if (slot.index === event.data?.slotIndex) {
+                slotCaptured = true;
+                slot.capturedRevenue = true;
+                await transactionalEntityManager.save(RewardTier, tier);
+                this.auctionGateway.notifyAuctionSlotCaptured(auction.id, { tierId: tier.id, slotIndex: slot.index });
+                break;
+              }
+            }
+            if (slotCaptured) {
+              break;
+            }
+          }
+        })
         .catch((error) => {
           this.logger.error(error);
         });
     }
   }
 
-  // TODO: Implement logic
   private async syncErc721ClaimedEvents() {
-    const events = await this.withdrawnRevenueEventRepository.find({ where: { processed: false } });
-    this.logger.log(`found ${events.length} RevenueWithdrawn events`);
+    const events = await this.erc721ClaimedEventRepository.find({ where: { processed: false } });
+    this.logger.log(`found ${events.length} ERC721Claimed events`);
     for (const event of events) {
       await this.connection
-        .transaction(async (transactionalEntityManager) => {})
+        .transaction(async (transactionalEntityManager) => {
+          const auction = await transactionalEntityManager.findOne(Auction, {
+            where: { onChainId: event.data?.auctionId },
+          });
+
+          if (!auction) {
+            this.logger.warn(`auction not found with onChainId: ${event.data?.auctionId}`);
+            return;
+          }
+          await this.markSlotNftsAsClaimed(transactionalEntityManager, event, auction.id);
+
+          event.processed = true;
+          await transactionalEntityManager.save(event);
+        })
         .catch((error) => {
           this.logger.error(error);
         });
     }
+  }
+
+  private async markSlotNftsAsClaimed(
+    transactionalEntityManager: EntityManager,
+    event: Erc721ClaimedEvent,
+    auctionId: number,
+  ) {
+    const rewardTiers = await transactionalEntityManager.find(RewardTier, {
+      where: { auctionId: auctionId },
+    });
+    if (rewardTiers.length === 0) throw new MarkRewardTierNftAsWithdrawnException('Reward Tiers not found');
+
+    await transactionalEntityManager.update(
+      RewardTierNft,
+      {
+        rewardTierId: In(rewardTiers.map((rewardTier) => rewardTier.id)),
+        slot: event.data?.slotIndex,
+      },
+      { claimed: true },
+    );
   }
 }

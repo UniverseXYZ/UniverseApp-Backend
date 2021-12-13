@@ -25,4 +25,7 @@ export class RewardTierNft {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column({ nullable: true, default: false })
+  claimed: boolean;
 }
