@@ -371,13 +371,24 @@ export class AuctionEventsScraperService {
     }
   }
 
-  // TODO: Implement logic
   private async syncAuctionExtendedEvents() {
     const events = await this.auctionExtendedEventRepository.find({ where: { processed: false } });
     this.logger.log(`found ${events.length} AuctionExtended events`);
     for (const event of events) {
       await this.connection
-        .transaction(async (transactionalEntityManager) => {})
+        .transaction(async (transactionalEntityManager) => {
+          const auction = await transactionalEntityManager.findOne(Auction, {
+            where: { onChainId: event.data?.auctionId },
+          });
+          if (!auction) {
+            this.logger.warn(`auction not found with onChainId: ${event.data?.auctionId}`);
+            return;
+          }
+          auction.endDate = new Date(event.data?.endTime * 1000);
+          await transactionalEntityManager.save(Auction, auction);
+          event.processed = true;
+          await transactionalEntityManager.save(event);
+        })
         .catch((error) => {
           this.logger.error(error);
         });
