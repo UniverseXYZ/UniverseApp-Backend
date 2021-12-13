@@ -15,7 +15,7 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { NftSource } from '../domain/nft.entity';
-import { TokenUriStorageEnum } from '../domain/saved-nft.entity';
+import { MetadataStorageEnum } from '../domain/saved-nft.entity';
 
 export class EditCollectionBody {
   @IsString()
@@ -87,16 +87,16 @@ export class SaveNftBody {
   })
   collectionId: number;
 
-  @IsEnum(TokenUriStorageEnum)
+  @IsEnum(MetadataStorageEnum)
   @ApiProperty({
-    enum: TokenUriStorageEnum, 
+    enum: MetadataStorageEnum, 
     example: [
-      TokenUriStorageEnum.ONCHAIN, 
-      TokenUriStorageEnum.OFFCHAIN
+      MetadataStorageEnum.ONCHAIN, 
+      MetadataStorageEnum.OFFCHAIN
     ],
     required: true,
   })
-  tokenUriStorage: TokenUriStorageEnum;
+  metadataStorage: MetadataStorageEnum;
 }
 
 export class SaveNftRoyalty {
@@ -229,16 +229,16 @@ export class EditSavedNftBody {
   })
   collectionId?: number;
 
-  @IsEnum(TokenUriStorageEnum)
+  @IsEnum(MetadataStorageEnum)
   @ApiProperty({
-    enum: TokenUriStorageEnum, 
+    enum: MetadataStorageEnum, 
     example: [
-      TokenUriStorageEnum.ONCHAIN, 
-      TokenUriStorageEnum.OFFCHAIN
+      MetadataStorageEnum.ONCHAIN, 
+      MetadataStorageEnum.OFFCHAIN
     ],
     required: true,
   })
-  tokenUriStorage: TokenUriStorageEnum;
+  metadataStorage: MetadataStorageEnum;
 }
 
 export class GetNftTokenUriBody {

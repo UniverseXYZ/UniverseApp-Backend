@@ -11,7 +11,7 @@ import { AppConfig } from '../../configuration/configuration.service';
 import { FileSystemService } from '../../file-system/file-system.service';
 import { ArweaveService } from '../../file-storage/arweave.service';
 // import { FleekService } from '../../file-storage/fleek.service';
-import { SavedNft, TokenUriStorageEnum } from '../domain/saved-nft.entity';
+import { SavedNft, MetadataStorageEnum } from '../domain/saved-nft.entity';
 import { classToPlain, plainToClass } from 'class-transformer';
 import {
   CreateCollectionBody,
@@ -43,7 +43,7 @@ type SaveNftParams = {
   properties?: any;
   royalties: { address: string; amount: number }[];
   collectionId?: number;
-  tokenUriStorage: TokenUriStorageEnum;
+  metadataStorage: MetadataStorageEnum;
 };
 
 type EditSavedNftParams = {
@@ -54,7 +54,7 @@ type EditSavedNftParams = {
   royalties: { address: string; amount: number }[];
   txHash?: string;
   collectionId: number;
-  tokenUriStorage: TokenUriStorageEnum;
+  metadataStorage: MetadataStorageEnum;
 };
 
 type SaveCollectibleParams = {
@@ -118,7 +118,7 @@ export class NftService {
       royalties: params.royalties,
       userId: params.userId,
       collectionId: params.collectionId,
-      tokenUriStorage: params.tokenUriStorage,
+      metadataStorage: params.metadataStorage,
     });
     const dbSavedNft = await this.savedNftRepository.save(savedNft);
     const collection = await this.nftCollectionRepository.findOne({ id: params.collectionId });
@@ -413,7 +413,7 @@ export class NftService {
       'royalties',
       'txHash',
       'collectionId',
-      'tokenUriStorage',
+      'metadataStorage',
     ]);
 
     for (const param in filteredParams) {
