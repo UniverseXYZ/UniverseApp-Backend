@@ -1,6 +1,11 @@
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { Exclude } from 'class-transformer';
 
+export enum TokenUriStorageEnum {
+  ONCHAIN = 'onchain',
+  OFFCHAIN = 'offchain',
+}
+
 @Entity({
   schema: 'universe-backend',
 })
@@ -17,6 +22,13 @@ export class SavedNft {
 
   @Column({ nullable: true })
   tokenUri: string;
+
+  @Column({ 
+    type: 'enum',
+    enum: TokenUriStorageEnum,
+    default: TokenUriStorageEnum.OFFCHAIN,
+  })
+  tokenUriStorage: TokenUriStorageEnum;
 
   @Column()
   name: string;

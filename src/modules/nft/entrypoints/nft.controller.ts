@@ -62,6 +62,7 @@ export class NftController {
       royalties: body.royalties,
       collectionId: body.collectionId,
       userId: req.user.sub,
+      tokenUriStorage: body.tokenUriStorage,
     });
   }
 
