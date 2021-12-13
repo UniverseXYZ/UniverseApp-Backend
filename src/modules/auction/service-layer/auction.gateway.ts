@@ -65,8 +65,12 @@ export class AuctionGateway implements OnGatewayInit, OnGatewayConnection, OnGat
     this.server.emit(`auction_${auctionId}_bidWithdrawn`, bidInfo);
   }
 
-  public notifyBidMatched(auctionId: number, info: { bids: AuctionBid[]; finalised: boolean }) {
+  public notifyBidMatched(auctionId: number, info: { bids: AuctionBid[] }) {
     this.server.emit(`auction_${auctionId}_bidMatched`, info);
+  }
+
+  public notifyAuctionFinalised(auctionId: number) {
+    this.server.emit(`auction_${auctionId}_finalised`);
   }
 
   public notifyAuctionExtended(auctionId: number, endDate: Date) {
