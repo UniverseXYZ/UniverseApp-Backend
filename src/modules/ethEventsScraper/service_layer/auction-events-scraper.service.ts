@@ -19,6 +19,12 @@ import { AuctionBid } from 'src/modules/auction/domain/auction.bid.entity';
 import { User } from 'src/modules/users/user.entity';
 import { classToPlain } from 'class-transformer';
 import { utils } from 'ethers';
+import { CapturedRevenueEvent } from '../domain/captured-revenue-event';
+import { Erc721ClaimedEvent } from '../domain/claimed-erc721-event';
+import { AuctionExtendedEvent } from '../domain/extended-auction-event';
+import { MatchedBidEvent } from '../domain/matched-bids-event';
+import { BidWithdrawnEvent } from '../domain/withdrawn-bid-event';
+import { WithdrawnRevenueEvent } from '../domain/withdrawn-revenue-event';
 
 @Injectable()
 export class AuctionEventsScraperService {
@@ -42,6 +48,19 @@ export class AuctionEventsScraperService {
     private erc721WithdrawEventRepository: Repository<Erc721WithdrawnEvent>,
     @InjectRepository(AuctionCanceledEvent)
     private auctionCanceledEventRepository: Repository<AuctionCanceledEvent>,
+    @InjectRepository(CapturedRevenueEvent)
+    private capturedRevenueEventRepository: Repository<CapturedRevenueEvent>,
+    @InjectRepository(Erc721ClaimedEvent)
+    private erc721ClaimedEventRepository: Repository<Erc721ClaimedEvent>,
+    @InjectRepository(AuctionExtendedEvent)
+    private auctionExtendedEventRepository: Repository<AuctionExtendedEvent>,
+    @InjectRepository(MatchedBidEvent)
+    private matchedBidEventRepository: Repository<MatchedBidEvent>,
+    @InjectRepository(BidWithdrawnEvent)
+    private bidWithdrawnEventRepository: Repository<BidWithdrawnEvent>,
+    @InjectRepository(WithdrawnRevenueEvent)
+    private withdrawnRevenueEventRepository: Repository<WithdrawnRevenueEvent>,
+
     private connection: Connection,
     private auctionGateway: AuctionGateway,
   ) {}
@@ -57,6 +76,13 @@ export class AuctionEventsScraperService {
       await this.syncErc721DepositedEvents();
       await this.syncErc721WithdrawEvents();
       await this.syncBidSubmittedEvents();
+      await this.syncBidWithdrawnEvents();
+      await this.syncAuctionExtendedEvents();
+      await this.syncBidMatchedEvents();
+      await this.syncRevenueWithdrawnEvents();
+      await this.syncRevenueCapturedEvents();
+      await this.syncErc721ClaimedEvents();
+
       this.processing = false;
     } catch (e) {
       this.processing = false;
@@ -309,6 +335,84 @@ export class AuctionEventsScraperService {
             user: classToPlain(user),
           });
         })
+        .catch((error) => {
+          this.logger.error(error);
+        });
+    }
+  }
+
+  // TODO: Implement logic
+  private async syncBidWithdrawnEvents() {
+    const events = await this.bidWithdrawnEventRepository.find({ where: { processed: false } });
+    this.logger.log(`found ${events.length} BidWithdrawn events`);
+    for (const event of events) {
+      await this.connection
+        .transaction(async (transactionalEntityManager) => {})
+        .catch((error) => {
+          this.logger.error(error);
+        });
+    }
+  }
+
+  // TODO: Implement logic
+  private async syncAuctionExtendedEvents() {
+    const events = await this.auctionExtendedEventRepository.find({ where: { processed: false } });
+    this.logger.log(`found ${events.length} AuctionExtended events`);
+    for (const event of events) {
+      await this.connection
+        .transaction(async (transactionalEntityManager) => {})
+        .catch((error) => {
+          this.logger.error(error);
+        });
+    }
+  }
+
+  // TODO: Implement logic
+  private async syncBidMatchedEvents() {
+    const events = await this.matchedBidEventRepository.find({ where: { processed: false } });
+    this.logger.log(`found ${events.length} BidMatched events`);
+    for (const event of events) {
+      await this.connection
+        .transaction(async (transactionalEntityManager) => {})
+        .catch((error) => {
+          this.logger.error(error);
+        });
+    }
+  }
+
+  // TODO: Implement logic
+  private async syncRevenueWithdrawnEvents() {
+    const events = await this.withdrawnRevenueEventRepository.find({ where: { processed: false } });
+    this.logger.log(`found ${events.length} RevenueWithdrawn events`);
+    for (const event of events) {
+      await this.connection
+        .transaction(async (transactionalEntityManager) => {})
+        .catch((error) => {
+          this.logger.error(error);
+        });
+    }
+  }
+
+  // TODO: Implement logic
+  private async syncRevenueCapturedEvents() {
+    const events = await this.capturedRevenueEventRepository.find({ where: { processed: false } });
+    this.logger.log(`found ${events.length} RevenueCaptured events`);
+    for (const event of events) {
+      await this.connection
+        .transaction(async (transactionalEntityManager) => {})
+        .catch((error) => {
+          this.logger.error(error);
+        });
+    }
+  }
+
+  // TODO: Implement logic
+  private async syncErc721ClaimedEvents() {
+    const events = await this.withdrawnRevenueEventRepository.find({ where: { processed: false } });
+    this.logger.log(`found ${events.length} RevenueWithdrawn events`);
+    for (const event of events) {
+      await this.connection
+        .transaction(async (transactionalEntityManager) => {})
         .catch((error) => {
           this.logger.error(error);
         });
