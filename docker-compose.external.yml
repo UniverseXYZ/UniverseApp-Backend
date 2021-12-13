@@ -7,7 +7,7 @@ services:
     command: [
         "redis-server",
         "--bind",
-        "redis",
+        "${REDIS_HOST}",
         "--port",
         "${REDIS_PORT}"
     ]
