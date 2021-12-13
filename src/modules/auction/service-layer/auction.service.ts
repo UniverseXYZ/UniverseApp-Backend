@@ -850,7 +850,7 @@ export class AuctionService {
       .where('auctions.startDate < :now AND auctions.endDate > :now', { now: now })
       .andWhere('auctions.onChain = true')
       .andWhere('auctions.canceled = false')
-      .orderBy('id', 'DESC')
+      .leftJoinAndMapOne('auctions.user', User, 'user', 'user.id = auctions.userId')
       .limit(limit)
       .offset(offset);
 
@@ -897,7 +897,7 @@ export class AuctionService {
       .andWhere('auctions.onChain = true')
       .andWhere('auctions.canceled = false')
       .andWhere('auctions.depositedNfts =  true')
-      .orderBy('id', 'DESC')
+      .leftJoinAndMapOne('auctions.user', User, 'user', 'user.id = auctions.userId')
       .limit(limit)
       .offset(offset);
 
@@ -1343,7 +1343,7 @@ export class AuctionService {
     };
   }
 
-  private async buildFilters(query, filter = 'ending') {
+  private async buildFilters(query, filter: string) {
     switch (filter) {
       case 'recent':
         query.orderBy('auctions.id', 'DESC');
