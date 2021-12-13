@@ -26,6 +26,7 @@ import { AuctionExtendedEvent } from './domain/extended-auction-event';
 import { MatchedBidEvent } from './domain/matched-bids-event';
 import { WithdrawnRevenueEvent } from './domain/withdrawn-revenue-event';
 import { BidWithdrawnEvent } from './domain/withdrawn-bid-event';
+import { AuctionBid } from '../auction/domain/auction.bid.entity';
 @Module({
   imports: [
     AppConfigModule,
@@ -53,6 +54,7 @@ import { BidWithdrawnEvent } from './domain/withdrawn-bid-event';
       MatchedBidEvent,
       WithdrawnRevenueEvent,
       BidWithdrawnEvent,
+      AuctionBid,
     ]),
   ],
   providers: [EthEventsScraperService, AuctionEventsScraperService, AuctionGateway],

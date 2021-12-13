@@ -19,6 +19,9 @@ export class AuctionBid {
   @Column({ type: 'decimal' })
   amount: number;
 
+  @Column({ nullable: true })
+  onChainSlotIndex: number;
+
   @CreateDateColumn()
   createdAt: Date;
 }
