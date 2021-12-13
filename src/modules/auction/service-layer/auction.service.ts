@@ -755,11 +755,21 @@ export class AuctionService {
     const bids = await this.auctionBidRepository.find({ where: { userId: userId }, order: { createdAt: 'DESC' } });
     const auctionIds = bids.map((bid) => bid.auctionId);
 
-    const [auctions, rewardTiers, minBidQuery, maxBidQuery, bidsCountQuery] = await Promise.all([
+    const [auctions, rewardTiers, minBidsQuery, maxBidsQuery, bidsCountQuery] = await Promise.all([
       this.auctionRepository.find({ where: { id: In(auctionIds) } }),
       this.rewardTierRepository.find({ where: { auctionId: In(auctionIds) } }),
-      this.auctionBidRepository.createQueryBuilder('bid').select('MIN(bid.amount)', 'min').getRawOne(),
-      this.auctionBidRepository.createQueryBuilder('bid').select('MAX(bid.amount)', 'max').getRawOne(),
+      this.auctionBidRepository
+        .createQueryBuilder('bid')
+        .select(['bid.auctionId', 'MIN(bid.amount) as min'])
+        .groupBy('bid.auctionId')
+        .where('bid.auctionId IN (:...auctionIds)', { auctionIds: auctionIds })
+        .getRawMany(),
+      this.auctionBidRepository
+        .createQueryBuilder('bid')
+        .select(['bid.auctionId', 'MAX(bid.amount) as max'])
+        .groupBy('bid.auctionId')
+        .where('bid.auctionId IN (:...auctionIds)', { auctionIds: auctionIds })
+        .getRawMany(),
       this.auctionBidRepository
         .createQueryBuilder('bid')
         .select(['bid.auctionId', 'COUNT(*) as bidCount'])
@@ -793,7 +803,8 @@ export class AuctionService {
 
     const mappedBids = bids.map((bid) => {
       const auctionBidsCount = +bidsCountQuery.find((b) => b['bid_auctionId'] === bid.auctionId)['bidCount'];
-
+      const highestBid = +maxBidsQuery.find((b) => b['bid_auctionId'] === bid.auctionId)['max'];
+      const lowestBid = +minBidsQuery.find((b) => b['bid_auctionId'] === bid.auctionId)['min'];
       const tiers = rewardTiersByAuctionId[bid.auctionId];
 
       // If auction has 5 winning slots but received only one bid -> numberOfWinners should be 1)
@@ -825,8 +836,8 @@ export class AuctionService {
       return {
         bid: classToPlain(bid),
         auction: classToPlain(auctionsById[bid.auctionId]),
-        highestBid: +maxBidQuery.max,
-        lowestBid: +minBidQuery.min,
+        highestBid,
+        lowestBid,
         numberOfWinners,
         maxNfts,
         minNfts,
