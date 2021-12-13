@@ -26,7 +26,7 @@ export class SavedNft {
   @Column({ 
     type: 'enum',
     enum: MetadataStorageEnum,
-    default: MetadataStorageEnum.OFFCHAIN,
+    default: MetadataStorageEnum.ONCHAIN,
   })
   metadataStorage: MetadataStorageEnum;
 
