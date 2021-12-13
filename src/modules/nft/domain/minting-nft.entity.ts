@@ -28,7 +28,8 @@ export class MintingNft {
   @Column({ 
     type: 'enum',
     enum: MetadataStorageEnum,
-    default: MetadataStorageEnum.ONCHAIN,
+    default: null,
+    nullable: true,
   })
   metadataStorage: MetadataStorageEnum;
 
