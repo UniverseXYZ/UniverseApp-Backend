@@ -9,7 +9,7 @@ type CapturedRevenueEventData = {
 };
 
 @Entity({
-  name: 'captured_revenues',
+  name: 'captured_slots',
 })
 export class CapturedRevenueEvent {
   @PrimaryGeneratedColumn()
@@ -20,6 +20,9 @@ export class CapturedRevenueEvent {
 
   @Column()
   tx_hash: string;
+
+  @Column()
+  sender: string;
 
   @Column()
   tx_index: number;
