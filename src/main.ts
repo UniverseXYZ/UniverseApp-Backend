@@ -14,7 +14,7 @@ async function bootstrap() {
   const config = app.get(AppConfig);
   const port = config.values.app.port;
   app.use(helmet());
-  app.enableCors({ methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS' });
+  // app.enableCors({ methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS' });
   app.useGlobalPipes(new ValidationPipe());
   app.useWebSocketAdapter(new RedisIoAdapter(app));
 

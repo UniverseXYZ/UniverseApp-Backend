@@ -578,7 +578,10 @@ export class AuctionEventsScraperService {
 
                 event.processed = true;
                 await transactionalEntityManager.save(event);
-                this.auctionGateway.notifyAuctionSlotCaptured(auction.id, { tierId: tier.id, slotIndex: slot.index });
+                this.auctionGateway.notifyAuctionSlotCaptured(auction.id, {
+                  sender: event.sender,
+                  slotIndex: slot.index,
+                });
                 break;
               }
             }
