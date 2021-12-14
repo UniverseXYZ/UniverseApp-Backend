@@ -628,7 +628,10 @@ export class AuctionService {
   async updateAuction(userId: number, auctionId: number, updateAuctionBody: EditAuctionBody) {
     let auction = await this.validateAuctionPermissions(userId, auctionId);
     if (updateAuctionBody.link) {
-      const duplicateLinks = await this.auctionRepository.find({ where: { link: updateAuctionBody.link } });
+      const duplicateLinks = await this.auctionRepository.find({
+        where: { link: updateAuctionBody.link, id: Not(auctionId) },
+      });
+
       if (duplicateLinks.length) {
         throw new DuplicateAuctionLinkException();
       }
