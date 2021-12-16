@@ -6,7 +6,7 @@ import { NftMissingAttributesError, TokenUriFormatNotSupportedError } from './ex
 export class NftValidator {
   public checkNftHasAllAttributes(nft: Partial<MoralisNft>) {
     const error = new NftMissingAttributesError();
-    if (!Number.isInteger(parseInt(nft.token_id))) throw error;
+    if (!nft.token_id) throw error;
     if (!nft.token_address) throw error;
     if (!nft.owner_of) throw error;
     if (nft.contract_type !== 'ERC721' && nft.contract_type !== 'ERC1155') throw error;
