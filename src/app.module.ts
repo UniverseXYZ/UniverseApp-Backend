@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bull';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -31,6 +32,13 @@ import { MoralisModule } from './modules/moralis/moralis.module';
     TypeOrmModule.forRootAsync({
       imports: [DatabaseModule],
       useExisting: TypeOrmDefaultConfigService,
+    }),
+    BullModule.forRoot({
+      redis: {
+        host: process.env.REDIS_HOST,
+        port: parseInt(process.env.REDIS_PORT),
+        password: process.env.KD_REDIS_PASSWORD,
+      },
     }),
     HealthModule,
     UsersModule,
