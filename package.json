@@ -23,6 +23,7 @@
     "db:migration:run": "npm run typeorm -- migration:run"
   },
   "dependencies": {
+    "@nestjs/bull": "^0.4.2",
     "@nestjs/cli": "^7.6.0",
     "@nestjs/common": "^7.6.15",
     "@nestjs/config": "^0.6.3",
