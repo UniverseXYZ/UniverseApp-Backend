@@ -36,6 +36,7 @@ import { AuctionCannotBeModifiedException } from './exceptions/AuctionCannotBeMo
 import { RewardTierSlotsMinimumBidException } from './exceptions/RewardTierSlotsMinimumBidException';
 import { RewardTierSlotsOrderException } from './exceptions/RewardTierSlotsOrderException';
 import { RewardTierNFTUsedInOtherTierException } from './exceptions/RewardTierNFTUsedInOtherTierException';
+import { ImageDeleteTypeException } from './exceptions/ImageDeleteTypeException';
 import { FileSystemService } from '../../file-system/file-system.service';
 import { RewardTierNotFoundException } from './exceptions/RewardTierNotFoundException';
 import { RewardTierBadOwnerException } from './exceptions/RewardTierBadOwnerException';
@@ -1262,6 +1263,48 @@ export class AuctionService {
     if (limit === 0 || page === 0) return;
 
     query.limit(limit).offset((page - 1) * limit);
+  }
+
+  public async deleteImage(userId: number, id: number, type: string) {
+    const allowedTypes = ['auctionPromo', 'auctionBackground', 'tier'];
+    const user = await this.usersService.getById(userId, true);
+    let image = '';
+
+    if (!allowedTypes.includes(type)) {
+      throw new ImageDeleteTypeException();
+    }
+
+    if (type === 'tier') {
+      const rewardTier = await this.validateTierPermissions(user.id, id);
+      if (!rewardTier.imageUrl) return;
+
+      image = rewardTier.imageUrl;
+      rewardTier.imageUrl = null;
+      await this.rewardTierRepository.save(rewardTier);
+    } else {
+      const auction = await this.auctionRepository.findOne({ where: { id } });
+      if (!auction) {
+        throw new AuctionNotFoundException();
+      }
+
+      if (type === 'auctionPromo' && auction.promoImageUrl) {
+        image = auction.promoImageUrl;
+        auction.promoImageUrl = null;
+        await this.auctionRepository.save(auction);
+      }
+
+      if (type === 'auctionBackgroud' && auction.backgroundImageUrl) {
+        image = auction.backgroundImageUrl;
+        auction.backgroundImageUrl = null;
+        await this.auctionRepository.save(auction);
+      }
+    }
+
+    if (!image) return false;
+
+    await this.s3Service.deleteImage(image.split('/').pop());
+
+    return true;
   }
 
   private async buildFilters(query, filter: string) {

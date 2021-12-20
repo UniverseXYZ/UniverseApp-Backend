@@ -606,6 +606,22 @@ export class PlaceBidBody {
   amount: number;
 }
 
+export class DeleteImageParams {
+  @ApiProperty({
+    example: 1,
+    description: 'The id of the auction or reward tier that should have its image deleted',
+  })
+  @IsNumber()
+  id: number;
+
+  @ApiProperty({
+    example: 'tier',
+    description: 'Type of image to delete (auction background/promo image or reward tier image)',
+  })
+  @IsString()
+  type: string;
+}
+
 export class ChangeAuctionStatus {
   @ApiProperty({
     example: 1,

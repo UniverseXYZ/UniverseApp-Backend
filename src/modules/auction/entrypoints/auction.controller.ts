@@ -33,6 +33,7 @@ import {
   ChangeAuctionStatus,
   AddRewardTierBodyParams,
   GetAuctionsQuery,
+  DeleteImageParams,
 } from './dto';
 import { AuctionService } from '../service-layer/auction.service';
 import { JwtAuthGuard, OptionalJwtAuthGuard } from '../../auth/jwt-auth.guard';
@@ -316,5 +317,11 @@ export class AuctionController {
   @UseGuards(JwtAuthGuard)
   async getAuction(@Req() req, @Param('id') id = 0) {
     return await this.auctionService.getAuction(id);
+  }
+
+  @Delete('auction/images')
+  @UseGuards(JwtAuthGuard)
+  async deleteImage(@Req() req, @Body() deleteImageParams: DeleteImageParams) {
+    return await this.auctionService.deleteImage(req.user.sub, deleteImageParams.id, deleteImageParams.type);
   }
 }
