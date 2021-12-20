@@ -393,7 +393,7 @@ export class AuctionEventsScraperService {
         });
 
       if (bid && auctionId) {
-        const bids = this.attachBidsInfo(auctionId);
+        const bids = await this.attachBidsInfo(auctionId);
         const bidder = await this.usersRepository.findOne({ where: { address: bid.bidder, isActive: true } });
         this.auctionGateway.notifyAuctionBidWithdrawn(auctionId, {
           amount: bid.amount,
