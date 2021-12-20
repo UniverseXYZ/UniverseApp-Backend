@@ -565,52 +565,6 @@ export class AuctionService {
     };
   }
 
-  public async cancelOnChainAuction(userId: number, auctionId: number) {
-    // TODO: This is a temporary endpoint to create auction. In the future the scraper should fill in these fields
-    const auction = await this.validateAuctionPermissions(userId, auctionId);
-    //TODO: We need some kind of validation that this on chain id really exists
-    const deployedAuction = await this.auctionRepository.update(auctionId, {
-      // We must not change those properties, because the auction is already deployed on the smart contract and
-      // If we cancel an auction it cannot be undone. Please note if you edit this request, to handle delettion of reward tier reqeust checks
-      // onChain: false,
-      // onChainId: null,
-      canceled: true,
-      txHash: '',
-    });
-
-    return {
-      auction: classToPlain(deployedAuction),
-    };
-  }
-
-  public async depositNfts(userId: number, depositNftsBody: DepositNftsBody) {
-    // TODO: This is a temporary endpoint to deposit nfts. In the future the scraper should fill in these fields
-    await this.validateAuctionPermissions(userId, depositNftsBody.auctionId);
-    //TODO: We need some kind of validation that this on chain id really exists
-    const depositResult = await this.rewardTierNftRepository.update(
-      { nftId: In(depositNftsBody.nftIds) },
-      { deposited: true },
-    );
-
-    return {
-      depositedNfts: depositResult.affected,
-    };
-  }
-
-  public async withdrawNfts(userId: number, withdrawNftsBody: WithdrawNftsBody) {
-    // TODO: This is a temporary endpoint to withdraw nfts. In the future the scraper should fill in these fields
-    await this.validateAuctionPermissions(userId, withdrawNftsBody.auctionId);
-    //TODO: We need some kind of validation that this on chain id really exists
-    const withdrawResult = await this.rewardTierNftRepository.update(
-      { nftId: In(withdrawNftsBody.nftIds) },
-      { deposited: false },
-    );
-
-    return {
-      withdrawnNfts: withdrawResult.affected,
-    };
-  }
-
   private async validateAuctionPermissions(userId: number, auctionId: number) {
     const auction = await this.auctionRepository.findOne({ where: { id: auctionId } });
 
@@ -1304,86 +1258,10 @@ export class AuctionService {
     return { bids: mappedBids, pagination: {} };
   }
 
-  public async placeAuctionBid(userId: number, placeBidBody: PlaceBidBody) {
-    //TODO: This is a temporary endpoint until the scraper functionality is finished
-    const auction = await this.auctionRepository.findOne(placeBidBody.auctionId);
-
-    if (!auction) {
-      throw new AuctionNotFoundException();
-    }
-
-    const bidder = await this.usersService.getById(userId);
-
-    const bid = await this.auctionBidRepository.findOne({
-      where: { userId, auctionId: placeBidBody.auctionId },
-    });
-
-    if (bid) {
-      await this.auctionBidRepository.update(bid.id, {
-        amount: +bid.amount + +placeBidBody.amount,
-      });
-    } else {
-      await this.auctionBidRepository.save({
-        userId: userId,
-        amount: placeBidBody.amount,
-        auctionId: placeBidBody.auctionId,
-      });
-    }
-    const response = { ...placeBidBody, user: bidder };
-    // this.gateway.notifyBids(placeBidBody.auctionId, response);
-
-    return {
-      bid: response,
-    };
-  }
-
-  public async cancelAuctionBid(userId: number, auctionId: number) {
-    //TODO: This is a temporary endpoint until the scraper functionality is finished
-    const auction = await this.auctionRepository.findOne({ where: { id: auctionId } });
-
-    if (!auction) {
-      throw new AuctionNotFoundException();
-    }
-
-    const bid = await this.auctionBidRepository.findOne({
-      where: { userId, auctionId: auctionId },
-    });
-
-    if (bid) {
-      const deleteResult = await this.auctionBidRepository.delete(bid.id);
-      return {
-        deleted: deleteResult.affected,
-      };
-    }
-
-    throw new AuctionBidNotFoundException();
-  }
-
   private setPagination(query, page: number, limit: number) {
     if (limit === 0 || page === 0) return;
 
     query.limit(limit).offset((page - 1) * limit);
-  }
-
-  public async changeAuctionStatus(userId: number, changeAuctionStatusBody: ChangeAuctionStatus) {
-    //TODO: This is a temporary endpoint until the scraper functionality is finished
-    let auction = await this.validateAuctionPermissions(userId, changeAuctionStatusBody.auctionId);
-
-    changeAuctionStatusBody.statuses.forEach((status) => {
-      auction[status.name] = status.value;
-    });
-
-    auction = await this.auctionRepository.save(auction);
-    const eventStatuses = [];
-    changeAuctionStatusBody.statuses.forEach((status) => {
-      eventStatuses.push({ status: status.name, value: status.value });
-    });
-
-    this.gateway.notifyAuctionStatus(auction.id, eventStatuses);
-
-    return {
-      auction,
-    };
   }
 
   private async buildFilters(query, filter: string) {

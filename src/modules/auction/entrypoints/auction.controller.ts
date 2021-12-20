@@ -52,30 +52,6 @@ export class AuctionController {
     return await this.auctionService.createAuction(req.user.sub, createAuctionBody);
   }
 
-  @Post('/auctions/cancel/:auctionId')
-  @ApiTags('auction')
-  @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Set on chain properies of auction' })
-  async cancelOnChainAuction(@Req() req, @Param('auctionId') auctionId: number) {
-    return await this.auctionService.cancelOnChainAuction(req.user.sub, auctionId);
-  }
-
-  @Post('/auctions/depositNfts')
-  @ApiTags('auction')
-  @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Set nfts as deposited' })
-  async depositNfts(@Req() req, @Body() deployNftsBody: DepositNftsBody) {
-    return await this.auctionService.depositNfts(req.user.sub, deployNftsBody);
-  }
-
-  @Post('/auctions/withdrawNfts')
-  @ApiTags('auction')
-  @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Set nfts as withdrawn' })
-  async withdrawNfts(@Req() req, @Body() withdrawNftsBody: WithdrawNftsBody) {
-    return await this.auctionService.withdrawNfts(req.user.sub, withdrawNftsBody);
-  }
-
   @Patch('auctions/:id')
   @UseGuards(JwtAuthGuard)
   @ApiTags('auction')
@@ -329,18 +305,6 @@ export class AuctionController {
     return await this.auctionService.listAuctionsByStatus(status, page, limit);
   }
 
-  @Post('auction/placeBid')
-  @UseGuards(JwtAuthGuard)
-  async placeAuctionBid(@Req() req, @Body() placeBidBody: PlaceBidBody) {
-    return await this.auctionService.placeAuctionBid(req.user.sub, placeBidBody);
-  }
-
-  @Delete('auction/:id/cancelBid')
-  @UseGuards(JwtAuthGuard)
-  async cancelAuctionBid(@Req() req, @Param('id') auctionId = 0) {
-    return await this.auctionService.cancelAuctionBid(req.user.sub, auctionId);
-  }
-
   @Get('pages/my-bids/:address')
   @UseGuards(JwtAuthGuard)
   async getUserBids(@Req() req, @Param('address') address) {
@@ -352,11 +316,5 @@ export class AuctionController {
   @UseGuards(JwtAuthGuard)
   async getAuction(@Req() req, @Param('id') id = 0) {
     return await this.auctionService.getAuction(id);
-  }
-
-  @Patch('auction/status')
-  @UseGuards(JwtAuthGuard)
-  async changeAuctionStatus(@Req() req, @Body() changeAuctionStatusBody: ChangeAuctionStatus) {
-    return await this.auctionService.changeAuctionStatus(req.user.sub, changeAuctionStatusBody);
   }
 }
