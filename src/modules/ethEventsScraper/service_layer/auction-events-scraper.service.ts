@@ -360,6 +360,8 @@ export class AuctionEventsScraperService {
     const events = await this.bidWithdrawnEventRepository.find({ where: { processed: false } });
     this.logger.log(`found ${events.length} BidWithdrawn events`);
     for (const event of events) {
+      let auctionId = 0;
+      let bid = null;
       await this.connection
         .transaction(async (transactionalEntityManager) => {
           const auction = await transactionalEntityManager.findOne(Auction, {
@@ -371,7 +373,7 @@ export class AuctionEventsScraperService {
             return;
           }
 
-          const bid = await transactionalEntityManager.findOne(AuctionBid, {
+          bid = await transactionalEntityManager.findOne(AuctionBid, {
             where: { auctionId: auction.id, bidder: event.data.recipient },
           });
 
@@ -380,19 +382,26 @@ export class AuctionEventsScraperService {
             return;
           }
 
-          await transactionalEntityManager.remove(AuctionBid, bid);
+          auctionId = auction.id;
 
+          await transactionalEntityManager.remove(AuctionBid, bid);
           event.processed = true;
           await transactionalEntityManager.save(event);
-
-          this.auctionGateway.notifyAuctionBidWithdrawn(auction.id, {
-            amount: bid.amount,
-            user: bid.bidder,
-          });
         })
         .catch((error) => {
           this.logger.error(error);
         });
+
+      if (bid && auctionId) {
+        const bids = this.attachBidsInfo(auctionId);
+        const bidder = await this.usersRepository.findOne({ where: { address: bid.bidder, isActive: true } });
+        this.auctionGateway.notifyAuctionBidWithdrawn(auctionId, {
+          amount: bid.amount,
+          user: bid.bidder,
+          bids,
+          userProfile: bidder,
+        });
+      }
     }
   }
 
@@ -656,16 +665,24 @@ export class AuctionEventsScraperService {
         'SUM(bid.amount) as totalBidsAmount',
         'COUNT(*) as bidCount',
       ])
-      .addGroupBy('bid.auctionId')
-      .addGroupBy('bid.id')
+      .groupBy('bid.auctionId')
       .where('bid.auctionId = :auctionId', { auctionId })
-      .getRawOne();
+      .getRawMany();
+
+    if (!bidsQuery.length) {
+      return {
+        bidsCount: 0,
+        highestBid: 0,
+        lowerstBid: 0,
+        totalBids: 0,
+      };
+    }
 
     const bids = {
-      bidsCount: +bidsQuery['bidCount'] || 0,
-      highestBid: +bidsQuery['max'] || 0,
-      lowestBid: +bidsQuery['min'] || 0,
-      totalBids: +bidsQuery['totalbidsamount'] || 0,
+      bidsCount: +bidsQuery[0]['bidcount'],
+      highestBid: +bidsQuery[0]['max'],
+      lowestBid: +bidsQuery[0]['min'],
+      totalBids: +bidsQuery[0]['totalbidsamount'],
     };
 
     return bids;
