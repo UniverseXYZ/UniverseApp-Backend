@@ -35,6 +35,7 @@ import {
   GetAuctionsQuery,
   DeleteImageParams,
   ValidateUrlParams,
+  GetUserBidsParams,
 } from './dto';
 import { AuctionService } from '../service-layer/auction.service';
 import { JwtAuthGuard, OptionalJwtAuthGuard } from '../../auth/jwt-auth.guard';
@@ -309,8 +310,13 @@ export class AuctionController {
 
   @Get('pages/my-bids/:address')
   @UseGuards(JwtAuthGuard)
-  async getUserBids(@Req() req, @Param('address') address) {
-    return await this.auctionService.getUserBids(address);
+  async getUserBids(@Req() req, @Param('address') address, @Query() query: GetUserBidsParams) {
+    return await this.auctionService.getUserBids(
+      address,
+      parseInt(query.limit) || undefined,
+      parseInt(query.offset) || undefined,
+      query.search,
+    );
   }
 
   //Todo: add tier info
