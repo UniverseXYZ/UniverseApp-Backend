@@ -34,6 +34,7 @@ import {
   AddRewardTierBodyParams,
   GetAuctionsQuery,
   DeleteImageParams,
+  ValidateUrlParams,
 } from './dto';
 import { AuctionService } from '../service-layer/auction.service';
 import { JwtAuthGuard, OptionalJwtAuthGuard } from '../../auth/jwt-auth.guard';
@@ -323,5 +324,11 @@ export class AuctionController {
   @UseGuards(JwtAuthGuard)
   async deleteImage(@Req() req, @Body() deleteImageParams: DeleteImageParams) {
     return await this.auctionService.deleteImage(req.user.sub, deleteImageParams.id, deleteImageParams.type);
+  }
+
+  @Get('auction/validate/:url')
+  @ApiTags('auction')
+  async validateUrl(@Param('url') url, @Query() query: ValidateUrlParams) {
+    return await this.auctionService.validateUrl(url, query.auctionId);
   }
 }

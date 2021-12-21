@@ -622,6 +622,16 @@ export class DeleteImageParams {
   type: string;
 }
 
+export class ValidateUrlParams {
+  @ApiProperty({
+    example: 1,
+    description: 'The id of the auction to which the user is bidding',
+  })
+  @IsNumberString()
+  @IsOptional()
+  auctionId: number;
+}
+
 export class ChangeAuctionStatus {
   @ApiProperty({
     example: 1,

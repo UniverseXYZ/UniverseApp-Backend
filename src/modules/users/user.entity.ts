@@ -21,7 +21,7 @@ export class User {
   @Column({ default: '' })
   logoImageName: string;
 
-  @Column({ default: '' })
+  @Column({ default: '', unique: true })
   displayName: string;
 
   @Column({ default: '' })
