@@ -1164,11 +1164,26 @@ export class AuctionService {
     };
   }
 
-  public async getUserBids(address: string) {
+  public async getUserBids(address: string, limit = 8, offset = 0, search = '') {
     //TODO: Add Pagination as this request can get quite computation heavy
 
     // User should have only one bid per auction -> if user places multiple bids their amount should be accumulated into a single bid (That's how smart contract works)
-    const bids = await this.auctionBidRepository.find({ where: { bidder: address }, order: { createdAt: 'DESC' } });
+    const query = this.auctionBidRepository
+      .createQueryBuilder('bids')
+      .leftJoin('auction', 'auction', 'auction.id = bids.auctionId')
+      .leftJoinAndMapOne('auction.user', User, 'user', 'user.id = auction.userId')
+      .where('bidder = :address', { address })
+      .limit(limit)
+      .offset(offset);
+
+    if (search) {
+      query.andWhere('(LOWER(auction.name) LIKE :auction OR LOWER(user.displayName) LIKE :name)', {
+        auction: `${search}%`,
+        name: `${search}%`,
+      });
+    }
+
+    const [bids, count] = await query.getManyAndCount();
 
     if (!bids.length) {
       return { bids: [], pagination: {} };
@@ -1256,7 +1271,14 @@ export class AuctionService {
         minNfts,
       };
     });
-    return { bids: mappedBids, pagination: {} };
+    return {
+      bids: mappedBids,
+      pagination: {
+        total: count,
+        offset,
+        limit,
+      },
+    };
   }
 
   private setPagination(query, page: number, limit: number) {

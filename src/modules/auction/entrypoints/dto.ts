@@ -606,6 +606,38 @@ export class PlaceBidBody {
   amount: number;
 }
 
+export class GetUserBidsParams {
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    example: 8,
+    description: 'The number of returned auction items ',
+    type: 'number',
+    required: false,
+  })
+  limit: string;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    example: 0,
+    description: 'The number of auction items to be skipped',
+    type: 'number',
+    required: false,
+  })
+  offset: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    example: 'universe',
+    description: 'Searching by auction or artist name',
+    type: 'string',
+    required: false,
+  })
+  search: string;
+}
+
 export class DeleteImageParams {
   @ApiProperty({
     example: 1,
