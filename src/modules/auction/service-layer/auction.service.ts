@@ -1307,6 +1307,14 @@ export class AuctionService {
     return true;
   }
 
+  public async validateUrl(url: string) {
+    if (await this.auctionRepository.findOne({ where: { link: url } })) {
+      return false;
+    }
+
+    return true;
+  }
+
   private async buildFilters(query, filter: string) {
     switch (filter) {
       case 'recent':

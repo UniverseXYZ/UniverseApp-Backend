@@ -57,4 +57,14 @@ export class UserController {
   async getPublicInfo(@Param('username') username: string) {
     return await this.usersService.getByUsername(username);
   }
+
+  @Get('user/validate/name/:name')
+  async validateName(@Param('name') name) {
+    return await this.usersService.validateName(name);
+  }
+
+  @Get('user/validate/url/:url')
+  async validateUrl(@Param('url') url) {
+    return await this.usersService.validateUrl(url);
+  }
 }

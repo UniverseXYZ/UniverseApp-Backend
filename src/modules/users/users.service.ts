@@ -134,4 +134,20 @@ export class UsersService {
 
     return user;
   }
+
+  async validateName(name: string) {
+    if (await this.usersRepository.findOne({ where: { displayName: name } })) {
+      return false;
+    }
+
+    return true;
+  }
+
+  async validateUrl(url: string) {
+    if (await this.usersRepository.findOne({ where: { universePageUrl: url } })) {
+      return false;
+    }
+
+    return true;
+  }
 }

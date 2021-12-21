@@ -324,4 +324,10 @@ export class AuctionController {
   async deleteImage(@Req() req, @Body() deleteImageParams: DeleteImageParams) {
     return await this.auctionService.deleteImage(req.user.sub, deleteImageParams.id, deleteImageParams.type);
   }
+
+  @Get('auction/validate/:url')
+  @ApiTags('auction')
+  async validateUrl(@Param('url') url) {
+    return await this.auctionService.validateUrl(url);
+  }
 }
