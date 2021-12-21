@@ -59,12 +59,14 @@ export class UserController {
   }
 
   @Get('user/validate/name/:name')
-  async validateName(@Param('name') name) {
-    return await this.usersService.validateName(name);
+  @UseGuards(JwtAuthGuard)
+  async validateName(@Param('name') name, @Request() req) {
+    return await this.usersService.validateName(name, req.user.sub);
   }
 
   @Get('user/validate/url/:url')
-  async validateUrl(@Param('url') url) {
-    return await this.usersService.validateUrl(url);
+  @UseGuards(JwtAuthGuard)
+  async validateUrl(@Param('url') url, @Request() req) {
+    return await this.usersService.validateUrl(url, req.user.sub);
   }
 }

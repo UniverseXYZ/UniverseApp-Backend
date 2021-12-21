@@ -1307,8 +1307,8 @@ export class AuctionService {
     return true;
   }
 
-  public async validateUrl(url: string) {
-    if (await this.auctionRepository.findOne({ where: { link: url } })) {
+  public async validateUrl(url: string, auctionId = 0) {
+    if (await this.auctionRepository.findOne({ where: { link: url, id: Not(auctionId) } })) {
       return false;
     }
 
