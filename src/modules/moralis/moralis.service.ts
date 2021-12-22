@@ -120,7 +120,7 @@ export class MoralisService {
     const pageSize = 500;
     let keepLooping = true;
     while (keepLooping) {
-      console.log(`Fetch NFTs from ${skip} to ${skip + pageSize}`);
+      this.logger.log(`Fetch NFTs from ${skip} to ${skip + pageSize}`);
       const params = {
         start: start,
         end: end,
@@ -131,7 +131,7 @@ export class MoralisService {
       try {
         results = await Moralis.Cloud.run('fetchEthNFTOwners', params);
       } catch (err) {
-        console.log(err);
+        this.logger.log(err);
       }
 
       if (results.length < pageSize) keepLooping = false;
@@ -184,7 +184,7 @@ export class MoralisService {
         newMoralisLog.token = token;
         await this.moralisLogRepository.save(newMoralisLog);
       }
-      console.log(error);
+      this.logger.error(error);
     }
   }
 
