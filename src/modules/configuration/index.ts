@@ -10,6 +10,8 @@ export const configValues = {
   },
   app: {
     port: parseInt(process.env.APP_PORT, 10),
+    redisHost: process.env.REDIS_HOST,
+    redisPort: parseInt(process.env.REDIS_PORT),
   },
   ethereum: {
     infuraProjectId: process.env.INFURA_PROJECT_ID,
