@@ -1315,7 +1315,7 @@ export class AuctionService {
         await this.auctionRepository.save(auction);
       }
 
-      if (type === 'auctionBackgroud' && auction.backgroundImageUrl) {
+      if (type === 'auctionBackground' && auction.backgroundImageUrl) {
         image = auction.backgroundImageUrl;
         auction.backgroundImageUrl = null;
         await this.auctionRepository.save(auction);
