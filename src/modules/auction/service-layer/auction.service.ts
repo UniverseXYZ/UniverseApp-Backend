@@ -49,6 +49,7 @@ import { User } from 'src/modules/users/user.entity';
 import { AuctionGateway } from './auction.gateway';
 import { AuctionBidNotFoundException } from './exceptions/AuctionBidNotFoundException';
 import { DuplicateAuctionLinkException } from './exceptions/DuplicateAuctionLinkException';
+import BigNumber from 'bignumber.js';
 
 @Injectable()
 export class AuctionService {
@@ -181,7 +182,7 @@ export class AuctionService {
         nfts: rewardTierNftsMap[rewardTier.id].map((nft) => classToPlain(nft)),
       })),
       moreActiveAuctions: moreActiveAuctions.map((a) => classToPlain(a)),
-      bidders: bids,
+      bidders: classToPlain(bids),
     };
   }
 
@@ -755,7 +756,7 @@ export class AuctionService {
 
       auctionsWithBidders = auctionsWithBidsInfo.map((auction) => ({
         ...auction,
-        bidders: bidsByAuctionId[auction.id],
+        bidders: classToPlain(bidsByAuctionId[auction.id] || []),
       }));
     }
 
@@ -940,19 +941,27 @@ export class AuctionService {
 
     return auctions.map((auction) => {
       const bid = bidsQuery.find((bid) => bid['bid_auctionId'] === auction.id);
-      const bids = {
-        bidsCount: 0,
-        highestBid: 0,
-        lowestBid: 0,
-        totalBids: 0,
+      let bids = {
+        bidsCount: '0',
+        highestBid: '0',
+        lowestBid: '0',
+        totalBids: '0',
       };
+
       if (bid) {
-        bids.bidsCount = +bid['bidcount'];
-        bids.highestBid = +bid['max'];
-        bids.lowestBid = +bid['min'];
-        bids.totalBids = +bid['totalbidsamount'];
-      } else {
+        const bidsCount = bid['bidcount'];
+        const highestBid = new BigNumber(bid['max']).dividedBy(10 ** auction.tokenDecimals).toFixed();
+        const lowestBid = new BigNumber(bid['min']).dividedBy(10 ** auction.tokenDecimals).toFixed();
+        const totalBids = new BigNumber(bid['totalbidsamount']).dividedBy(10 ** auction.tokenDecimals).toFixed();
+
+        bids = {
+          bidsCount,
+          highestBid,
+          lowestBid,
+          totalBids,
+        };
       }
+
       return {
         ...auction,
         bids,
@@ -1230,9 +1239,16 @@ export class AuctionService {
 
     const mappedBids = bids.map((bid) => {
       const bidResult = bidsQuery.find((b) => b['bid_auctionId'] === bid.auctionId);
+
       const auctionBidsCount = +bidResult['bidcount'];
-      const highestBid = +bidResult['max'];
-      const lowestBid = +bidResult['min'];
+
+      const highestBid = new BigNumber(bidResult['max'])
+        .dividedBy(10 ** auctionsById[bid.auctionId].tokenDecimals)
+        .toFixed();
+
+      const lowestBid = new BigNumber(bidResult['min'])
+        .dividedBy(10 ** auctionsById[bid.auctionId].tokenDecimals)
+        .toFixed();
       const tiers = rewardTiersByAuctionId[bid.auctionId];
 
       // If auction has 5 winning slots but received only one bid -> numberOfWinners should be 1)

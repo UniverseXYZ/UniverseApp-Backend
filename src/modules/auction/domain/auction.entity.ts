@@ -1,5 +1,6 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
-import { Exclude } from 'class-transformer';
+import { Exclude, Transform } from 'class-transformer';
+import BigNumber from 'bignumber.js';
 
 @Entity({
   schema: 'universe-backend',
@@ -89,6 +90,9 @@ export class Auction {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Column({ type: 'decimal', nullable: true, default: 0 })
-  revenueClaimed: number;
+  @Column({ type: 'bigint', nullable: true })
+  @Transform(({ value, obj }) => new BigNumber(value).dividedBy(10 ** obj.decimalPlaces).toFixed(), {
+    toPlainOnly: true,
+  })
+  revenueClaimed: string;
 }

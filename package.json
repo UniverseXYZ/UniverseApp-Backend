@@ -42,6 +42,7 @@
     "aws-sdk": "^2.902.0",
     "better-queue": "^3.8.10",
     "bull": "^4.2.0",
+    "bignumber.js": "^9.0.2",
     "class-transformer": "^0.4.0",
     "class-validator": "^0.13.1",
     "dotenv": "^8.2.0",

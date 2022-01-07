@@ -48,12 +48,12 @@ export class AuctionGateway implements OnGatewayInit, OnGatewayConnection, OnGat
   }
   public notifyAuctionBidSubmitted(
     auctionId: number,
-    bidInfo: { user: any; amount: number; userProfile: any; bids: any },
+    bidInfo: { user: any; amount: string; userProfile: any; bids: any },
   ) {
     this.server.emit(`auction_${auctionId}_bidSubmitted`, bidInfo);
   }
 
-  public notifyAuctionRevenueWithdraw(auctionId, totalRevenue: number, recipient: string) {
+  public notifyAuctionRevenueWithdraw(auctionId, totalRevenue: string, recipient: string) {
     this.server.emit(`auction_${auctionId}_withdrawnRevenue`, { totalRevenue, recipient });
   }
 
@@ -63,7 +63,7 @@ export class AuctionGateway implements OnGatewayInit, OnGatewayConnection, OnGat
 
   public notifyAuctionBidWithdrawn(
     auctionId: number,
-    bidInfo: { user: any; amount: number; bids: any; userProfile: any },
+    bidInfo: { user: any; amount: string; bids: any; userProfile: any },
   ) {
     this.server.emit(`auction_${auctionId}_bidWithdrawn`, bidInfo);
   }
