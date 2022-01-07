@@ -26,6 +26,7 @@ import { MatchedBidEvent } from '../domain/matched-bids-event';
 import { BidWithdrawnEvent } from '../domain/withdrawn-bid-event';
 import { WithdrawnRevenueEvent } from '../domain/withdrawn-revenue-event';
 import { FinalisedAuctionEvent } from '../domain/finalised-auction-event';
+import BigNumber from 'bignumber.js';
 
 @Injectable()
 export class AuctionEventsScraperService {
@@ -308,7 +309,7 @@ export class AuctionEventsScraperService {
     this.logger.log(`found ${events.length} BidSubmitted events`);
 
     let bid = null;
-    let auctionId = 0;
+    let foundAuction = null;
     for (const event of events) {
       await this.connection
         .transaction(async (transactionalEntityManager) => {
@@ -321,7 +322,7 @@ export class AuctionEventsScraperService {
             return;
           }
 
-          auctionId = auction.id;
+          foundAuction = auction;
 
           bid =
             (await transactionalEntityManager.findOne(AuctionBid, {
@@ -332,8 +333,8 @@ export class AuctionEventsScraperService {
               bidder: event.data.sender,
             }));
 
-          const parsedAmount = utils.formatUnits(event.data.totalBid.toString(), auction.tokenDecimals);
-          bid.amount = +parsedAmount;
+          bid.amount = event.data.totalBid;
+          bid.decimalPlaces = auction.tokenDecimals;
           await transactionalEntityManager.save(AuctionBid, bid);
 
           event.processed = true;
@@ -343,11 +344,11 @@ export class AuctionEventsScraperService {
           this.logger.error(error);
         });
 
-      if (bid && auctionId) {
+      if (bid && foundAuction) {
         const bidder = await this.usersRepository.findOne({ where: { address: bid.bidder, isActive: true } });
-        const bids = await this.attachBidsInfo(auctionId);
-        this.auctionGateway.notifyAuctionBidSubmitted(auctionId, {
-          amount: bid.amount,
+        const bids = await this.attachBidsInfo(foundAuction.id, foundAuction.tokenDecimals);
+        this.auctionGateway.notifyAuctionBidSubmitted(foundAuction.id, {
+          amount: new BigNumber(bid.amount).dividedBy(10 ** foundAuction.tokenDecimals).toFixed(),
           user: bid.bidder,
           userProfile: bidder,
           bids,
@@ -360,7 +361,7 @@ export class AuctionEventsScraperService {
     const events = await this.bidWithdrawnEventRepository.find({ where: { processed: false } });
     this.logger.log(`found ${events.length} BidWithdrawn events`);
     for (const event of events) {
-      let auctionId = 0;
+      let foundAuction = null;
       let bid = null;
       await this.connection
         .transaction(async (transactionalEntityManager) => {
@@ -382,7 +383,7 @@ export class AuctionEventsScraperService {
             return;
           }
 
-          auctionId = auction.id;
+          foundAuction = auction;
 
           await transactionalEntityManager.remove(AuctionBid, bid);
           event.processed = true;
@@ -392,11 +393,11 @@ export class AuctionEventsScraperService {
           this.logger.error(error);
         });
 
-      if (bid && auctionId) {
-        const bids = await this.attachBidsInfo(auctionId);
+      if (bid && foundAuction) {
+        const bids = await this.attachBidsInfo(foundAuction.id, foundAuction.tokenDecimals);
         const bidder = await this.usersRepository.findOne({ where: { address: bid.bidder, isActive: true } });
-        this.auctionGateway.notifyAuctionBidWithdrawn(auctionId, {
-          amount: bid.amount,
+        this.auctionGateway.notifyAuctionBidWithdrawn(foundAuction, {
+          amount: new BigNumber(bid.amount).dividedBy(10 ** foundAuction.tokenDecimals).toFixed(),
           user: bid.bidder,
           bids,
           userProfile: bidder,
@@ -479,12 +480,11 @@ export class AuctionEventsScraperService {
             where: { auctionId: auction.id },
             order: { amount: 'DESC', id: 'ASC' },
           });
-          const parsedAmount = utils.formatUnits(event.data.winningBidAmount.toString(), auction.tokenDecimals);
 
           if (event.data.slotIndex > bids.length) {
             this.logger.warn(`didn't find matching bid to slotIndex ${event.data.slotIndex}`);
             await transactionalEntityManager.create(AuctionBid, {
-              amount: +parsedAmount,
+              amount: event.data.winningBidAmount.toString(),
               bidder: event.data.winner,
               auctionId: auction.id,
               onChainSlotIndex: event.data.slotIndex,
@@ -493,7 +493,7 @@ export class AuctionEventsScraperService {
             // Slot indexes are 1 based
             const bid = bids[event.data.slotIndex - 1];
             await transactionalEntityManager.update(AuctionBid, bid.id, {
-              amount: +parsedAmount,
+              amount: event.data.winningBidAmount.toString(),
               bidder: event.data.winner,
               auctionId: auction.id,
               onChainSlotIndex: event.data.slotIndex,
@@ -539,8 +539,7 @@ export class AuctionEventsScraperService {
             return;
           }
 
-          const revenueClaimed = +utils.formatUnits(event.data.amount.toString(), auction.tokenDecimals);
-          auction.revenueClaimed = +auction.revenueClaimed + revenueClaimed;
+          auction.revenueClaimed = (auction.revenueClaimed + event.data.amount.toString()).toString();
           await transactionalEntityManager.save(auction);
 
           event.processed = true;
@@ -655,7 +654,7 @@ export class AuctionEventsScraperService {
     );
   }
 
-  private async attachBidsInfo(auctionId: number) {
+  private async attachBidsInfo(auctionId: number, tokenDecimals: number) {
     const bidsQuery = await this.auctionBidRepository
       .createQueryBuilder('bid')
       .select([
@@ -678,11 +677,16 @@ export class AuctionEventsScraperService {
       };
     }
 
+    const bidsCount = bidsQuery[0]['bidcount'];
+    const highestBid = new BigNumber(bidsQuery[0]['max']).dividedBy(10 ** tokenDecimals).toFixed();
+    const lowestBid = new BigNumber(bidsQuery[0]['min']).dividedBy(10 ** tokenDecimals).toFixed();
+    const totalBids = new BigNumber(bidsQuery[0]['totalbidsamount']).dividedBy(10 ** tokenDecimals).toFixed();
+
     const bids = {
-      bidsCount: +bidsQuery[0]['bidcount'],
-      highestBid: +bidsQuery[0]['max'],
-      lowestBid: +bidsQuery[0]['min'],
-      totalBids: +bidsQuery[0]['totalbidsamount'],
+      bidsCount,
+      highestBid,
+      lowestBid,
+      totalBids,
     };
 
     return bids;

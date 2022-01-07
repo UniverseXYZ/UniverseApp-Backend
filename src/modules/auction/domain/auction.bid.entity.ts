@@ -1,4 +1,5 @@
-import { Exclude } from 'class-transformer';
+import BigNumber from 'bignumber.js';
+import { Exclude, Transform } from 'class-transformer';
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({
@@ -16,11 +17,17 @@ export class AuctionBid {
   @Exclude()
   auctionId: number;
 
-  @Column({ type: 'decimal' })
-  amount: number;
+  @Column({ type: 'bigint', nullable: true })
+  @Transform(({ value, obj }) => new BigNumber(value).dividedBy(10 ** obj.decimalPlaces).toFixed(), {
+    toPlainOnly: true,
+  })
+  amount: string;
 
   @Column({ nullable: true })
   onChainSlotIndex: number;
+
+  @Column({ nullable: true })
+  decimalPlaces: number;
 
   @CreateDateColumn()
   createdAt: Date;
