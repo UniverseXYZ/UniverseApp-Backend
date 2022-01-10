@@ -999,7 +999,13 @@ export class AuctionService {
     const idNftMap = nfts.reduce((acc, nft) => ({ ...acc, [nft.id]: nft }), {} as Record<string, Nft>);
 
     const rewardTierNftsMap = rewardTierNfts
-      .sort((a, b) => (a.rewardTierId !== b.rewardTierId ? a.rewardTierId - b.rewardTierId : a.slot - b.slot))
+      .sort((a, b) =>
+        a.rewardTierId !== b.rewardTierId
+          ? a.rewardTierId - b.rewardTierId
+          : a.slot !== b.slot
+          ? a.slot - b.slot
+          : a.id - b.id,
+      )
       .reduce(function (acc, rewardTierNft) {
         return {
           ...acc,
