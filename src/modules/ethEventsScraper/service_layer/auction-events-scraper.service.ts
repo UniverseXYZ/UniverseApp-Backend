@@ -396,7 +396,7 @@ export class AuctionEventsScraperService {
       if (bid && foundAuction) {
         const bids = await this.attachBidsInfo(foundAuction.id, foundAuction.tokenDecimals);
         const bidder = await this.usersRepository.findOne({ where: { address: bid.bidder, isActive: true } });
-        this.auctionGateway.notifyAuctionBidWithdrawn(foundAuction, {
+        this.auctionGateway.notifyAuctionBidWithdrawn(foundAuction.id, {
           amount: new BigNumber(bid.amount).dividedBy(10 ** foundAuction.tokenDecimals).toFixed(),
           user: bid.bidder,
           bids,
