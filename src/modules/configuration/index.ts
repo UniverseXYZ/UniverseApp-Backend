@@ -32,6 +32,12 @@ export const configValues = {
   arweave: {
     wallet: process.env.AIRWEAVE_WALLET,
   },
+  fleek: {
+    apiKey: process.env.FLEEK_API_KEY,
+    apiSecret: process.env.FLEEK_API_SECRET,
+    bucket: process.env.FLEEK_BUCKET,
+    ipfsGateway: process.env.FLEEK_IPFS_GATEWAY,
+  },
   moralis: {
     serverUrl: process.env.MORALIS_SERVER_URL,
     masterKey: process.env.MORALIS_MASTER_KEY,

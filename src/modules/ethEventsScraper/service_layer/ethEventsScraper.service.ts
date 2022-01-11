@@ -11,9 +11,16 @@ import { User } from '../../users/user.entity';
 import { DeployCollectionEvent } from '../domain/deploy-collection-event';
 import { MintedNftEvent } from '../domain/mintNftEvent';
 import { customAlphabet } from 'nanoid';
-import { SavedNft } from '../../nft/domain/saved-nft.entity';
-import { MintingCollection } from '../../nft/domain/minting-collection.entity';
-import { MintingNft } from 'src/modules/nft/domain/minting-nft.entity';
+import { 
+  NftCollectionStatusEnum, 
+  NftStatusEnum,
+  NftTransactionStatusEnum, 
+} from 'src/common/constants/enums';
+import { NftTransaction } from '../../nft/domain/nft-transaction.entity';
+import { NftFile } from '../../nft/domain/nft-file.entity';
+// import { SavedNft } from '../../nft/domain/saved-nft.entity';
+// import { MintingCollection } from '../../nft/domain/minting-collection.entity';
+// import { MintingNft } from 'src/modules/nft/domain/minting-nft.entity';
 
 @Injectable()
 export class EthEventsScraperService {
@@ -30,12 +37,16 @@ export class EthEventsScraperService {
     private nftCollectionRepository: Repository<NftCollection>,
     @InjectRepository(DeployCollectionEvent)
     private deployCollectionEventRepository: Repository<DeployCollectionEvent>,
-    @InjectRepository(MintingCollection)
-    private mintingCollectionRepository: Repository<MintingCollection>,
+    // @InjectRepository(MintingCollection)
+    // private mintingCollectionRepository: Repository<MintingCollection>,
     @InjectRepository(MintedNftEvent)
     private createNftEventRepository: Repository<MintedNftEvent>,
-    @InjectRepository(MintingNft)
-    private mintingNftRepository: Repository<MintingNft>,
+    // @InjectRepository(MintingNft)
+    // private mintingNftRepository: Repository<MintingNft>,
+    @InjectRepository(NftTransaction)
+    private nftTransactionRepository: Repository<NftTransaction>,
+    @InjectRepository(NftFile)
+    private nftFileRepository: Repository<NftFile>
   ) {}
 
   @Cron(CronExpression.EVERY_10_SECONDS)
@@ -58,30 +69,24 @@ export class EthEventsScraperService {
     const events = await this.deployCollectionEventRepository.find({ where: { processed: false } });
 
     for (const event of events) {
-      const mintingCollection = await this.mintingCollectionRepository.findOne({ where: { txHash: event.tx_hash } });
-
-      if (!mintingCollection) continue;
-
-      let collection = await this.nftCollectionRepository.findOne({
-        where: { address: event.contract_address?.toLowerCase() },
+      const deployingCollection = await this.nftCollectionRepository.findOne({ 
+        where: { 
+          txHash: event.tx_hash,
+          status: NftCollectionStatusEnum.DEPLOYING,
+        } 
       });
-      if (!collection) {
-        collection = this.nftCollectionRepository.create();
-      }
-      collection.txHash = event.tx_hash;
-      collection.address = event.contract_address?.toLowerCase();
-      collection.owner = event.owner.toLowerCase();
-      collection.creator = event.owner.toLowerCase();
-      collection.name = event.token_name;
-      collection.symbol = event.token_symbol;
-      collection.shortUrl = mintingCollection.shortUrl;
-      collection.coverUrl = mintingCollection.coverUrl;
-      collection.description = mintingCollection.description;
-      await this.mintingCollectionRepository.delete({ txHash: event.tx_hash });
+
+      if (!deployingCollection) continue;
+
+      deployingCollection.address = event.contract_address?.toLowerCase();
+      deployingCollection.owner = event.owner.toLowerCase();
+      deployingCollection.creator = event.owner.toLowerCase();
+      deployingCollection.name = event.token_name;
+      deployingCollection.symbol = event.token_symbol;
 
       event.processed = true;
       await this.deployCollectionEventRepository.save(event);
-      await this.nftCollectionRepository.save(collection);
+      await this.nftCollectionRepository.save(deployingCollection);
     }
   }
 
@@ -104,79 +109,104 @@ export class EthEventsScraperService {
       for (const event of events) {
         const user = await this.userRepository.findOne({ where: { address: event.receiver.toLowerCase() } });
         const collection = await this.nftCollectionRepository.findOne({
-          where: { address: event.contract_address.toLowerCase() },
+          where: { 
+            address: event.contract_address.toLowerCase(),
+            status: NftCollectionStatusEnum.DEPLOYED,
+          },
         });
 
         if (!user || !collection) continue;
 
-        const mintingNft = await this.mintingNftRepository.findOne({
-          where: { tokenUri, collectionId: collection.id },
+        const mintingNft = await this.nftRepository.findOne({
+          where: { 
+            tokenUri: tokenUri, 
+            status: NftStatusEnum.MINTING,
+            collectionId: collection.id 
+          },
         });
         if (!mintingNft) continue;
 
-        const nft = this.nftRepository.create();
-        nft.userId = user.id;
-        nft.collectionId = collection.id;
-        await this.attachNftEdition(collection, event, nft, editionUUID);
-        this.attachNftDataFromEvent(nft, event);
-        this.attachNftDataFromTokenUri(nft, response);
-        await this.attachNftNumberOfEditions(nft, tokenUri, collection.id, mintingNft);
+        mintingNft.userId = user.id;
+        mintingNft.collectionId = collection.id;
+        await this.attachNftEdition(collection, event, mintingNft, editionUUID);
+        await this.attachNftDataFromEvent(mintingNft, event);
+        await this.attachNftDataFromTokenUri(mintingNft, response);
+        
+        // await this.attachNftNumberOfEditions(nft, tokenUri, collection.id, mintingNft);
+        mintingNft.numberOfEditions = mintingNft.numberOfEditions ? mintingNft.numberOfEditions + 1 : 1;
+
+        mintingNft.status = NftStatusEnum.MINTED;
 
         event.processed = true;
         await this.createNftEventRepository.save(event);
-        await this.nftRepository.save(nft);
-
-        mintingNft.mintedEditions = mintingNft.mintedEditions + 1;
-        if (mintingNft.mintedEditions === mintingNft.numberOfEditions) {
-          await this.mintingNftRepository.delete({ tokenUri });
-        } else {
-          await this.mintingNftRepository.save(mintingNft);
-        }
+        await this.nftRepository.save(mintingNft);
       }
     } catch (error) {
       this.logger.error(`processTokenUri ${tokenUri} ${JSON.stringify(error, undefined, '  ')}`);
     }
   }
 
-  private async attachNftNumberOfEditions(nft: Nft, tokenUri: string, collectionId: number, mintingNft: MintingNft) {
-    nft.numberOfEditions = 1;
+  /**
+   * @Deprecated
+   * @param nft 
+   * @param tokenUri 
+   * @param collectionId 
+   * @param mintingNft 
+   */
+  // private async attachNftNumberOfEditions(nft: Nft, tokenUri: string, collectionId: number, mintingNft: Nft) {
+  //   nft.numberOfEditions = 1;
 
-    if (mintingNft) {
-      nft.numberOfEditions = mintingNft.numberOfEditions;
-    } else {
-      const nftsCountByTokenUri = await this.nftRepository.count({
-        where: { collectionId, tokenUri },
-      });
-      if (nftsCountByTokenUri !== 0) {
-        nft.numberOfEditions = nftsCountByTokenUri + 1;
-        await this.nftRepository.update({ collectionId, tokenUri }, { numberOfEditions: nftsCountByTokenUri + 1 });
-      }
-    }
-  }
+  //   if (mintingNft) {
+  //     nft.numberOfEditions = mintingNft.numberOfEditions;
+  //   } else {
+  //     const nftsCountByTokenUri = await this.nftRepository.count({
+  //       where: { collectionId, tokenUri },
+  //     });
+  //     if (nftsCountByTokenUri !== 0) {
+  //       nft.numberOfEditions = nftsCountByTokenUri + 1;
+  //       await this.nftRepository.update({ collectionId, tokenUri }, { numberOfEditions: nftsCountByTokenUri + 1 });
+  //     }
+  //   }
+  // }
 
   private async attachNftEdition(collection: NftCollection, event: MintedNftEvent, nft: Nft, editionUUID: string) {
     const nftByTokenUri = await this.nftRepository.findOne({
-      where: { collectionId: collection.id, tokenUri: event.token_uri },
+      where: { 
+        collectionId: collection.id, 
+        tokenUri: event.token_uri, 
+      },
     });
     nft.editionUUID = nftByTokenUri ? nftByTokenUri.editionUUID : editionUUID;
   }
 
-  private attachNftDataFromTokenUri(nft: Nft, response) {
+  private async attachNftDataFromTokenUri(nft: Nft, response) {
     nft.name = response.data.name as string;
     nft.description = response.data.description as string;
-    nft.artworkType = this.getExtensionFromUrl(response.data.image_original_url);
-    nft.url = response.data.image_original_url as string;
-    nft.optimized_url = response.data.image_preview_url as string;
-    nft.thumbnail_url = response.data.image_thumbnail_url as string;
-    nft.original_url = response.data.image_url as string;
+    
+    let nftFile = this.nftFileRepository.create();
+//@TODO this has to be updated as universe nfts will support multiple files.    
+    nftFile.order = 1;
+    nftFile.type = this.getExtensionFromUrl(response.data.image_original_url);
+    nftFile.url = response.data.image_original_url as string;
+    nftFile.optimizedUrl = response.data.image_preview_url as string;
+    nftFile.originalUrl = response.data.image_url as string;
+    nftFile.nft = nft;
+    await this.nftFileRepository.save(nftFile);
+    
     nft.properties = response.data.attributes?.map((attributeObject) => ({
       [attributeObject.trait_type]: attributeObject.value,
     }));
     nft.royalties = response.data.royalties;
   }
 
-  private attachNftDataFromEvent(nft: Nft, event: MintedNftEvent) {
-    nft.txHash = event.tx_hash;
+  private async attachNftDataFromEvent(nft: Nft, event: MintedNftEvent) {
+    let nftTransaction = this.nftTransactionRepository.create();
+    nftTransaction.hash = event.tx_hash;
+    nftTransaction.nft = nft; // - this nft already exists in the nft table so it's safe to assign it!
+    //not sure if we have the status here
+    //nftTransaction.status = NftTransactionStatusEnum.SUCCESS;
+    await this.nftTransactionRepository.save(nftTransaction);
+
     nft.tokenId = event.token_id.toString();
     nft.tokenUri = event.token_uri;
     nft.creator = event.receiver?.toLowerCase();

@@ -1,22 +1,44 @@
-import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { 
+  Column, 
+  CreateDateColumn, 
+  Entity, 
+  Index, 
+  PrimaryGeneratedColumn, 
+  UpdateDateColumn 
+} from 'typeorm';
+import { 
+  NftCollectionSourceEnum,
+  NftCollectionStatusEnum,
+} from '../../../common/constants/enums';
+import { Exclude } from 'class-transformer';
 
-export enum CollectionSource {
-  UNIVERSE = 'universe',
-  SCRAPER = 'scraper',
-}
 @Entity({
   schema: 'universe-backend',
 })
+
 export class NftCollection {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column({
-    type: 'enum',
-    enum: CollectionSource,
-    default: CollectionSource.UNIVERSE,
+    nullable: true,
   })
-  source: CollectionSource;
+  @Exclude()
+  userId: number;
+
+  @Column({
+    type: 'enum',
+    enum: NftCollectionStatusEnum,
+    nullable: true,
+  })
+  status: NftCollectionStatusEnum;
+
+  @Column({
+    type: 'enum',
+    enum: NftCollectionSourceEnum,
+    default: NftCollectionSourceEnum.UNIVERSE,
+  })
+  source: NftCollectionSourceEnum;
 
   @Column({ nullable: true })
   txHash?: string;
