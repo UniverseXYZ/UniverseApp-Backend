@@ -1,34 +1,49 @@
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Column, 
+  CreateDateColumn, 
+  Entity, 
+  Index, 
+  ManyToOne, 
+  PrimaryGeneratedColumn, 
+  UpdateDateColumn 
+} from 'typeorm';
 import { Exclude } from 'class-transformer';
+import { Nft } from './nft.entity';
+import { JsonBody } from 'aws-sdk/clients/wafv2';
 
 @Entity({
   schema: 'universe-backend',
 })
-export class SavedNft {
+
+export class NftFile {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Exclude()
-  @Column()
-  userId: number;
+  @ManyToOne(
+    () => Nft,
+    nft => nft.files,
+    {
+      onUpdate: 'CASCADE',
+      onDelete: 'RESTRICT',
+    }
+  )
+  nft: Nft;
 
   @Column()
-  collectionId: number;
+  order: number;
 
-  @Column({ nullable: true })
-  tokenUri: string;
-
-  @Column()
+  @Column({
+      nullable: true,
+  })
   name: string;
 
-  @Column({ nullable: true })
-  description?: string;
+  @Column({
+      nullable: true,
+  })
+  description: string;
 
-  @Column()
-  numberOfEditions: number;
-
   @Column({ nullable: true })
-  artworkType?: string;
+  type?: string;
 
   //artwork original s3
   @Column({ nullable: true })
@@ -46,18 +61,21 @@ export class SavedNft {
   @Column({ nullable: true })
   originalUrl?: string;
 
-  @Column({ type: 'jsonb', nullable: true })
-  properties?: any;
+  @Column({
+    nullable: true,
+  })
+  ipfsHash: string;
 
-  @Column({ type: 'jsonb', nullable: true })
-  royalties?: any;
+  @Column({
+    type: 'jsonb',
+    nullable: true,
+  })
+  @Exclude()
+  ipfs: any;
 
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
-
-  @DeleteDateColumn()
-  deletedAt: Date;
 }

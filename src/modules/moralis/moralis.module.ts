@@ -7,6 +7,7 @@ import { NftCollection } from '../nft/domain/collection.entity';
 import { MoralisLog } from './domain/moralis-log.entity';
 import { MonitoredNfts } from '../nft/domain/monitored-nfts';
 import { Nft } from '../nft/domain/nft.entity';
+import { NftFile } from '../nft/domain/nft-file.entity';
 import { QueueModel } from '../queue/queue.model';
 import { User } from '../users/user.entity';
 import { MoralisService } from './moralis.service';
@@ -19,7 +20,14 @@ import { NftValidator } from './service/nft-validator';
     AppConfigModule,
     QueueModel,
     HttpModule,
-    TypeOrmModule.forFeature([Nft, NftCollection, User, MonitoredNfts, MoralisLog]),
+    TypeOrmModule.forFeature([
+      NftFile, 
+      Nft, 
+      NftCollection, 
+      User, 
+      MonitoredNfts, 
+      MoralisLog
+    ]),
     FileStorageModule,
     FileSystemModule,
   ],

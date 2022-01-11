@@ -3,16 +3,18 @@ import { Injectable } from '@nestjs/common';
 import { AppConfig } from '../configuration/configuration.service';
 import { User } from '../users/user.entity';
 import { Nft } from '../nft/domain/nft.entity';
+import { NftFile } from '../nft/domain/nft-file.entity';
+import { NftTransaction } from '../nft/domain/nft-transaction.entity';
 import { NftCollection } from '../nft/domain/collection.entity';
-import { SavedNft } from '../nft/domain/saved-nft.entity';
+// import { SavedNft } from '../nft/domain/saved-nft.entity';
 import { RewardTier } from '../auction/domain/reward-tier.entity';
 import { RewardTierNft } from '../auction/domain/reward-tier-nft.entity';
 import { Auction } from '../auction/domain/auction.entity';
 import { MintedNftEvent } from '../ethEventsScraper/domain/mintNftEvent';
 import { DeployCollectionEvent } from '../ethEventsScraper/domain/deploy-collection-event';
-import { MintingCollection } from '../nft/domain/minting-collection.entity';
+// import { MintingCollection } from '../nft/domain/minting-collection.entity';
 import { LoginChallenge } from '../auth/model/login-challenge.entity';
-import { MintingNft } from '../nft/domain/minting-nft.entity';
+// import { MintingNft } from '../nft/domain/minting-nft.entity';
 import { AuctionBid } from '../auction/domain/auction.bid.entity';
 import { MonitoredNfts } from '../nft/domain/monitored-nfts';
 import { MoralisLog } from '../moralis/domain/moralis-log.entity';
@@ -31,17 +33,19 @@ import { BidWithdrawnEvent } from '../ethEventsScraper/domain/withdrawn-bid-even
 // TODO: Add db entities here
 const entities = [
   User,
+  NftFile,
+  NftTransaction,
   Nft,
   NftCollection,
-  SavedNft,
+  // SavedNft,
   RewardTier,
   RewardTierNft,
   Auction,
   MintedNftEvent,
   DeployCollectionEvent,
-  MintingCollection,
+  // MintingCollection,
   LoginChallenge,
-  MintingNft,
+  // MintingNft,
   AuctionBid,
   MonitoredNfts,
   MoralisLog,

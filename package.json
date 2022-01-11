@@ -23,6 +23,7 @@
     "db:migration:run": "npm run typeorm -- migration:run"
   },
   "dependencies": {
+    "@fleekhq/fleek-storage-js": "^1.0.20",
     "@nestjs/cli": "^7.6.0",
     "@nestjs/common": "^7.6.15",
     "@nestjs/config": "^0.6.3",
@@ -42,6 +43,7 @@
     "better-queue": "^3.8.10",
     "class-transformer": "^0.4.0",
     "class-validator": "^0.13.1",
+    "crypto": "^1.0.1",
     "dotenv": "^8.2.0",
     "ethers": "^5.1.4",
     "express-session": "^1.17.1",
