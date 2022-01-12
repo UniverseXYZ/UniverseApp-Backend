@@ -90,7 +90,7 @@ export class Auction {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Column({ type: 'bigint', nullable: true })
+  @Column({ type: 'bigint', nullable: true, default: 0 })
   @Transform(({ value, obj }) => new BigNumber(value).dividedBy(10 ** obj.decimalPlaces).toFixed(), {
     toPlainOnly: true,
   })

@@ -63,7 +63,7 @@ export class AuctionGateway implements OnGatewayInit, OnGatewayConnection, OnGat
 
   public notifyAuctionBidWithdrawn(
     auctionId: number,
-    bidInfo: { user: any; amount: string; bids: any; userProfile: any },
+    bidInfo: { user: any; amount: string; bids: any; userProfile: any; withdrawn: boolean },
   ) {
     this.server.emit(`auction_${auctionId}_bidWithdrawn`, bidInfo);
   }
