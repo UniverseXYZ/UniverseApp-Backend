@@ -61,6 +61,12 @@ export class UsersService {
     await this.usersRepository.save(userDb);
   }
   async uploadProfileImage(file: Express.Multer.File, user: any) {
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
+
+    if (!allowedTypes.includes(file.mimetype)) {
+      throw new Error('File type not allowed');
+    }
+
     try {
       const userDb = await this.usersRepository.findOne({ where: { address: user.address } });
       if (!userDb) {
