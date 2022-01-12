@@ -23,6 +23,7 @@
     "db:migration:run": "npm run typeorm -- migration:run"
   },
   "dependencies": {
+    "@fleekhq/fleek-storage-js": "^1.0.20",
     "@nestjs/bull": "^0.4.2",
     "@nestjs/cli": "^7.6.0",
     "@nestjs/common": "^7.6.15",

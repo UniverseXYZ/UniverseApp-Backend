@@ -8,6 +8,7 @@ import { NftCollection } from '../nft/domain/collection.entity';
 import { MoralisLog } from './domain/moralis-log.entity';
 import { MonitoredNfts } from '../nft/domain/monitored-nfts';
 import { Nft } from '../nft/domain/nft.entity';
+import { NftFile } from '../nft/domain/nft-file.entity';
 import { User } from '../users/user.entity';
 import { MoralisService } from './moralis.service';
 import { MoralisWebHookController } from './moralis.webhook.controller';
@@ -20,7 +21,14 @@ import { MoralisProcessor } from './moralis.processor';
   imports: [
     AppConfigModule,
     HttpModule,
-    TypeOrmModule.forFeature([Nft, NftCollection, User, MonitoredNfts, MoralisLog]),
+    TypeOrmModule.forFeature([
+      NftFile, 
+      Nft, 
+      NftCollection, 
+      User, 
+      MonitoredNfts, 
+      MoralisLog
+    ]),
     FileStorageModule,
     FileSystemModule,
     BullModule.registerQueue({

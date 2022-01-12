@@ -1,38 +1,93 @@
-import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { 
+  Column, 
+  CreateDateColumn, 
+  Entity, 
+  Index, 
+  JoinColumn, 
+  OneToMany, 
+  PrimaryGeneratedColumn, 
+  UpdateDateColumn 
+} from 'typeorm';
 import { Exclude } from 'class-transformer';
+import {
+  NftSourceEnum,
+  NftStatusEnum,
+  MetadataStorageEnum,
+} from '../../../common/constants/enums';
+import { NftFile } from './nft-file.entity';
+import { NftTransaction } from './nft-transaction.entity';
 
-export enum NftSource {
-  UNIVERSE = 'universe',
-  SCRAPER = 'scraper',
-}
 @Entity({
   schema: 'universe-backend',
 })
+
 export class Nft {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Exclude()
   @Column({ nullable: true })
+  @Exclude()
   @Index()
   userId: number;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   collectionId: number;
 
   @Column({
     type: 'enum',
-    enum: NftSource,
-    default: NftSource.UNIVERSE,
+    enum: NftStatusEnum,
+    nullable: false, // explicitly specify the value!
+  })
+  status: NftStatusEnum;
+
+  @Column({
+    type: 'enum',
+    enum: NftSourceEnum,
+    default: NftSourceEnum.UNIVERSE,
   })
   @Exclude()
-  source: NftSource;
+  source: NftSourceEnum;
 
   @Column({ nullable: true })
-  txHash: string;
+  tokenId: string;
 
+  @Column({ nullable: true })
+  name: string;
+
+  @Column({ nullable: true })
+  description?: string;
+
+  //arweave json metadata uri
+  @Column({ nullable: true })
+  tokenUri: string;
+
+  @Column({ nullable: true })
+  numberOfEditions?: number;
+
+  @Column({
+    type: 'jsonb', 
+    nullable: true,
+  })
+  properties?: any;
+
+  @Column({
+    type: 'jsonb', 
+    nullable: true
+  })
+  royalties?: any;
+
+  @Column({ 
+    type: 'enum',
+    enum: MetadataStorageEnum,
+    default: null,
+    nullable: true,
+  })
+  metadataStorage: MetadataStorageEnum;
+
+  @Column({ nullable: true })
   @Exclude()
-  @Column({ nullable: true })
   editionUUID: string;
 
   @Column({ nullable: true })
@@ -41,60 +96,51 @@ export class Nft {
   @Column({ nullable: true, length: 42 })
   owner: string;
 
-  @Column({ nullable: true })
-  name: string;
-
-  @Column({ nullable: true })
-  description?: string;
-
-  @Column({ nullable: true })
-  tokenId: string;
-
-  @Column({ nullable: true })
-  artworkType?: string;
-
-  //artwork original s3
-  @Column({ nullable: true })
-  url?: string;
-
-  //artwork original optimized s3, less bytes per pixel/frame
-  @Column({ nullable: true })
-  optimized_url?: string;
-
-  //either resized image, or in case of videos a snapshot of a frame
-  @Column({ nullable: true })
-  thumbnail_url?: string;
-
-  //arweave content
-  @Column({ nullable: true })
-  original_url?: string;
-
-  //arweave json metadata uri
-  @Column({ nullable: true })
-  tokenUri: string;
-
-  @Column({ type: 'jsonb', nullable: true })
-  properties?: any;
-
-  @Column({ type: 'jsonb', nullable: true })
-  royalties?: any;
-
-  @Column({ nullable: true })
-  numberOfEditions?: number;
-
-  @Exclude()
-  @Column({ default: true })
-  refreshed: boolean;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
+  @Column({
+    nullable: true,
+    length: 42,
+  })
+  mintToOtherWallet: string;
 
   @Column({ default: 1 })
   amount: number;
 
   @Column({ default: 'ERC721' })
   standard: string;
+
+  @Column({
+    nullable: true,
+  })
+  licenseUri: string;
+
+  @Column({ default: true })
+  @Exclude()
+  refreshed: boolean;
+
+  @OneToMany(
+    () => NftFile,
+    nftFile => nftFile.nft,
+    {
+      onUpdate: 'CASCADE',
+      onDelete: 'RESTRICT',
+    }
+  )
+  files: NftFile[];
+
+  @OneToMany(
+    () => NftTransaction,
+    nftTransaction => nftTransaction.nft,
+    {
+      onUpdate: 'CASCADE',
+      onDelete: 'RESTRICT',
+    }
+  )
+  transactions: NftTransaction[];
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+    
 }
