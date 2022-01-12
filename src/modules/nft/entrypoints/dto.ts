@@ -628,6 +628,14 @@ export class GetMyNftsAvailabilityParams {
     example: '3',
   })
   size: number;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The id of the auction',
+    example: '1',
+  })
+  auctionId: number;
 }
 
 export class GetMyCollectionsParams {
