@@ -31,4 +31,7 @@ export class AuctionBid {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @Column({ default: false, nullable: true })
+  withdrawn: boolean;
 }

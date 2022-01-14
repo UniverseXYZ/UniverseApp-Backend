@@ -384,8 +384,13 @@ export class AuctionEventsScraperService {
           }
 
           foundAuction = auction;
-
-          await transactionalEntityManager.remove(AuctionBid, bid);
+          const auctionEnded = auction.endDate.getTime() < new Date().getTime();
+          if (auctionEnded) {
+            bid.withdrawn = true;
+            await transactionalEntityManager.save(bid);
+          } else {
+            await transactionalEntityManager.remove(AuctionBid, bid);
+          }
           event.processed = true;
           await transactionalEntityManager.save(event);
         })
@@ -401,6 +406,7 @@ export class AuctionEventsScraperService {
           user: bid.bidder,
           bids,
           userProfile: bidder,
+          withdrawn: bid.withdrawn,
         });
       }
     }
