@@ -8,7 +8,7 @@ export class MoralisWebHookController {
   @Post('add')
   async handleNewNFTOwner(@Request() req, @Body() body) {
     const token = body.object;
-    this.moralisService.addNewNFT(token);
+    await this.moralisService.addNewNFT(token);
     return true;
   }
 }
