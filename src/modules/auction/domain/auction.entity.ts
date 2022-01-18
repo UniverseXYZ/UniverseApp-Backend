@@ -91,8 +91,14 @@ export class Auction {
   updatedAt: Date;
 
   @Column({ type: 'bigint', nullable: true, default: 0 })
-  @Transform(({ value, obj }) => new BigNumber(value).dividedBy(10 ** obj.decimalPlaces).toFixed(), {
-    toPlainOnly: true,
-  })
+  @Transform(
+    ({ value, obj }) => {
+      console.log(value, obj);
+      return new BigNumber(value || '0').dividedBy(10 ** obj.tokenDecimals).toFixed();
+    },
+    {
+      toPlainOnly: true,
+    },
+  )
   revenueClaimed: string;
 }
