@@ -107,14 +107,26 @@ export class EthEventsScraperService {
           where: { address: event.contract_address.toLowerCase() },
         });
 
-        if (!user || !collection) continue;
+        if (!user) {
+          this.logger.log('User not found (' + event.receiver.toLowerCase() + ')');
+          continue;
+        }
+
+        if (!collection) {
+          this.logger.log('Collection not found (' + event.contract_address.toLowerCase() + ')');
+          continue;
+        }
 
         const mintingNft = await this.mintingNftRepository.findOne({
           where: { tokenUri, collectionId: collection.id },
         });
-        if (!mintingNft) continue;
+        if (!mintingNft) {
+          this.logger.log('tokerUri ' + tokenUri + ' not found.');
+          continue;
+        }
 
         const nft = this.nftRepository.create();
+        this.logger.log('Minting nft with editionUUID(' + editionUUID + ')');
         nft.userId = user.id;
         nft.collectionId = collection.id;
         await this.attachNftEdition(collection, event, nft, editionUUID);
