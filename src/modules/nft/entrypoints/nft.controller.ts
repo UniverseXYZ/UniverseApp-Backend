@@ -122,7 +122,7 @@ export class NftController {
   }
 
   @Get('saved-nfts/:id/token-uri')
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiTags('nfts')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Generate the token URI for Saved NFT' })
@@ -132,7 +132,7 @@ export class NftController {
     @Req() req,
     @Param() params: GetNftTokenURIParams
   ) {
-    return await this.nftService.getSavedNftTokenURI(params.id, 1/*req.user.sub*/);
+    return await this.nftService.getSavedNftTokenURI(params.id, req.user.sub);
   }
 
   @Post('nfts/token-uri')
