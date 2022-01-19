@@ -545,13 +545,17 @@ export class AuctionEventsScraperService {
             return;
           }
 
-          auction.revenueClaimed = (auction.revenueClaimed + event.data.amount.toString()).toString();
+          auction.revenueClaimed = new BigNumber(auction.revenueClaimed || '0').plus(event.data.amount).toFixed();
           await transactionalEntityManager.save(auction);
 
           event.processed = true;
           await transactionalEntityManager.save(event);
 
-          this.auctionGateway.notifyAuctionRevenueWithdraw(auction.id, auction.revenueClaimed, event.data.recipient);
+          const formattedRevenue = new BigNumber(auction.revenueClaimed)
+            .dividedBy(10 ** auction.tokenDecimals)
+            .toFixed();
+
+          this.auctionGateway.notifyAuctionRevenueWithdraw(auction.id, formattedRevenue, event.data.recipient);
         })
         .catch((error) => {
           this.logger.error(error);
