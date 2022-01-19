@@ -157,6 +157,7 @@ export class MoralisService {
   };
 
   async addNewNFT(token) {
+    this.logger.log('Add new nft to the moralis queue', token);
     await this.moralisNftQueue.add(PROCESS_MORALIS_TOKEN_JOB, { token });
   }
 
