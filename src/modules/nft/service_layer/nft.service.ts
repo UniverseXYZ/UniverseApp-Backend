@@ -172,9 +172,13 @@ export class NftService {
     return { optimisedFile, downsizedFile, arweaveUrl };
   }
 
-  public async getSavedNftTokenURI(id: number) {
-    const savedNft = await this.savedNftRepository.findOne({ where: { id } });
-
+  public async getSavedNftTokenURI(id: number, userId: number) {
+    const savedNft = await this.savedNftRepository.findOne({
+      where: { 
+        id: id,
+        userId: userId, 
+      } 
+    });
     if (!savedNft) {
       throw new NftNotFoundException();
     }

@@ -128,8 +128,11 @@ export class NftController {
   @ApiOperation({ summary: 'Generate the token URI for Saved NFT' })
   @ApiParam({ name: 'id', description: 'The id of the nft', required: true, example: 1 })
   @ApiResponse({ status: 200, description: 'The URLs for tokens metadata', type: 'string', isArray: true })
-  async getTokenURI(@Param() params: GetNftTokenURIParams) {
-    return await this.nftService.getSavedNftTokenURI(params.id);
+  async getTokenURI(
+    @Req() req,
+    @Param() params: GetNftTokenURIParams
+  ) {
+    return await this.nftService.getSavedNftTokenURI(params.id, req.user.sub);
   }
 
   @Post('nfts/token-uri')
