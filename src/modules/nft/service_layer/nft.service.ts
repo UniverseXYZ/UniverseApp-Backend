@@ -485,6 +485,7 @@ export class NftService {
   ) {
     let nfts = [];
     const query = this.nftRepository.createQueryBuilder('nft');
+    const user = await this.userRepository.findOne({ where: { id: userId } });
 
     if (additionalData?.creator && !prefetchData?.creator) {
       query.leftJoinAndMapOne('nft.creator', User, 'creator', 'creator.address = nft.creator');
@@ -494,7 +495,7 @@ export class NftService {
       query.leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.id = nft.userId');
     }
 
-    nfts = await query.where('nft.userId = :userId', { userId: userId }).orderBy('nft.createdAt', 'DESC').getMany();
+    nfts = await query.where('nft.owner = :owner', { owner: user.address }).orderBy('nft.createdAt', 'DESC').getMany();
 
     if (prefetchData?.owner) {
       nfts = nfts.map((nft) => {
