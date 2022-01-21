@@ -27,6 +27,9 @@ export class MintedNftEvent {
   receiver: string;
 
   @Column()
+  creator: string;
+
+  @Column()
   contract_address: string;
 
   @Column()
