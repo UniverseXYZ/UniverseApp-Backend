@@ -174,10 +174,10 @@ export class NftService {
 
   public async getSavedNftTokenURI(id: number, userId: number) {
     const savedNft = await this.savedNftRepository.findOne({
-      where: { 
+      where: {
         id: id,
-        userId: userId, 
-      } 
+        userId: userId,
+      },
     });
     if (!savedNft) {
       throw new NftNotFoundException();
@@ -450,13 +450,13 @@ export class NftService {
     }
 
     const [owner, creator, moreFromCollection, tokenIds] = await Promise.all([
-      this.userRepository.findOne({ id: nft.userId }),
+      this.userRepository.findOne({ address: nft.owner }),
       this.userRepository.findOne({ address: nft.creator?.toLowerCase() }),
       this.nftRepository
         .createQueryBuilder('nft')
         .where('nft.editionUUID != :edition', { edition: nft.editionUUID })
         .andWhere('nft.collectionId = :collectionId', { collectionId: collection.id })
-        .leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.id = nft.userId')
+        .leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.address = nft.owner')
         .leftJoinAndMapOne('nft.creator', User, 'creator', 'creator.address = nft.creator')
         .distinctOn(['nft.editionUUID'])
         .take(moreNftsCount)
@@ -492,7 +492,7 @@ export class NftService {
     }
 
     if (additionalData?.owner && !prefetchData?.owner) {
-      query.leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.id = nft.userId');
+      query.leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.address = nft.owner');
     }
 
     nfts = await query.where('nft.owner = :owner', { owner: user.address }).orderBy('nft.createdAt', 'DESC').getMany();
@@ -736,7 +736,7 @@ export class NftService {
 
     const query = this.nftRepository
       .createQueryBuilder('nft')
-      .leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.id = nft.userId')
+      .leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.address = nft.owner')
       .leftJoinAndMapOne('nft.creator', User, 'creator', 'creator.address = nft.creator')
       .where(conditions, { collectionId: collection.id, limit: limit, offset: offset })
       .orderBy('nft.createdAt', 'DESC');
