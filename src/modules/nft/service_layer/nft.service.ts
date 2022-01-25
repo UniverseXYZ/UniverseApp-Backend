@@ -474,7 +474,7 @@ export class NftService {
       creator: classToPlain(creator),
       owner: classToPlain(owner),
       moreFromCollection: classToPlain(moreFromCollection),
-      tokenIds: tokenIds.map((obj) => obj.tokenId),
+      tokenIds: tokenIds.map((obj) => obj.tokenId).sort((a, b) => Number(a) - Number(b)),
     };
   };
 
