@@ -30,7 +30,7 @@ export class AuthService {
     const signerAddress = await this.ethersService.verifySignature(message, signature);
 
     if (address.toLowerCase() !== signerAddress.toLowerCase()) return false;
-    return await this.usersService.findOne(address);
+    return await this.usersService.findOneOrCreate(address);
   }
 
   async login(address: string, challengeUUID: string, signature: string) {
@@ -47,7 +47,7 @@ export class AuthService {
     }
 
     await this.loginChallengeRepository.delete({ uuid: challengeUUID });
-    const user = await this.usersService.findOne(address);
+    const user = await this.usersService.findOneOrCreate(address);
 
     if (!user.moralisWatched) {
       try {
