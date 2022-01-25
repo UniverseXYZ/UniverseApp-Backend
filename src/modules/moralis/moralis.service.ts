@@ -143,17 +143,25 @@ export class MoralisService {
   }
 
   async onModuleInit() {
-    Moralis.serverURL = this.config.values.moralis.serverUrl;
-    Moralis.masterKey = this.config.values.moralis.masterKey;
-    Moralis.initialize(this.config.values.moralis.applicationId);
+    await Moralis.start({
+      serverUrl: this.config.values.moralis.serverUrl,
+      appId: this.config.values.moralis.applicationId,
+      masterKey: this.config.values.moralis.masterKey,
+    });
+
+    await this.addNewUserToWatchAddress('0x132Ccc8e5c00E7A883Bb0b8595CC67b86A429683');
   }
 
   addNewUserToWatchAddress = async (address: string) => {
-    Moralis.Cloud.run('watchEthAddress', {
-      address,
-      chainId: this.config.values.ethereum.ethereumNetwork === 'rinkeby' ? '0x4' : '0x1',
-      sync_historical: true,
-    });
+    await Moralis.Cloud.run(
+      'watchEthAddress',
+      {
+        address,
+        chainId: this.config.values.ethereum.ethereumNetwork === 'rinkeby' ? '0x4' : '0x1',
+        sync_historical: true,
+      },
+      { useMasterKey: true },
+    );
   };
 
   async addNewNFT(token) {
