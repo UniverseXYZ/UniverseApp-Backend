@@ -148,8 +148,6 @@ export class MoralisService {
       appId: this.config.values.moralis.applicationId,
       masterKey: this.config.values.moralis.masterKey,
     });
-
-    await this.addNewUserToWatchAddress('0x132Ccc8e5c00E7A883Bb0b8595CC67b86A429683');
   }
 
   addNewUserToWatchAddress = async (address: string) => {

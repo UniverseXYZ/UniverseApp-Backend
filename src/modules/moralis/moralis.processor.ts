@@ -10,7 +10,7 @@ export class MoralisProcessor {
   constructor(private moralisService: MoralisService) {}
   private readonly logger = new Logger(MoralisProcessor.name);
 
-  @Process({ name: PROCESS_MORALIS_TOKEN_JOB, concurrency: 1 })
+  @Process({ name: PROCESS_MORALIS_TOKEN_JOB, concurrency: 5 })
   async handleProcessToken(job: Job) {
     this.logger.debug('Start parsing token...');
     await this.moralisService.moralisNewNFTOwnerHandler(job.data);
