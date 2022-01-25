@@ -899,7 +899,6 @@ export class NftService {
       .getMany();
 
     const collectionIdArray = dbCollections.map((v) => v.id);
-
     dbCollections.forEach((row) => {
       const pair = tokenPairs.find((pair) => pair.collection === row.address);
       if (pair) {
