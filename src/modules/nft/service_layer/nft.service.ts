@@ -18,6 +18,7 @@ import {
   EditMintingCollectionBody,
   EditMintingNftBody,
   GetNftTokenUriBody,
+  NftCollectionTokePairsBody,
 } from '../entrypoints/dto';
 import { validateOrReject } from 'class-validator';
 import { UploadResult } from '../../file-storage/model/UploadResult';
@@ -881,5 +882,71 @@ export class NftService {
     }
     const urlComponents = url.split(/[.]+/);
     return urlComponents[urlComponents.length - 1];
+  }
+
+  public async getNFTPageByCollectionAndTokenPairs(body: NftCollectionTokePairsBody) {
+    const { tokenPairs } = body;
+    const collections = tokenPairs.map((v) => v.collection.toLocaleLowerCase());
+    const tokenIdSet = new Set();
+    tokenPairs.forEach((v) => {
+      v.tokenIds.forEach((tkId) => tokenIdSet.add(tkId));
+    });
+    const tokenIds = [...tokenIdSet];
+
+    const dbCollections = await this.nftCollectionRepository
+      .createQueryBuilder('collection')
+      .where('collection.address IN (:...collections)', { collections })
+      .getMany();
+
+    const collectionIdArray = dbCollections.map((v) => v.id);
+
+    dbCollections.forEach((row) => {
+      const pair = tokenPairs.find((pair) => pair.collection === row.address);
+      if (pair) {
+        pair.collectionId = row.id;
+      }
+    });
+
+    const conditions =
+      'nft.editionUUID IN (' +
+      'SELECT DISTINCT("nft"."editionUUID") FROM (' +
+      'SELECT "editionUUID", "id" FROM "universe-backend"."nft" as "nft" WHERE "nft"."collectionId" IN (:...collectionIdArray) AND "nft"."id" IN (:...tokenIds) ORDER BY "nft"."id" DESC' +
+      ') AS "nft"' +
+      ')';
+
+    const query = this.nftRepository
+      .createQueryBuilder('nft')
+      .leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.id = nft.userId')
+      .leftJoinAndMapOne('nft.creator', User, 'creator', 'creator.address = nft.creator')
+      .where(conditions, { collectionIdArray, tokenIds })
+      .orderBy('nft.createdAt', 'DESC');
+
+    const nfts = await query.getMany();
+
+    const editionNFTsMap: Record<string, Nft[]> = this.groupNftsByEdition(nfts);
+    let formattedNfts = [];
+
+    if (Object.keys(editionNFTsMap).length > 0) {
+      formattedNfts = Object.values(editionNFTsMap).map((nfts) => ({
+        ...classToPlain(nfts[0]),
+        tokenIds: nfts.map((nft) => nft.tokenId),
+      }));
+    }
+
+    const checkNFTPairs = (item) => {
+      const pair = tokenPairs.find((pair) => pair.collectionId === item.collectionId);
+      if (pair) {
+        return pair.tokenIds.includes(item.id);
+      }
+      return false;
+    };
+
+    const result = formattedNfts.filter((item) => {
+      return checkNFTPairs(item);
+    });
+
+    return {
+      nfts: result,
+    };
   }
 }
