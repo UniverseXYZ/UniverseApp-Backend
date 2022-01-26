@@ -758,10 +758,17 @@ export class NftService {
       if (!userEditions[nft.editionUUID]) {
         userEditions[nft.editionUUID] = [];
       }
-      if (!userEditions[nft.editionUUID][nft.owner['address']]) {
-        userEditions[nft.editionUUID][nft.owner['address']] = [];
+      if (!nft.owner) {
+        if (!userEditions[nft.editionUUID]['0x000']) {
+          userEditions[nft.editionUUID]['0x000'] = [];
+        }
+        userEditions[nft.editionUUID]['0x000'].push(nft);
+      } else {
+        if (!userEditions[nft.editionUUID][nft.owner['address']]) {
+          userEditions[nft.editionUUID][nft.owner['address']] = [];
+        }
+        userEditions[nft.editionUUID][nft.owner['address']].push(nft);
       }
-      userEditions[nft.editionUUID][nft.owner['address']].push(nft);
     });
 
     const editionNFTsMap = [];
