@@ -2,6 +2,7 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsInt,
   IsNumber,
   IsNumberString,
   IsOptional,
@@ -480,6 +481,14 @@ export class EditMintingNftBody {
     required: false,
   })
   txHash: string;
+
+  @IsInt()
+  @ApiProperty({
+    example: 10,
+    description: 'Number of actual editions minted',
+    required: false,
+  })
+  numberOfEditions: number;
 }
 
 export class GetNftParams {

@@ -431,6 +431,11 @@ export class NftService {
     } else {
       mintingNft.txHashes = [body.txHash];
     }
+
+    if (body.numberOfEditions) {
+      mintingNft.numberOfEditions = body.numberOfEditions;
+    }
+
     mintingNft.txStatus = 'pending';
     if (mintingNft.savedNftId) {
       await this.savedNftRepository.delete({ id: mintingNft.savedNftId });
