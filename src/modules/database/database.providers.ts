@@ -27,6 +27,7 @@ import { AuctionExtendedEvent } from '../ethEventsScraper/domain/extended-auctio
 import { MatchedBidEvent } from '../ethEventsScraper/domain/matched-bids-event';
 import { WithdrawnRevenueEvent } from '../ethEventsScraper/domain/withdrawn-revenue-event';
 import { BidWithdrawnEvent } from '../ethEventsScraper/domain/withdrawn-bid-event';
+import { Report } from '../report/domain/report.entity';
 
 // TODO: Add db entities here
 const entities = [
@@ -56,6 +57,7 @@ const entities = [
   MatchedBidEvent,
   WithdrawnRevenueEvent,
   BidWithdrawnEvent,
+  Report,
 ];
 
 @Injectable()

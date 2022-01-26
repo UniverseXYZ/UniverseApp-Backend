@@ -41,6 +41,14 @@ export const configValues = {
   opensea: {
     apiKey: process.env.OPEN_SEA_X_API_KEY,
   },
+  google: {
+    captchaSecretKey: process.env.GOOGLE_CAPTCHA_SECRET_KEY,
+    senderEmail: process.env.GOOGLE_SENDER_EMAIL,
+    senderEmailPassword: process.env.GOOGLE_SENDER_EMAIL_PASSWORD,
+  },
+  report: {
+    violationsEmail: process.env.REPORT_VIOLATIONS_EMAIL,
+  }
 };
 
 export default registerAs('config', () => {
