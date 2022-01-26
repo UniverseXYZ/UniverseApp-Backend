@@ -69,6 +69,18 @@ export class Nft {
   @Column({ nullable: true })
   original_url?: string;
 
+  @Column({ nullable: true })
+  animation_url?: string;
+
+  @Column({ nullable: true })
+  animation_original_url?: string;
+
+  @Column({ nullable: true })
+  background_color?: string;
+
+  @Column({ nullable: true })
+  external_link?: string;
+
   //arweave json metadata uri
   @Column({ nullable: true })
   tokenUri: string;
