@@ -33,15 +33,8 @@ import {
   MORALIS_NEW_NFT_QUEUE,
   OPENSEA_RINKEBY_API_URL,
   OPENSEA_ETH_API_URL,
-  MORALIS_IPFS_SERVER_URL,
   PROCESS_MORALIS_TOKEN_JOB,
 } from './constants';
-
-enum MetaDataApiCallType {
-  TOKEN_URI = 1,
-  OPENSEA = 2,
-}
-
 @Injectable()
 export class MoralisService {
   private logger = new Logger(MoralisService.name);
@@ -251,9 +244,13 @@ export class MoralisService {
     existingNft.animation_original_url = metadata.animation_original_url;
     existingNft.external_link = metadata.external_link;
 
-    if (!existingCollection.name) {
+    if (!existingCollection.name && metadata.collectionName) {
       existingCollection.name = metadata.collectionName;
       await this.nftCollectionRepository.save(existingCollection);
+    }
+
+    if (!existingCollection.bannerUrl && metadata.collectionBannerUrl) {
+      existingCollection.bannerUrl = await this.uploadAssert(metadata.collectionBannerUrl);
     }
 
     if (metadata.image_url) {

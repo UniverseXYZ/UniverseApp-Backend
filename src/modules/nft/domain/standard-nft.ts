@@ -22,6 +22,7 @@ export class StandardNftMetadata {
   animation_original_url?: string;
   creator?: string;
   collectionName?: string;
+  collectionBannerUrl?: string;
 
   constructor(json: Record<string, any>) {
     this.name = json?.name;
@@ -40,6 +41,7 @@ export class StandardNftMetadata {
     this.creator = json?.creator?.address;
     this.external_link = json?.external_link;
     this.collectionName = json?.collection.name;
+    this.collectionBannerUrl = json?.collection.banner_image_url;
   }
 
   public getImage() {
