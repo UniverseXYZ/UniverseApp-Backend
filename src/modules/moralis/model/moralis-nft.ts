@@ -1,15 +1,15 @@
 export type MoralisNft = {
-  name: string;
-  symbol: string;
+  name?: string;
+  symbol?: string;
   token_uri: string;
   token_id: string;
   token_address: string;
   owner_of: string;
   block_number: number;
-  amount: string;
+  amount?: string;
   contract_type: string;
-  createdAt: string;
-  updatedAt: string;
-  objectId: string;
-  className: string;
+  createdAt?: string;
+  updatedAt?: string;
+  objectId?: string;
+  className?: string;
 };
