@@ -181,7 +181,6 @@ export class MoralisService {
       collectionId: existingCollection.id,
       tokenId: token.token_id,
     });
-
     if (existingNft) {
       if (existingNft.owner !== token.owner_of.toLowerCase()) {
         existingNft = await this.changeNftOwner(existingNft, token);
