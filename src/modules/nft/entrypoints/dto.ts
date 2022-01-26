@@ -567,3 +567,29 @@ export class GetCollectionQueryParams {
   })
   limit: number;
 }
+
+export class CollectionTokenPair {
+  @IsString()
+  collection: string;
+
+  @IsNumber()
+  @IsOptional()
+  collectionId: number;
+
+  @IsArray()
+  @ArrayMinSize(1)
+  tokenIds: string[];
+}
+
+export class NftCollectionTokePairsBody {
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => CollectionTokenPair)
+  @ApiProperty({
+    example: [{ collection: '0x802717299d17c6ea2918d719b5dd7c3a9edf89f5', tokenIds: [61, 73, 88] }],
+    description: 'collection and token pairs',
+    type: () => [CollectionTokenPair],
+  })
+  tokenPairs: CollectionTokenPair[];
+}
