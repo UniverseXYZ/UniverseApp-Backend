@@ -1,3 +1,11 @@
+## [1.23.7](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.23.6...v1.23.7) (2022-01-27)
+
+
+### Bug Fixes
+
+* **nft:** View owned nfts ([8f1f9e2](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/8f1f9e2cfbd10cef843b2e14bf93f02f25faf45c))
+* **nft.userId query:** replace with address queries ([6fe94ae](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/6fe94aeb414c719fd3c94247c5de99f4ff7dddf5))
+
 ## [1.23.6](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.23.5...v1.23.6) (2021-10-29)
 
 
