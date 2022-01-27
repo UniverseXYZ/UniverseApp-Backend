@@ -23,6 +23,11 @@ export class StandardNftMetadata {
   creator?: string;
   collectionName?: string;
   collectionBannerUrl?: string;
+  ownerAddress?: string;
+  token_id?: string;
+  contract_type?: string;
+  amount?: string;
+  token_uri?: string;
 
   constructor(json: Record<string, any>) {
     this.name = json?.name;
@@ -42,6 +47,8 @@ export class StandardNftMetadata {
     this.external_link = json?.external_link;
     this.collectionName = json?.collection.name;
     this.collectionBannerUrl = json?.collection.banner_image_url;
+    this.ownerAddress = json?.owner.address;
+    this.token_id = json?.token_id;
   }
 
   public getImage() {
@@ -83,4 +90,7 @@ class StandardNftMetadataAttribute {
 
   @IsString()
   order?: string;
+
+  @IsString()
+  max_value?: string;
 }

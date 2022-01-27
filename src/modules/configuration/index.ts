@@ -1,4 +1,5 @@
 import { registerAs } from '@nestjs/config';
+require('dotenv').config();
 
 export const configValues = {
   database: {
