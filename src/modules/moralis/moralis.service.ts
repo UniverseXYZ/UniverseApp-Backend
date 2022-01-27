@@ -40,9 +40,11 @@ import {
   OPENSEA_NFT_QUEUE,
   PROCCESS_OPENSEA_NFT,
 } from './constants';
+import { timeStamp } from 'console';
 @Injectable()
 export class MoralisService {
   private logger = new Logger(MoralisService.name);
+  private lockOpenSeaApiCall = false;
 
   constructor(
     private readonly config: AppConfig,
@@ -103,6 +105,10 @@ export class MoralisService {
     await this.moralisLogRepository.delete({ id: In(idsToDelete) });
   }
 
+  async sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   async getHistory(start: number, end: number) {
     let skip = 0;
     const pageSize = 500;
@@ -127,6 +133,13 @@ export class MoralisService {
         await this.addNewNFT(token);
       }
       skip += pageSize;
+
+      while (true) {
+        const queueCount = await this.moralisNftQueue.count();
+        if (queueCount < 1000) break;
+        Logger.debug(`Queue has more than 1000 tokens, sleeping now... current ${skip}`);
+        await this.sleep(10000);
+      }
     }
   }
 
@@ -136,10 +149,6 @@ export class MoralisService {
       appId: this.config.values.moralis.applicationId,
       masterKey: this.config.values.moralis.masterKey,
     });
-
-    await this.uploadAssert(
-      'https://lh3.googleusercontent.com/7dfg0zSck0W8KMU1ACtzI8YwqCsQd4VlFoYZipv4fMlK_-lvmctl01UUs9L5E4k3Rrv1u93x-aZp7wQSctnaTbura3H6RPiCXmrvHA=s250',
-    );
   }
 
   addNewUserToWatchAddress = async (address: string) => {
@@ -159,14 +168,12 @@ export class MoralisService {
     await this.moralisNftQueue.add(PROCESS_MORALIS_TOKEN_JOB, { token });
   }
 
-  async addOpenseaNft(metadata, collectionId) {
-    await this.openseaNftQueue.add(PROCCESS_OPENSEA_NFT, { metadata, collectionId });
+  async addOpenseaNft(tokenAddress, tokenId, amount, collectionId) {
+    await this.openseaNftQueue.add(PROCCESS_OPENSEA_NFT, { tokenAddress, tokenId, amount, collectionId });
   }
 
   public async moralisNewNFTOwnerHandler(input: any) {
     const { token }: { token: MoralisNft } = input;
-    this.logger.log(token);
-
     try {
       await this.processToken(token);
     } catch (error) {
@@ -197,10 +204,10 @@ export class MoralisService {
       await this.checkNftIsNotUniverseContract(token.token_address);
       await this.checkNftIsNotCoreUniverseContract(token.token_address);
       try {
-        const metadata = await this.getTokenMetaDataWithOpenSeaAPI(token.token_address, token.token_id);
-        metadata.amount = token.amount;
-        await this.addOpenseaNft(metadata, existingCollection.id);
+        const metadata = await this.getTokenMetaDataWithOpenSeaAPI(token.token_address, token.
+        await this.addOpenseaNft(token.token_address, token.token_id, token.amount, existingCollection.id);
       } catch (err) {
+        console.log('fail');
         console.log(err);
       }
     }
@@ -319,7 +326,9 @@ export class MoralisService {
   }
 
   private async uploadAssert(url) {
+    console.log(url);
     const filename = `${await this.generateRandomHash()}${this.getFileExtension(url)}`;
+    console.log(filename);
     const downloadPath = `uploads/${filename}`;
     const downloader = new Downloader({
       url: url,
@@ -330,12 +339,13 @@ export class MoralisService {
     try {
       await downloader.download();
     } catch (err) {
-      console.log(err);
       throw new OpenSeaNftImageSupportedError();
     }
     const s3Result = await this.s3Service.uploadDocument(downloadPath, filename);
     await this.fileSystemService.removeFile(downloadPath);
+    console.log(s3Result.url);
     return s3Result.url;
+    return '';
   }
 
   private async changeNftOwner(existingNft: Nft, token: MoralisNft) {

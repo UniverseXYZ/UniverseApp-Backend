@@ -1,7 +1,5 @@
 import { HttpService, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
 import { Repository } from 'typeorm';
 import * as crypto from 'crypto';
 import { customAlphabet } from 'nanoid';
@@ -25,7 +23,7 @@ import {
 } from './service/exceptions';
 import { FileSystemService } from '../file-system/file-system.service';
 import { NftValidator } from './service/nft-validator';
-import { MORALIS_NEW_NFT_QUEUE } from './constants';
+import { OPENSEA_RINKEBY_API_URL, OPENSEA_ETH_API_URL } from './constants';
 @Injectable()
 export class OpenseaNftService {
   private logger = new Logger(OpenseaNftService.name);
@@ -46,14 +44,42 @@ export class OpenseaNftService {
     private monitoredNftsRepository: Repository<MonitoredNfts>,
     @InjectRepository(MoralisLog)
     private moralisLogRepository: Repository<MoralisLog>,
-    @InjectQueue(MORALIS_NEW_NFT_QUEUE) private readonly moralisNftQueue: Queue,
   ) {}
 
-  async onModuleInit() {}
-
   public async newOpenSeaNftOwnerHander(input: any) {
-    const { metadata, collectionId }: { metadata: StandardOpenseaNft; collectionId: number } = input;
+    const {
+      tokenAddress,
+      tokenId,
+      amount,
+      collectionId,
+    }: { tokenAddress: string; tokenId: string; amount: string; metadata: StandardOpenseaNft; collectionId: number } =
+      input;
+
+    const metadata = await this.getTokenMetaDataWithOpenSeaAPI(tokenAddress, tokenId);
+    metadata.amount = amount;
+
     await this.createNft(metadata, collectionId);
+  }
+
+  private async getTokenMetaDataWithOpenSeaAPI(tokenAddres: string, tokenId: string) {
+    if (tokenId == undefined || tokenAddres == undefined) {
+      throw new TokenAssertAddressNotSupportedError();
+    } else {
+      const openSeaApiUri =
+        this.config.values.ethereum.ethereumNetwork === 'rinkeby' ? OPENSEA_RINKEBY_API_URL : OPENSEA_ETH_API_URL;
+      const headers =
+        this.config.values.ethereum.ethereumNetwork === 'rinkeby'
+          ? {}
+          : { 'X-API-KEY': this.config.values.opensea.apiKey };
+      const { data } = await this.httpService
+        .get(`${openSeaApiUri}/${tokenAddres}/${tokenId}`, {
+          headers,
+        })
+        .toPromise();
+
+      const metadata = new StandardOpenseaNft(data);
+      return metadata;
+    }
   }
 
   public async createNft(metadata: StandardOpenseaNft, existingCollectionId: number) {
@@ -159,6 +185,7 @@ export class OpenseaNftService {
       url: url,
       directory: 'uploads',
       fileName: filename,
+      maxAttempts: 3,
     });
 
     try {

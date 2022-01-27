@@ -10,7 +10,7 @@ export class OpenseaNftProcessor {
   constructor(private openseaNftService: OpenseaNftService) {}
   private readonly logger = new Logger(OpenseaNftProcessor.name);
 
-  @Process({ name: PROCCESS_OPENSEA_NFT, concurrency: 20 })
+  @Process({ name: PROCCESS_OPENSEA_NFT, concurrency: 1 })
   async handleProcessToken(job: Job) {
     this.logger.debug('Parsing opensea nft...');
     await this.openseaNftService.newOpenSeaNftOwnerHander(job.data);
