@@ -32,6 +32,12 @@ export class ImageUriFormatNotSupportedError extends ServiceError {
   }
 }
 
+export class ImageDownloadError extends ServiceError {
+  constructor(uri) {
+    super(`Image Download Failed ${uri}`);
+  }
+}
+
 export class TokenAssertAddressNotSupportedError extends ServiceError {
   constructor() {
     super(`Token uri and id not supported`);
