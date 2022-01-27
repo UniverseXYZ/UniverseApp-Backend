@@ -1,5 +1,7 @@
 import { HttpService, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 import { In, Repository } from 'typeorm';
 import * as crypto from 'crypto';
 import Moralis from 'moralis/node';
@@ -7,7 +9,6 @@ import { customAlphabet } from 'nanoid';
 import Downloader from 'nodejs-file-downloader';
 
 import { AppConfig } from '../configuration/configuration.service';
-import { QueueService } from '../queue/queue.service';
 
 import { S3Service } from '../file-storage/s3.service';
 import { Nft, NftSource } from '../nft/domain/nft.entity';
@@ -28,11 +29,13 @@ import {
 } from './service/exceptions';
 import { FileSystemService } from '../file-system/file-system.service';
 import { NftValidator } from './service/nft-validator';
-
-const MORALIS_NEW_NFT_QUEUE = 'MORALIS_NEW_NFT_QUEUE';
-const OPENSEA_RINKEBY_API_URL = 'https://rinkeby-api.opensea.io/api/v1/asset';
-const OPENSEA_ETH_API_URL = 'https://api.opensea.io/api/v1/asset';
-const MORALIS_IPFS_SERVER_URL = 'https://ipfs.moralis.io:2053/ipfs/';
+import {
+  MORALIS_NEW_NFT_QUEUE,
+  OPENSEA_RINKEBY_API_URL,
+  OPENSEA_ETH_API_URL,
+  MORALIS_IPFS_SERVER_URL,
+  PROCESS_MORALIS_TOKEN_JOB,
+} from './constants';
 
 enum MetaDataApiCallType {
   TOKEN_URI = 1,
@@ -45,7 +48,6 @@ export class MoralisService {
 
   constructor(
     private readonly config: AppConfig,
-    private readonly queue: QueueService,
     private httpService: HttpService,
     private s3Service: S3Service,
     private fileSystemService: FileSystemService,
@@ -60,6 +62,7 @@ export class MoralisService {
     private monitoredNftsRepository: Repository<MonitoredNfts>,
     @InjectRepository(MoralisLog)
     private moralisLogRepository: Repository<MoralisLog>,
+    @InjectQueue(MORALIS_NEW_NFT_QUEUE) private readonly moralisNftQueue: Queue,
   ) {}
 
   private routeIpfsUrlImageIpfs(url: string) {
@@ -117,7 +120,7 @@ export class MoralisService {
     const pageSize = 500;
     let keepLooping = true;
     while (keepLooping) {
-      console.log(`Fetch NFTs from ${skip} to ${skip + pageSize}`);
+      this.logger.log(`Fetch NFTs from ${skip} to ${skip + pageSize}`);
       const params = {
         start: start,
         end: end,
@@ -128,7 +131,7 @@ export class MoralisService {
       try {
         results = await Moralis.Cloud.run('fetchEthNFTOwners', params);
       } catch (err) {
-        console.log(err);
+        this.logger.log(err);
       }
 
       if (results.length < pageSize) keepLooping = false;
@@ -140,25 +143,31 @@ export class MoralisService {
   }
 
   async onModuleInit() {
-    Moralis.serverURL = this.config.values.moralis.serverUrl;
-    Moralis.masterKey = this.config.values.moralis.masterKey;
-    Moralis.initialize(this.config.values.moralis.applicationId);
-    this.queue.initQueue(MORALIS_NEW_NFT_QUEUE, this.moralisNewNFTOwnerHandler, 1);
+    await Moralis.start({
+      serverUrl: this.config.values.moralis.serverUrl,
+      appId: this.config.values.moralis.applicationId,
+      masterKey: this.config.values.moralis.masterKey,
+    });
   }
 
   addNewUserToWatchAddress = async (address: string) => {
-    Moralis.Cloud.run('watchEthAddress', {
-      address,
-      chainId: this.config.values.ethereum.ethereumNetwork === 'rinkeby' ? '0x4' : '0x1',
-      sync_historical: true,
-    });
+    await Moralis.Cloud.run(
+      'watchEthAddress',
+      {
+        address,
+        chainId: this.config.values.ethereum.ethereumNetwork === 'rinkeby' ? '0x4' : '0x1',
+        sync_historical: true,
+      },
+      { useMasterKey: true },
+    );
   };
 
   async addNewNFT(token) {
-    this.queue.pushToQueue(MORALIS_NEW_NFT_QUEUE, { token });
+    this.logger.log('Add new nft to the moralis queue', token);
+    await this.moralisNftQueue.add(PROCESS_MORALIS_TOKEN_JOB, { token });
   }
 
-  moralisNewNFTOwnerHandler = async (input: any, cb: any) => {
+  public async moralisNewNFTOwnerHandler(input: any) {
     const { token }: { token: MoralisNft } = input;
     this.logger.log(token);
 
@@ -182,11 +191,9 @@ export class MoralisService {
         newMoralisLog.token = token;
         await this.moralisLogRepository.save(newMoralisLog);
       }
-      console.log(error);
+      this.logger.error(error);
     }
-
-    cb(null, true);
-  };
+  }
 
   private async processToken(token: MoralisNft) {
     this.nftValidator.checkNftHasAllAttributes(token);

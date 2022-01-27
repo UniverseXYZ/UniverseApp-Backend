@@ -172,9 +172,13 @@ export class NftService {
     return { optimisedFile, downsizedFile, arweaveUrl };
   }
 
-  public async getSavedNftTokenURI(id: number) {
-    const savedNft = await this.savedNftRepository.findOne({ where: { id } });
-
+  public async getSavedNftTokenURI(id: number, userId: number) {
+    const savedNft = await this.savedNftRepository.findOne({
+      where: {
+        id: id,
+        userId: userId,
+      },
+    });
     if (!savedNft) {
       throw new NftNotFoundException();
     }
@@ -427,6 +431,11 @@ export class NftService {
     } else {
       mintingNft.txHashes = [body.txHash];
     }
+
+    if (body.numberOfEditions) {
+      mintingNft.numberOfEditions = body.numberOfEditions;
+    }
+
     mintingNft.txStatus = 'pending';
     if (mintingNft.savedNftId) {
       await this.savedNftRepository.delete({ id: mintingNft.savedNftId });
@@ -446,13 +455,13 @@ export class NftService {
     }
 
     const [owner, creator, moreFromCollection, tokenIds] = await Promise.all([
-      this.userRepository.findOne({ id: nft.userId }),
+      this.userRepository.findOne({ address: nft.owner }),
       this.userRepository.findOne({ address: nft.creator?.toLowerCase() }),
       this.nftRepository
         .createQueryBuilder('nft')
         .where('nft.editionUUID != :edition', { edition: nft.editionUUID })
         .andWhere('nft.collectionId = :collectionId', { collectionId: collection.id })
-        .leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.id = nft.userId')
+        .leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.address = nft.owner')
         .leftJoinAndMapOne('nft.creator', User, 'creator', 'creator.address = nft.creator')
         .distinctOn(['nft.editionUUID'])
         .take(moreNftsCount)
@@ -470,7 +479,7 @@ export class NftService {
       creator: classToPlain(creator),
       owner: classToPlain(owner),
       moreFromCollection: classToPlain(moreFromCollection),
-      tokenIds: tokenIds.map((obj) => obj.tokenId),
+      tokenIds: tokenIds.map((obj) => obj.tokenId).sort((a, b) => Number(a) - Number(b)),
     };
   };
 
@@ -481,16 +490,17 @@ export class NftService {
   ) {
     let nfts = [];
     const query = this.nftRepository.createQueryBuilder('nft');
+    const user = await this.userRepository.findOne({ where: { id: userId } });
 
     if (additionalData?.creator && !prefetchData?.creator) {
       query.leftJoinAndMapOne('nft.creator', User, 'creator', 'creator.address = nft.creator');
     }
 
     if (additionalData?.owner && !prefetchData?.owner) {
-      query.leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.id = nft.userId');
+      query.leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.address = nft.owner');
     }
 
-    nfts = await query.where('nft.userId = :userId', { userId: userId }).orderBy('nft.createdAt', 'DESC').getMany();
+    nfts = await query.where('nft.owner = :owner', { owner: user.address }).orderBy('nft.createdAt', 'DESC').getMany();
 
     if (prefetchData?.owner) {
       nfts = nfts.map((nft) => {
@@ -716,7 +726,7 @@ export class NftService {
     const editionsCount = parseInt(
       (
         await this.nftRepository.query(
-          'SELECT COUNT(DISTINCT "editionUUID") FROM "universe-backend"."nft" WHERE "nft"."collectionId" = $1',
+          'SELECT COUNT(DISTINCT ("editionUUID", "owner")) FROM "universe-backend"."nft" WHERE "nft"."collectionId" = $1',
           [collection.id],
         )
       )[0].count,
@@ -731,7 +741,7 @@ export class NftService {
 
     const query = this.nftRepository
       .createQueryBuilder('nft')
-      .leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.id = nft.userId')
+      .leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.address = nft.owner')
       .leftJoinAndMapOne('nft.creator', User, 'creator', 'creator.address = nft.creator')
       .where(conditions, { collectionId: collection.id, limit: limit, offset: offset })
       .orderBy('nft.createdAt', 'DESC');
@@ -742,15 +752,43 @@ export class NftService {
 
     const nfts = await query.getMany();
 
-    const editionNFTsMap: Record<string, Nft[]> = this.groupNftsByEdition(nfts);
-    let formattedNfts = [];
+    const userEditions = [];
 
-    if (Object.keys(editionNFTsMap).length > 0) {
-      formattedNfts = Object.values(editionNFTsMap).map((nfts) => ({
-        ...classToPlain(nfts[0]),
-        tokenIds: nfts.map((nft) => nft.tokenId),
-      }));
-    }
+    nfts.forEach((nft) => {
+      if (!userEditions[nft.editionUUID]) {
+        userEditions[nft.editionUUID] = [];
+      }
+      if (!nft.owner) {
+        if (!userEditions[nft.editionUUID]['0x000']) {
+          userEditions[nft.editionUUID]['0x000'] = [];
+        }
+        userEditions[nft.editionUUID]['0x000'].push(nft);
+      } else {
+        if (!userEditions[nft.editionUUID][nft.owner['address']]) {
+          userEditions[nft.editionUUID][nft.owner['address']] = [];
+        }
+        userEditions[nft.editionUUID][nft.owner['address']].push(nft);
+      }
+    });
+
+    const editionNFTsMap = [];
+    Object.values(userEditions).forEach((edition) => {
+      Object.values(edition).forEach((nfts) => {
+        editionNFTsMap.push(this.groupNftsByEdition(nfts as Nft[]));
+      });
+    });
+
+    let formattedNfts = [];
+    editionNFTsMap.forEach((nftMap) => {
+      if (Object.keys(nftMap).length > 0) {
+        const temp = Object.values(nftMap).map((nfts: Nft[]) => ({
+          ...classToPlain(nfts[0]),
+          tokenIds: nfts.map((nft) => nft.tokenId),
+        }));
+
+        formattedNfts = [...formattedNfts, ...temp];
+      }
+    });
 
     return {
       collection: classToPlain(collection),
