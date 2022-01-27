@@ -1,4 +1,5 @@
 import { registerAs } from '@nestjs/config';
+require('dotenv').config();
 
 export const configValues = {
   database: {
@@ -19,6 +20,7 @@ export const configValues = {
   },
   auth: {
     jwtSecret: process.env.JWT_SECRET,
+    apiSecret: process.env.API_SECRET,
   },
   aws: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,

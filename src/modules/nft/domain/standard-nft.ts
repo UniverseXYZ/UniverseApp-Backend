@@ -1,4 +1,4 @@
-import { IsString } from 'class-validator';
+import { IsString, IsNumber } from 'class-validator';
 
 /**
  * Model class that reflects the standard used for NFTs metadata
@@ -9,6 +9,11 @@ export class StandardNftMetadata {
   private image?: string;
   image_url?: string;
   image_large?: string;
+  animation_url?: string;
+  animation?: string;
+  image_original_url?: string;
+  external_url?: string;
+  animation_original_url?: string;
   attributes?: StandardNftMetadataAttribute[] | Record<string, unknown>;
 
   constructor(json: Record<string, any>) {
@@ -17,6 +22,9 @@ export class StandardNftMetadata {
     this.image = json?.image;
     this.image_url = json?.image_url;
     this.attributes = json?.attributes;
+    this.animation_url = json?.animation_url;
+    this.animation = json?.animation;
+    this.external_url = json?.external_url;
   }
 
   public getImage() {
@@ -47,12 +55,11 @@ export class StandardNftMetadata {
   public getNormalizedAttributes() {
     if (this.attributes) {
       if (Array.isArray(this.attributes)) {
-        return this.attributes.map((attrObj) => ({
-          [attrObj.trait_type]: attrObj.value,
-        }));
+        return this.attributes;
       } else {
         return Object.keys(this.attributes).map((key) => ({
-          key: this.attributes[key],
+          trait_type: key,
+          value: this.attributes[key],
         }));
       }
     }
@@ -62,8 +69,23 @@ export class StandardNftMetadata {
 
 class StandardNftMetadataAttribute {
   @IsString()
-  trait_type: string;
+  trait_type?: string;
 
   @IsString()
-  value: string;
+  value?: string;
+
+  @IsString()
+  display_type?: string;
+
+  @IsNumber()
+  trait_count?: number;
+
+  @IsString()
+  order?: string;
+
+  @IsString()
+  max_value?: string;
+
+  @IsString()
+  min_value?: string;
 }

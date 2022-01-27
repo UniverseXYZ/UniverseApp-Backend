@@ -12,8 +12,8 @@ export class MoralisProcessor {
 
   @Process({ name: PROCESS_MORALIS_TOKEN_JOB, concurrency: 10 })
   async handleProcessToken(job: Job) {
-    this.logger.debug('Start parsing token...');
+    this.logger.debug('Parsing opensea nft...');
     await this.moralisService.moralisNewNFTOwnerHandler(job.data);
-    this.logger.debug('Parsing token completed');
+    this.logger.debug('Parsing opensea nft completed');
   }
 }
