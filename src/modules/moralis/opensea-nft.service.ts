@@ -52,9 +52,7 @@ export class OpenseaNftService {
       tokenId,
       amount,
       collectionId,
-    }: { tokenAddress: string; tokenId: string; amount: string; metadata: StandardOpenseaNft; collectionId: number } =
-      input;
-
+    }: { tokenAddress: string; tokenId: string; amount: string; collectionId: number } = input;
     const metadata = await this.getTokenMetaDataWithOpenSeaAPI(tokenAddress, tokenId);
     metadata.amount = amount;
 
@@ -148,7 +146,6 @@ export class OpenseaNftService {
       }
       return result;
     } catch (error) {
-      console.log(error);
       if (
         error instanceof TokenUriFormatNotSupportedError ||
         error instanceof ImageUriFormatNotSupportedError ||
