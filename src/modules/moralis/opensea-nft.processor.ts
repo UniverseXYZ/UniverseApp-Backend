@@ -12,8 +12,6 @@ export class OpenseaNftProcessor {
 
   @Process({ name: PROCCESS_OPENSEA_NFT })
   async handleProcessToken(job: Job) {
-    this.logger.debug('Parsing opensea nft...');
     await this.openseaNftService.newOpenSeaNftOwnerHander(job.data);
-    this.logger.debug('Parsing opensea nft completed');
   }
 }

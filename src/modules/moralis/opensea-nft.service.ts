@@ -46,6 +46,10 @@ export class OpenseaNftService {
     private moralisLogRepository: Repository<MoralisLog>,
   ) {}
 
+  async sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   public async newOpenSeaNftOwnerHander(input: any) {
     const {
       tokenAddress,
@@ -53,10 +57,30 @@ export class OpenseaNftService {
       amount,
       collectionId,
     }: { tokenAddress: string; tokenId: string; amount: string; collectionId: number } = input;
-    const metadata = await this.getTokenMetaDataWithOpenSeaAPI(tokenAddress, tokenId);
-    metadata.amount = amount;
-
-    await this.createNft(metadata, collectionId);
+    try {
+      const metadata = await this.getTokenMetaDataWithOpenSeaAPI(tokenAddress, tokenId);
+      metadata.amount = amount;
+      await this.createNft(metadata, collectionId);
+      this.logger.log(`Scraped token successfully {${tokenAddress}, ${tokenId}} ${metadata.token_metadata}`);
+    } catch (error) {
+      await this.sleep(1000);
+      if (
+        error instanceof TokenUriFormatNotSupportedError ||
+        error instanceof ImageUriFormatNotSupportedError ||
+        error instanceof TokenAssertAddressNotSupportedError
+      ) {
+        const newMoralisLog = this.moralisLogRepository.create();
+        newMoralisLog.name = error.name;
+        newMoralisLog.token = { tokenAddress, tokenId };
+        await this.moralisLogRepository.save(newMoralisLog);
+      } else {
+        const newMoralisLog = this.moralisLogRepository.create();
+        newMoralisLog.name = 'opensea-api-parse-error';
+        newMoralisLog.token = { tokenAddress, tokenId };
+        await this.moralisLogRepository.save(newMoralisLog);
+      }
+      this.logger.error(error);
+    }
   }
 
   private async getTokenMetaDataWithOpenSeaAPI(tokenAddres: string, tokenId: string) {
@@ -81,88 +105,69 @@ export class OpenseaNftService {
   }
 
   public async createNft(metadata: StandardOpenseaNft, existingCollectionId: number) {
-    try {
-      const existingCollection = await this.nftCollectionRepository.findOne({ where: { id: existingCollectionId } });
-      const existingNft = this.nftRepository.create();
-      const user = await this.userRepository.findOne({ where: { address: metadata.owner } });
-      existingNft.userId = user?.id;
-      if (metadata.contract_type === 'ERC1155') {
-        existingNft.amount = Number(metadata.amount) ? Number(metadata.amount) : 1;
-      }
-      existingNft.collectionId = existingCollection.id;
-      existingNft.source = NftSource.SCRAPER;
-      const editionUUID = customAlphabet('1234567890abcdefghijklmnopqrstuvwxyz', 10)();
-
-      const nftWithSimilarTokenUuid = await this.nftRepository.findOne({ where: { tokenUri: metadata.token_uri } });
-      const numberOfEditions = nftWithSimilarTokenUuid ? nftWithSimilarTokenUuid.numberOfEditions + 1 : 1;
-      existingNft.editionUUID = nftWithSimilarTokenUuid?.editionUUID || editionUUID;
-      existingNft.numberOfEditions = numberOfEditions;
-
-      existingNft.owner = metadata.owner;
-      existingNft.tokenId = metadata.token_id;
-      existingNft.standard = metadata.contract_type;
-
-      existingNft.tokenUri = metadata.token_metadata;
-      existingNft.name = metadata.name;
-      existingNft.description = metadata.description;
-      existingNft.properties = metadata.traits;
-      existingNft.creator = metadata.creator;
-      existingNft.background_color = metadata.background_color;
-      existingNft.original_url = metadata.image_original_url;
-      existingNft.animation_original_url = metadata.animation_original_url;
-      existingNft.external_link = metadata.external_link;
-
-      if (!existingCollection.name && metadata.collectionName) {
-        existingCollection.name = metadata.collectionName;
-        await this.nftCollectionRepository.save(existingCollection);
-      }
-
-      if (!existingCollection.bannerUrl && metadata.collectionBannerUrl) {
-        existingCollection.bannerUrl = await this.uploadAssert(metadata.collectionBannerUrl);
-      }
-
-      if (metadata.image_url) {
-        existingNft.url = await this.uploadAssert(metadata.image_url);
-        existingNft.artworkType = this.getFileExtension(metadata.image_url);
-      }
-
-      if (metadata.image_preview_url) {
-        existingNft.optimized_url = await this.uploadAssert(metadata.image_preview_url);
-      }
-
-      if (metadata.image_thumbnail_url) {
-        existingNft.thumbnail_url = await this.uploadAssert(metadata.image_thumbnail_url);
-      }
-
-      if (metadata.animation_url) {
-        existingNft.animation_url = await this.uploadAssert(metadata.animation_url);
-        existingNft.artworkType = this.getFileExtension(metadata.animation_url);
-      }
-
-      const result = await this.nftRepository.save(existingNft);
-
-      if (numberOfEditions > 1) {
-        await this.nftRepository.update({ tokenUri: metadata.token_metadata }, { numberOfEditions });
-      }
-      return result;
-    } catch (error) {
-      if (
-        error instanceof TokenUriFormatNotSupportedError ||
-        error instanceof ImageUriFormatNotSupportedError ||
-        error instanceof TokenAssertAddressNotSupportedError
-      ) {
-        const newMoralisLog = this.moralisLogRepository.create();
-        newMoralisLog.name = error.name;
-        newMoralisLog.token = metadata;
-        await this.moralisLogRepository.save(newMoralisLog);
-      } else {
-        const newMoralisLog = this.moralisLogRepository.create();
-        newMoralisLog.name = 'opensea-api-parse-error';
-        newMoralisLog.token = metadata;
-        await this.moralisLogRepository.save(newMoralisLog);
-      }
-      this.logger.error(error);
+    const existingCollection = await this.nftCollectionRepository.findOne({ where: { id: existingCollectionId } });
+    const existingNft = this.nftRepository.create();
+    const user = await this.userRepository.findOne({ where: { address: metadata.owner } });
+    existingNft.userId = user?.id;
+    if (metadata.contract_type === 'ERC1155') {
+      existingNft.amount = Number(metadata.amount) ? Number(metadata.amount) : 1;
     }
+    existingNft.collectionId = existingCollection.id;
+    existingNft.source = NftSource.SCRAPER;
+    const editionUUID = customAlphabet('1234567890abcdefghijklmnopqrstuvwxyz', 10)();
+
+    const nftWithSimilarTokenUuid = await this.nftRepository.findOne({ where: { tokenUri: metadata.token_uri } });
+    const numberOfEditions = nftWithSimilarTokenUuid ? nftWithSimilarTokenUuid.numberOfEditions + 1 : 1;
+    existingNft.editionUUID = nftWithSimilarTokenUuid?.editionUUID || editionUUID;
+    existingNft.numberOfEditions = numberOfEditions;
+
+    existingNft.owner = metadata.owner;
+    existingNft.tokenId = metadata.token_id;
+    existingNft.standard = metadata.contract_type;
+
+    existingNft.tokenUri = metadata.token_metadata;
+    existingNft.name = metadata.name;
+    existingNft.description = metadata.description;
+    existingNft.properties = metadata.traits;
+    existingNft.creator = metadata.creator;
+    existingNft.background_color = metadata.background_color;
+    existingNft.original_url = metadata.image_original_url;
+    existingNft.animation_original_url = metadata.animation_original_url;
+    existingNft.external_link = metadata.external_link;
+
+    if (!existingCollection.name && metadata.collectionName) {
+      existingCollection.name = metadata.collectionName;
+      await this.nftCollectionRepository.save(existingCollection);
+    }
+
+    if (!existingCollection.bannerUrl && metadata.collectionBannerUrl) {
+      existingCollection.bannerUrl = await this.uploadAssert(metadata.collectionBannerUrl);
+    }
+
+    if (metadata.image_url) {
+      existingNft.url = await this.uploadAssert(metadata.image_url);
+      existingNft.artworkType = this.getFileExtension(metadata.image_url);
+    }
+
+    if (metadata.image_preview_url) {
+      existingNft.optimized_url = await this.uploadAssert(metadata.image_preview_url);
+    }
+
+    if (metadata.image_thumbnail_url) {
+      existingNft.thumbnail_url = await this.uploadAssert(metadata.image_thumbnail_url);
+    }
+
+    if (metadata.animation_url) {
+      existingNft.animation_url = await this.uploadAssert(metadata.animation_url);
+      existingNft.artworkType = this.getFileExtension(metadata.animation_url);
+    }
+
+    const result = await this.nftRepository.save(existingNft);
+
+    if (numberOfEditions > 1) {
+      await this.nftRepository.update({ tokenUri: metadata.token_metadata }, { numberOfEditions });
+    }
+    return result;
   }
 
   private getFileExtension(url) {
