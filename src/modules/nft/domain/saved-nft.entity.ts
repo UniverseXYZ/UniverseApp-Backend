@@ -1,6 +1,11 @@
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { Exclude } from 'class-transformer';
 
+export enum MetadataStorageEnum {
+  ONCHAIN = 'onchain',
+  OFFCHAIN = 'offchain',
+}
+
 @Entity({
   schema: 'universe-backend',
 })
@@ -17,6 +22,14 @@ export class SavedNft {
 
   @Column({ nullable: true })
   tokenUri: string;
+
+  @Column({ 
+    type: 'enum',
+    enum: MetadataStorageEnum,
+    default: null,
+    nullable: true,
+  })
+  metadataStorage: MetadataStorageEnum;
 
   @Column()
   name: string;

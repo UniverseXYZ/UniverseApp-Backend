@@ -5,10 +5,12 @@ on:
     branches:
       - master
       - dev
+      - auctions
   pull_request:
     branches:
       - master
       - dev
+      - auctions
   workflow_dispatch:
 
 jobs:

@@ -61,6 +61,12 @@ export class UsersService {
     await this.usersRepository.save(userDb);
   }
   async uploadProfileImage(file: Express.Multer.File, user: any) {
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
+
+    if (!allowedTypes.includes(file.mimetype)) {
+      throw new Error('File type not allowed');
+    }
+
     try {
       const userDb = await this.usersRepository.findOne({ where: { address: user.address } });
       if (!userDb) {
@@ -133,5 +139,21 @@ export class UsersService {
     }
 
     return user;
+  }
+
+  async validateName(name: string, userId: number) {
+    if (await this.usersRepository.findOne({ where: { displayName: name, id: Not(userId) } })) {
+      return false;
+    }
+
+    return true;
+  }
+
+  async validateUrl(url: string, userId: number) {
+    if (await this.usersRepository.findOne({ where: { universePageUrl: url, id: Not(userId) } })) {
+      return false;
+    }
+
+    return true;
   }
 }

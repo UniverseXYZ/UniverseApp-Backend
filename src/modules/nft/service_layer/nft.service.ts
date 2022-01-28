@@ -10,7 +10,8 @@ import { S3Service } from '../../file-storage/s3.service';
 import { AppConfig } from '../../configuration/configuration.service';
 import { FileSystemService } from '../../file-system/file-system.service';
 import { ArweaveService } from '../../file-storage/arweave.service';
-import { SavedNft } from '../domain/saved-nft.entity';
+// import { FleekService } from '../../file-storage/fleek.service';
+import { SavedNft, MetadataStorageEnum } from '../domain/saved-nft.entity';
 import { classToPlain, plainToClass } from 'class-transformer';
 import {
   CreateCollectionBody,
@@ -42,6 +43,7 @@ type SaveNftParams = {
   properties?: any;
   royalties: { address: string; amount: number }[];
   collectionId?: number;
+  metadataStorage: MetadataStorageEnum;
 };
 
 type EditSavedNftParams = {
@@ -52,6 +54,7 @@ type EditSavedNftParams = {
   royalties: { address: string; amount: number }[];
   txHash?: string;
   collectionId: number;
+  metadataStorage: MetadataStorageEnum;
 };
 
 type SaveCollectibleParams = {
@@ -101,6 +104,7 @@ export class NftService {
     private fileProcessingService: FileProcessingService,
     private s3Service: S3Service,
     private arweaveService: ArweaveService,
+    // private fleekService: FleekService,
     private config: AppConfig,
     private fileSystemService: FileSystemService,
   ) {}
@@ -114,6 +118,7 @@ export class NftService {
       royalties: params.royalties,
       userId: params.userId,
       collectionId: params.collectionId,
+      metadataStorage: params.metadataStorage,
     });
     const dbSavedNft = await this.savedNftRepository.save(savedNft);
     const collection = await this.nftCollectionRepository.findOne({ id: params.collectionId });
@@ -162,7 +167,7 @@ export class NftService {
       this.s3Service.uploadDocument(file.path, `${file.filename}`),
       ...uniqueFiles.map((fileItem) => this.s3Service.uploadDocument(fileItem.path, `${fileItem.fullFilename()}`)),
     ]);
-    const data = await fs.readFile(file.path);
+    const data = await fs.readFile(file.path);  
     const arweaveUrl = await this.arweaveService.storeData(data, file.mimetype);
 
     await Promise.all(
@@ -412,6 +417,7 @@ export class NftService {
       'royalties',
       'txHash',
       'collectionId',
+      'metadataStorage',
     ]);
 
     for (const param in filteredParams) {
@@ -607,14 +613,18 @@ export class NftService {
     return this.reduceUserNftsByEdition(user.id, additionalData, prefetchData);
   }
 
-  public async getMyNftsAvailability(userId: number, start = 0, limit = 8, size = 0) {
+  public async getMyNftsAvailability(userId: number, start = 0, limit = 8, size = 0, auctionId = 0) {
     const editionsCount = parseInt(
       (
         await this.nftRepository.query(
           'WITH editions AS ' +
-            '(SELECT "editionUUID" FROM "universe-backend"."nft" WHERE "userId" = $1 GROUP BY "editionUUID" HAVING COUNT(*) >= $2)' +
+            '(SELECT "editionUUID" FROM "universe-backend"."nft" WHERE "userId" = $1 AND nft.id NOT IN (SELECT "nftId" FROM "universe-backend"."reward_tier_nft" WHERE "rewardTierId" IN (SELECT "id" FROM "universe-backend"."reward_tier" WHERE "userId" = $2 ' +
+            (auctionId ? 'AND "auctionId" != $3' : '') +
+            ')) GROUP BY "editionUUID" HAVING COUNT(*) >= ' +
+            (auctionId ? '$4' : '$3') +
+            ')' +
             'SELECT count(*) FROM editions',
-          [userId, size],
+          auctionId ? [userId, userId, auctionId, size] : [userId, userId, size],
         )
       )[0].count,
     );
@@ -622,8 +632,10 @@ export class NftService {
     const nfts = await this.nftRepository
       .createQueryBuilder('nft')
       .where(
-        'nft.editionUUID IN (SELECT "editionUUID" FROM "universe-backend"."nft" WHERE "userId" = :userId GROUP BY "editionUUID" HAVING COUNT(*) > :size LIMIT :limit OFFSET :offset)',
-        { userId: userId, size: size, limit: limit, offset: start },
+        'nft.editionUUID IN (SELECT "editionUUID" FROM "universe-backend"."nft" WHERE "userId" = :userId AND nft.id NOT IN (SELECT "nftId" FROM "universe-backend"."reward_tier_nft" WHERE "rewardTierId" IN (SELECT "id" FROM "universe-backend"."reward_tier" WHERE "userId" = :userId ' +
+          (auctionId ? 'AND "auctionId" != :auctionId' : '') +
+          ')) GROUP BY "editionUUID" HAVING COUNT(*) > :size LIMIT :limit OFFSET :offset)',
+        { userId: userId, size: size, limit: limit, offset: start, auctionId: auctionId },
       )
       .groupBy('nft.editionUUID, nft.id')
       .orderBy('nft.createdAt', 'DESC')
@@ -666,7 +678,7 @@ export class NftService {
       nfts: mappedNfts,
       pagination: {
         page: start === 0 ? 1 : Math.ceil(start / limit + 1),
-        hasNextPage: editionsCount > start + limit,
+        hasNextPage: editionsCount > +start + +limit,
         totalPages: Math.ceil(editionsCount / limit),
       },
     };

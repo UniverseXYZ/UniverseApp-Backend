@@ -152,3 +152,17 @@ These 2 endpoints create a new Minting NFT instance, which represents a NFT that
 }
 ```
 4. Get My NFTs page by calling the `GET /api/pages/my-nfts` endpoint
+
+
+## Auctions
+### Auction states:
+ -  **Initialising (default)** - Auction configuration has been completed but no NFTs have been deposited from the reward tiers
+ -  **On chain (scraper)** - Auction has been created on a smart contract level
+ -  **Deposited (scraper)** - At least 1 nft has been deposited to the auction smart contract
+ -  **Canceled (scraper)**- cancelAuction() has been called
+	 - User must withdraw all his NFTs before recreating the same auction
+ -  **Started (FE computed)** -  Not canceled && deposited nfts > 0 && start time > now && end time < now
+ -  **Finished  (FE computed)** - end time > now && not finalised
+ -  **Finalised (scraper)** - end time > now && finalizeAuction() has been called
+	 - Users are allowed to capture revenue
+	 - Owner is allowed to withdraw bids
