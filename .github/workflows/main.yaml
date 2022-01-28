@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - dev
+      - bugfix/api-rate-limiting
   pull_request:
     branches:
       - master
