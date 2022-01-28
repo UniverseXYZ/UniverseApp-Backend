@@ -137,9 +137,10 @@ export class MoralisService {
       }
       while (true) {
         const queueCount = await this.moralisNftQueue.count();
-        if (queueCount < 1000) break;
-        this.logger.debug(`Current position is ${skip} and queue is over 1000`);
-        await this.sleep(2000);
+        const queueCount1 = await this.openseaNftQueue.count();
+        if (queueCount < 1000 && queueCount1 < 10000) break;
+        this.logger.debug(`Current position is ${skip}, moralis=${queueCount}, opensea=${queueCount1}`);
+        await this.sleep(20000);
       }
       skip += pageSize;
     }
@@ -200,9 +201,11 @@ export class MoralisService {
 
       try {
         existingNft = await this.createNewNft(token, existingCollection);
+        this.logger.log(`Scraped token successfully {${token.token_address} - ${token.token_id}}`);
       } catch (error) {
-        this.openseaNftQueue.add(PROCCESS_OPENSEA_NFT, {
-          tokenAddres: token.token_uri,
+        await this.openseaNftQueue.add(PROCCESS_OPENSEA_NFT, {
+          tokenAddress: token.token_address,
+          amount: token.amount,
           tokenId: token.token_id,
           collectionId: existingCollection.id,
         });
@@ -229,7 +232,9 @@ export class MoralisService {
   }
 
   private getTokenUri(token: MoralisNft) {
-    if (token.token_uri.includes('0x{id}')) {
+    if (token.token_uri.includes('opensea')) {
+      throw new TokenUriFormatNotSupportedError('opensea nft');
+    } else if (token.token_uri.includes('0x{id}')) {
       return token.token_uri.replace('0x{id}', token.token_id); //Cyber Girls
     } else if (token.token_uri.includes('{id}')) {
       return token.token_uri.replace('{id}', token.token_id); //Fluf erc-1155
@@ -240,7 +245,7 @@ export class MoralisService {
 
   private async parseNewNFTMetaData(existingNft: Nft, token: MoralisNft, numberOfEditions) {
     if (!!token.token_uri) {
-      const metadata = await this.getTokenUriMetaData(token);
+      const metadata = await this.getTokenUriMetaData(existingNft.tokenUri);
       existingNft.name = metadata.name;
       existingNft.description = metadata.description;
       existingNft.external_link = metadata.external_url;
@@ -395,8 +400,7 @@ export class MoralisService {
     }
   }
 
-  private async getTokenUriMetaData(token: MoralisNft) {
-    const tokenUri = token.token_uri;
+  private async getTokenUriMetaData(tokenUri) {
     try {
       if (tokenUri.startsWith('ipfs')) {
         const normalizedTokenUri = this.routeIpfsUrlToMoralisIpfs(tokenUri);
