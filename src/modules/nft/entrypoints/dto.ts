@@ -457,6 +457,20 @@ export class GetUserNftsQueryParams {
     example: '1',
   })
   limit: number;
+
+  @IsOptional()
+  @ApiProperty({
+    description: 'The collection ids to filter by',
+    example: '12,3',
+  })
+  collections: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({
+    description: 'NFT name',
+  })
+  name: string;
 }
 
 export class GetSavedNftsParams {
@@ -709,13 +723,10 @@ export class GetMyNftsPageParams {
   limit: number;
 
   @IsOptional()
-  // @IsArray()
-  // @IsString({ each: true })
-  // @Type(() => String)
-  // @ApiProperty({
-  //   description: 'Collection addresses',
-  // })
-  // @Transform(({ value }) => value.split(','))
+  @ApiProperty({
+    description: 'The collection ids to filter by',
+    example: '12,3',
+  })
   collections: string;
 
   @IsOptional()
