@@ -72,6 +72,11 @@ export class EthEventsScraperService {
       collection.shortUrl = mintingCollection.shortUrl;
       collection.coverUrl = mintingCollection.coverUrl;
       collection.description = mintingCollection.description;
+      collection.siteLink = mintingCollection.siteLink;
+      collection.discordLink = mintingCollection.discordLink;
+      collection.mediumLink = mintingCollection.mediumLink;
+      collection.instagramLink = mintingCollection.instagramLink;
+      collection.telegramLink = mintingCollection.telegramLink;
       await this.mintingCollectionRepository.delete({ txHash: event.tx_hash });
 
       event.processed = true;

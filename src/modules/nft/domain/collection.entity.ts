@@ -42,6 +42,21 @@ export class NftCollection {
   description?: string;
 
   @Column({ nullable: true })
+  siteLink?: string;
+
+  @Column({ nullable: true })
+  discordLink?: string;
+
+  @Column({ nullable: true })
+  instagramLink?: string;
+
+  @Column({ nullable: true })
+  mediumLink?: string;
+
+  @Column({ nullable: true })
+  telegramLink?: string;
+
+  @Column({ nullable: true })
   shortUrl?: string;
 
   @Column({ nullable: true })
