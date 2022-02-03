@@ -368,6 +368,6 @@ export class NftController {
   @ApiOperation({ summary: 'Get count of the nfts, collections, saved nfts' })
   @ApiBearerAuth()
   async getMyNftsSummary(@Req() req) {
-    return this.nftService.getMyNftsSummary(req.user.sub);
+    return this.nftService.getMyNftsSummary(req.user.address);
   }
 }

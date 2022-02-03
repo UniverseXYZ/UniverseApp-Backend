@@ -533,10 +533,12 @@ export class NftService {
 
     const conditions =
       'nft.editionUUID IN (' +
-      'SELECT DISTINCT("nft"."editionUUID") FROM (' +
-      'SELECT "editionUUID", "id" FROM "universe-backend"."nft" as "nft" WHERE "nft"."owner" = :owner ORDER BY "nft"."id" DESC' +
-      ') AS "nft" LIMIT :limit OFFSET :offset' +
-      ')';
+      'SELECT "editionUUID" FROM (' +
+      'SELECT DISTINCT "editionUUID", MAX("id")' +
+      'FROM "universe-backend"."nft" as "nft" ' +
+      'WHERE "nft"."owner" = :owner ' +
+      'GROUP BY "editionUUID"' +
+      ') AS "nft" ORDER BY "max" DESC LIMIT :limit OFFSET :offset)';
 
     query.where('nft.owner = :owner', { owner: userAddress });
     query.andWhere(conditions, { owner: userAddress, limit: limit, offset: offset });
@@ -977,8 +979,8 @@ export class NftService {
     };
   }
 
-  public async getMyNftsSummary(userId: number) {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+  public async getMyNftsSummary(address: string) {
+    const user = await this.userRepository.findOne({ where: { address } });
     if (!user) {
       throw new UserNotFoundException();
     }
@@ -986,8 +988,8 @@ export class NftService {
     const editionsCount = parseInt(
       (
         await this.nftRepository.query(
-          'SELECT COUNT(DISTINCT "editionUUID") FROM "universe-backend"."nft" WHERE "nft"."userId" = $1',
-          [user.id],
+          'SELECT COUNT(DISTINCT "editionUUID") FROM "universe-backend"."nft" WHERE "nft"."owner" = $1',
+          [user.address.toLowerCase()],
         )
       )[0].count,
     );
