@@ -646,6 +646,24 @@ export class GetMyCollectionsParams {
   limit: number;
 }
 
+export class GetMyCollectionsTabParams {
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The offset for getting nfts',
+    example: '8',
+  })
+  offset: number;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The amount of editions to get',
+    example: '1',
+  })
+  limit: number;
+}
+
 export class GetCollectionQueryParams {
   @IsString()
   @IsOptional()
@@ -689,4 +707,21 @@ export class GetMyNftsPageParams {
     example: '1',
   })
   limit: number;
+
+  @IsOptional()
+  // @IsArray()
+  // @IsString({ each: true })
+  // @Type(() => String)
+  // @ApiProperty({
+  //   description: 'Collection addresses',
+  // })
+  // @Transform(({ value }) => value.split(','))
+  collections: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({
+    description: 'NFT name',
+  })
+  name: string;
 }

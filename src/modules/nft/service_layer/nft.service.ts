@@ -489,15 +489,16 @@ export class NftService {
   };
 
   private async reduceUserNftsByEdition(
-    userId: number,
+    userAddress: string,
     additionalData?: NftAdditionalData,
     prefetchData?: NftPrefetchData,
     limit = 8,
     offset = 0,
+    name = '',
+    collectionsQuery = '',
   ) {
     let nfts = [];
     const query = this.nftRepository.createQueryBuilder('nft');
-    const user = await this.userRepository.findOne({ where: { id: userId } });
 
     if (additionalData?.creator && !prefetchData?.creator) {
       query.leftJoinAndMapOne('nft.creator', User, 'creator', 'creator.address = nft.creator');
@@ -511,23 +512,34 @@ export class NftService {
       (
         await this.nftRepository.query(
           'SELECT COUNT(DISTINCT "editionUUID") FROM "universe-backend"."nft" WHERE "nft"."owner" = $1',
-          [user.address],
+          [userAddress],
         )
       )[0].count,
     );
 
     const conditions =
-      'nft.editionUUID IN (' +
-      'SELECT DISTINCT("nft"."editionUUID") FROM (' +
-      'SELECT "editionUUID", "id" FROM "universe-backend"."nft" as "nft" WHERE "nft"."owner" = :owner ORDER BY "nft"."id" DESC' +
-      ') AS "nft" LIMIT :limit OFFSET :offset' +
-      ')';
+      // 'nft.editionUUID IN (' +
+      'SELECT DISTINCT("nft"."editionUUID"), "nft"."id" FROM (' +
+      'SELECT "editionUUID", "id" FROM "universe-backend"."nft" as "nft" WHERE "nft"."owner" = :owner' +
+      ') AS "nft" ORDER BY "nft"."id" DESC LIMIT :limit OFFSET :offset ';
+    // ')';
 
-    nfts = await query
-      .where('nft.owner = :owner', { owner: user.address })
-      .andWhere(conditions, { owner: user.address, limit: limit, offset: offset })
-      .orderBy('nft.createdAt', 'DESC')
-      .getMany();
+    query.where('nft.owner = :owner', { owner: userAddress });
+    query.andWhere(conditions, { owner: userAddress, limit: limit, offset: offset });
+
+    if (name) {
+      query.andWhere('(LOWER(nft.name) LIKE :name)', {
+        name: `${name.toLowerCase()}%`,
+      });
+    }
+
+    if (collectionsQuery) {
+      query.andWhere('nft.collectionId IN(:...collections)', {
+        collections: collectionsQuery.split(',').map((id) => Number(id)),
+      });
+    }
+
+    nfts = await query.orderBy('nft.id', 'DESC').getMany();
 
     if (prefetchData?.owner) {
       nfts = nfts.map((nft) => {
@@ -605,14 +617,14 @@ export class NftService {
     };
   }
 
-  public async getMyNfts(userId: number, limit = 8, offset = 0) {
+  public async getMyNfts(userAddress: string, limit = 8, offset = 0) {
     const additionalData: NftAdditionalData = {
       collection: false,
       owner: false,
       creator: true,
     };
 
-    return await this.reduceUserNftsByEdition(userId, additionalData, null, limit, offset);
+    return await this.reduceUserNftsByEdition(userAddress, additionalData, null, limit, offset);
   }
 
   public async getUserNfts(username: string, limit = 8, offset = 0) {
@@ -632,7 +644,7 @@ export class NftService {
       owner: user,
     };
 
-    return this.reduceUserNftsByEdition(user.id, additionalData, prefetchData, limit, offset);
+    return this.reduceUserNftsByEdition(user.address, additionalData, prefetchData, limit, offset);
   }
 
   public async getMyNftsAvailability(userId: number, start = 0, limit = 8, size = 0) {
@@ -701,7 +713,7 @@ export class NftService {
 
     const nfts = await this.nftRepository.find({
       where: { owner: user.address },
-      select: ['collectionId'],
+      select: ['collectionId', 'editionUUID'],
     });
 
     const [collections, count] = await this.nftCollectionRepository.findAndCount({
@@ -709,6 +721,41 @@ export class NftService {
       take: limit,
       skip: offset,
     });
+
+    const mappedCollections = collections.map((collection) => {
+      const editionsReducedNfts = nfts.reduce((acc, nft) => {
+        if (!acc[nft.collectionId]) [(acc[nft.collectionId] = [])];
+
+        const hasNFt = acc[nft.collectionId].find((nftColl) => nftColl.editionUUID === nft.editionUUID);
+        if (!hasNFt) {
+          acc[nft.collectionId].push(nft);
+        }
+
+        return acc;
+      }, {});
+
+      return {
+        ...classToPlain(collection),
+        nftCount: editionsReducedNfts[collection.id].length,
+      };
+    });
+
+    return {
+      collections: mappedCollections,
+      pagination: this.paginationDetails(count, limit, offset),
+    };
+  }
+
+  public async getMyCollectionsTab(userId: number, limit = 8, offset = 0) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    const [collections, count] = await this.nftCollectionRepository
+      .createQueryBuilder('collection')
+      .where('collection.owner = :userAddress', { userAddress: user.address })
+      .orWhere('collection.publicCollection = TRUE')
+      .take(limit)
+      .skip(offset)
+      .getManyAndCount();
 
     return {
       collections: collections.map((collection) => classToPlain(collection)),
@@ -729,6 +776,10 @@ export class NftService {
       pagination: this.paginationDetails(count, limit, offset),
     };
   }
+
+  // public async getUserCollections(address), {
+
+  // }
 
   public async deleteSavedNft(id: number, userId: number) {
     const savedNft = await this.savedNftRepository.findOne({ where: { id } });
@@ -827,14 +878,13 @@ export class NftService {
     };
   }
 
-  public async getMyNftsPage(userId: number, limit = 8, offset = 0) {
+  public async getMyNftsPage(userAddress: any, limit = 8, offset = 0, name = '', collections = '') {
     const additionaData: NftAdditionalData = {
       collection: false,
       owner: false,
       creator: true,
     };
-
-    return await this.reduceUserNftsByEdition(userId, additionaData, null, limit, offset);
+    return await this.reduceUserNftsByEdition(userAddress, additionaData, null, limit, offset, name, collections);
   }
 
   public async getMyNftsPendingPage(userId, limit = 8, offset = 0) {
