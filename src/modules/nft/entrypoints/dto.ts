@@ -25,6 +25,51 @@ export class EditCollectionBody {
     required: false,
   })
   description?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    example: 'https://site.io',
+    description: 'The site of the collection',
+    required: false,
+  })
+  siteLink?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    example: 'universe.xyz',
+    description: 'The discord link of the collection',
+    required: false,
+  })
+  discordLink?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    example: 'universeXYZ',
+    description: 'Instagram profile of the collection',
+    required: false,
+  })
+  instagramLink?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    example: 'universeXYZ',
+    description: 'The medium profile of the collection',
+    required: false,
+  })
+  mediumLink?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    example: 'universeXYZ',
+    description: 'The telegram profile of the collection',
+    required: false,
+  })
+  telegramLink?: string;
 }
 
 export class SaveNftBody {
@@ -409,6 +454,56 @@ export class CreateCollectionBody {
     required: false,
   })
   description?: string;
+
+  @IsString()
+  @IsOptional()
+  @Length(1, 1024)
+  @ApiProperty({
+    example: 'https://site.io',
+    description: 'The site of the collection',
+    required: false,
+  })
+  siteLink?: string;
+
+  @IsString()
+  @IsOptional()
+  @Length(1, 1024)
+  @ApiProperty({
+    example: 'universe.xyz',
+    description: 'The discord link of the collection',
+    required: false,
+  })
+  discordLink?: string;
+
+  @IsString()
+  @IsOptional()
+  @Length(1, 1024)
+  @ApiProperty({
+    example: 'universeXYZ',
+    description: 'Instagram profile of the collection',
+    required: false,
+  })
+  instagramLink?: string;
+
+  @IsString()
+  @IsOptional()
+  @Length(1, 1024)
+  @ApiProperty({
+    example: 'universeXYZ',
+    description: 'The medium profile of the collection',
+    required: false,
+  })
+  mediumLink?: string;
+
+  @IsString()
+  @IsOptional()
+  @Length(1, 1024)
+  @ApiProperty({
+    example: 'universeXYZ',
+    description: 'The telegram profile of the collection',
+    required: false,
+  })
+  telegramLink?: string;
 }
 
 export class EditMintingCollectionParams {

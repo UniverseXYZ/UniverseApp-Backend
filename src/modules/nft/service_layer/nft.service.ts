@@ -286,9 +286,14 @@ export class NftService {
     let mintingCollection = this.mintingCollectionRepository.create({
       userId,
       name: bodyClass.name,
-      description: bodyClass.description,
       symbol: bodyClass.symbol,
       coverUrl: s3Result.url,
+      description: bodyClass.description,
+      siteLink: bodyClass.siteLink,
+      discordLink: bodyClass.discordLink,
+      instagramLink: bodyClass.instagramLink,
+      mediumLink: bodyClass.mediumLink,
+      telegramLink: bodyClass.telegramLink,
     });
     mintingCollection = await this.mintingCollectionRepository.save(mintingCollection);
 
@@ -367,9 +372,9 @@ export class NftService {
       throw new NftCollectionBadOwnerException();
     }
 
-    const filteredAttributes = this.filterObjectAttributes(data, ['description']);
-    for (const attribute in filteredAttributes) {
-      collection[attribute] = filteredAttributes[attribute];
+    // const filteredAttributes = this.filterObjectAttributes(data, ['description']);
+    for (const attribute in data) {
+      collection[attribute] = data[attribute];
     }
 
     await this.nftCollectionRepository.save(collection);
