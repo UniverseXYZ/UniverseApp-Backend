@@ -401,12 +401,7 @@ export class NftService {
 
     return {
       nfts: savedNfts,
-      pagination: {
-        totalCount: count,
-        page: Math.ceil(offset / limit + 1),
-        hasNextPage: count > offset + limit,
-        totalPages: Math.ceil(count / limit),
-      },
+      pagination: this.paginationDetails(count, limit, offset),
     };
   }
 
@@ -572,12 +567,7 @@ export class NftService {
           tokenIds,
         };
       }),
-      pagination: {
-        totalCount: editionsCount,
-        page: Math.ceil(offset / limit + 1),
-        hasNextPage: editionsCount > offset + limit,
-        totalPages: Math.ceil(editionsCount / limit),
-      },
+      pagination: this.paginationDetails(editionsCount, limit, offset),
     };
   }
 
@@ -702,11 +692,7 @@ export class NftService {
 
     return {
       nfts: mappedNfts,
-      pagination: {
-        page: start === 0 ? 1 : Math.ceil(start / limit + 1),
-        hasNextPage: editionsCount > start + limit,
-        totalPages: Math.ceil(editionsCount / limit),
-      },
+      pagination: this.paginationDetails(editionsCount, limit, start),
     };
   }
 
@@ -726,12 +712,7 @@ export class NftService {
 
     return {
       collections: collections.map((collection) => classToPlain(collection)),
-      pagination: {
-        totalCount: count,
-        page: Math.ceil(offset / limit + 1),
-        hasNextPage: count > offset + limit,
-        totalPages: Math.ceil(count / limit),
-      },
+      pagination: this.paginationDetails(count, limit, offset),
     };
   }
 
@@ -745,12 +726,7 @@ export class NftService {
 
     return {
       collections: collections.map((collection) => classToPlain(collection)),
-      pagination: {
-        totalCount: count,
-        page: Math.ceil(offset / limit + 1),
-        hasNextPage: count > offset + limit,
-        totalPages: Math.ceil(count / limit),
-      },
+      pagination: this.paginationDetails(count, limit, offset),
     };
   }
 
@@ -847,12 +823,7 @@ export class NftService {
     return {
       collection: classToPlain(collection),
       nfts: formattedNfts,
-      pagination: {
-        totalCount: editionsCount,
-        page: Math.ceil(offset / limit + 1),
-        hasNextPage: editionsCount > offset + limit,
-        totalPages: Math.ceil(editionsCount / limit),
-      },
+      pagination: this.paginationDetails(editionsCount, limit, offset),
     };
   }
 
@@ -883,12 +854,7 @@ export class NftService {
         ...classToPlain(nft),
         collection: classToPlain(idCollectionMap[nft.collectionId]),
       })),
-      pagination: {
-        totalCount: count,
-        page: Math.ceil(offset / limit + 1),
-        hasNextPage: count > offset + limit,
-        totalPages: Math.ceil(count / limit),
-      },
+      pagination: this.paginationDetails(count, limit, offset),
     };
   }
 
@@ -944,12 +910,7 @@ export class NftService {
 
     return {
       collections: mintingCollections.map((mintingCollection) => classToPlain(mintingCollection)),
-      pagination: {
-        totalCount: count,
-        page: Math.ceil(offset / limit + 1),
-        hasNextPage: count > offset + limit,
-        totalPages: Math.ceil(count / limit),
-      },
+      pagination: this.paginationDetails(count, limit, offset),
     };
   }
 
@@ -1011,5 +972,18 @@ export class NftService {
     }
     const urlComponents = url.split(/[.]+/);
     return urlComponents[urlComponents.length - 1];
+  }
+
+  private paginationDetails(itemsCount: number, limit: number, offset: number) {
+    const page = Math.ceil(offset / limit + 1);
+    const hasNextPage = itemsCount > offset + limit;
+    const totalPages = Math.ceil(itemsCount / limit);
+
+    return {
+      totalCount: itemsCount,
+      page: page,
+      hasNextPage: hasNextPage,
+      totalPages: totalPages,
+    };
   }
 }
