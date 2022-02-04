@@ -1,3 +1,16 @@
+# [1.26.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.25.0...v1.26.0) (2022-02-04)
+
+
+### Bug Fixes
+
+* **getCollectionPage:** fix distinct query order ([59dd6eb](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/59dd6ebc4cb5aff173e15e98b36fa9506069d407))
+* **pagination:** Pagination order and summary ([9bc7c6f](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/9bc7c6faf11bd353a6e3eeae39f9de983c251de8))
+
+
+### Features
+
+* **collection:** add social media property links ([f59553b](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/f59553bc94b36d28ce2e0ae0426b2fa23bf0ae41))
+
 ## [1.23.7](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.23.6...v1.23.7) (2022-01-27)
 
 
