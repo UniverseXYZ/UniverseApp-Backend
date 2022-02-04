@@ -158,13 +158,16 @@ export class NftService {
     const downsizedFile = await this.fileProcessingService.downsizeFile(file.path, file.mimetype);
     const uniqueFiles = [optimisedFile, downsizedFile].filter((fileItem) => fileItem.path !== file.path);
 
+    this.logger.log('Starting to upload files to AWS');
     await Promise.all([
       this.s3Service.uploadDocument(file.path, `${file.filename}`),
       ...uniqueFiles.map((fileItem) => this.s3Service.uploadDocument(fileItem.path, `${fileItem.fullFilename()}`)),
     ]);
+    this.logger.log('Uploaded files to bucket successfully');
     const data = await fs.readFile(file.path);
+    this.logger.log('Starting to store data to aweave');
     const arweaveUrl = await this.arweaveService.storeData(data, file.mimetype);
-
+    this.logger.log('Stored data to arweave successfully');
     await Promise.all(
       [file.path, ...uniqueFiles.map((file) => file.path)].map((path) => this.fileSystemService.removeFile(path)),
     );
@@ -236,8 +239,9 @@ export class NftService {
     }
     const bodyClass = plainToClass(GetNftTokenUriBody, { ...body });
     await this.validateReqBody(bodyClass);
-
+    this.logger.log('Starting to process file');
     const { optimisedFile, downsizedFile, arweaveUrl } = await this.processUploadedFile(file);
+    this.logger.log('Processed file successfully');
     const idxs = [...Array(bodyClass.numberOfEditions).keys()];
     const tokenUri = await this.generateTokenUri({
       name: bodyClass.name,
