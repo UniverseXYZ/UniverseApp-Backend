@@ -824,10 +824,12 @@ export class NftService {
 
     const conditions =
       'nft.editionUUID IN (' +
-      'SELECT DISTINCT("nft"."editionUUID") FROM (' +
-      'SELECT "editionUUID", "id" FROM "universe-backend"."nft" as "nft" WHERE "nft"."collectionId" = :collectionId ORDER BY "nft"."id" DESC' +
-      ') AS "nft" LIMIT :limit OFFSET :offset' +
-      ')';
+      'SELECT "editionUUID" FROM (' +
+      'SELECT DISTINCT "editionUUID", MAX("id")' +
+      'FROM "universe-backend"."nft" as "nft" ' +
+      'WHERE "nft"."collectionId" = :collectionId ' +
+      'GROUP BY "editionUUID"' +
+      ') AS "nft" ORDER BY "max" DESC LIMIT :limit OFFSET :offset)';
 
     const query = this.nftRepository
       .createQueryBuilder('nft')
