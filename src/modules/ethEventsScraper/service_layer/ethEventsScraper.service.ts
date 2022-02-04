@@ -40,23 +40,26 @@ export class EthEventsScraperService {
 
   @Cron(CronExpression.EVERY_10_SECONDS)
   public async syncCollectionAndNftEvents() {
-    this.logger.log('start');
+    this.logger.log('Mint nft/collection CRON job started');
     try {
-      if (this.processing) return;
+      if (this.processing) {
+        this.logger.log('Mint Nft/Collection CRON is already in progress. Skipping');
+      }
       this.processing = true;
       await this.syncDeployCollectionEvents();
       await this.syncMintNftEvents();
       this.processing = false;
     } catch (e) {
       this.processing = false;
+      this.logger.log('Mint Nft/Collection CRON job error:');
       console.log(e);
     }
-    this.logger.log('end');
+    this.logger.log('Mint Nft/Collection CRON job finished.');
   }
 
   private async syncDeployCollectionEvents() {
     const events = await this.deployCollectionEventRepository.find({ where: { processed: false } });
-
+    this.logger.log(`Mint Collection CRON job: Found ${events.length} mint events for processing`);
     for (const event of events) {
       const mintingCollection = await this.mintingCollectionRepository.findOne({ where: { txHash: event.tx_hash } });
 
@@ -72,6 +75,11 @@ export class EthEventsScraperService {
       collection.shortUrl = mintingCollection.shortUrl;
       collection.coverUrl = mintingCollection.coverUrl;
       collection.description = mintingCollection.description;
+      collection.siteLink = mintingCollection.siteLink;
+      collection.discordLink = mintingCollection.discordLink;
+      collection.mediumLink = mintingCollection.mediumLink;
+      collection.instagramLink = mintingCollection.instagramLink;
+      collection.telegramLink = mintingCollection.telegramLink;
       await this.mintingCollectionRepository.delete({ txHash: event.tx_hash });
 
       event.processed = true;
@@ -84,7 +92,7 @@ export class EthEventsScraperService {
     const events = await this.createNftEventRepository.find({ where: { processed: false } });
     const tokenUriEventsMap = this.mapTokenUriToEvents(events);
     const tokenUris = Object.keys(tokenUriEventsMap);
-    this.logger.log(`found ${tokenUris.length} token URIs`);
+    this.logger.log(`Mint Nft CRON job: Found ${events.length} mint events for processing`);
 
     for (const tokenUri of tokenUris) {
       await this.processTokenUri(tokenUri, tokenUriEventsMap[tokenUri]);
