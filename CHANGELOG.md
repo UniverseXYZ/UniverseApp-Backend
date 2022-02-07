@@ -1,3 +1,10 @@
+## [1.26.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.26.0...v1.26.1) (2022-02-07)
+
+
+### Bug Fixes
+
+* **nft-query:** fix wrong nft queries and clear commeted out code ([4d616eb](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/4d616eb3e916830892840cc830a0b9a38e424af0))
+
 # [1.26.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.25.0...v1.26.0) (2022-02-04)
 
 
