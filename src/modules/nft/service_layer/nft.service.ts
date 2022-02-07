@@ -376,7 +376,6 @@ export class NftService {
       throw new NftCollectionBadOwnerException();
     }
 
-    // const filteredAttributes = this.filterObjectAttributes(data, ['description']);
     for (const attribute in data) {
       collection[attribute] = data[attribute];
     }
@@ -398,7 +397,6 @@ export class NftService {
       throw error;
     }
   }
-  // .leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.address = nft.owner')
 
   public async getSavedNfts(userId: number, limit = 8, offset = 0) {
     const [savedNfts, count] = await this.savedNftRepository
@@ -408,14 +406,6 @@ export class NftService {
       .take(limit)
       .limit(offset)
       .getManyAndCount();
-    // ({
-    //   where: {
-    //     userId,
-    //   },
-
-    //   take: limit,
-    //   skip: offset,
-    // }).;
 
     return {
       nfts: savedNfts,
@@ -535,29 +525,30 @@ export class NftService {
       )[0].count,
     );
 
-    const conditions =
+    let conditions =
       'nft.editionUUID IN (' +
       'SELECT "editionUUID" FROM (' +
       'SELECT DISTINCT "editionUUID", MAX("id")' +
       'FROM "universe-backend"."nft" as "nft" ' +
-      'WHERE "nft"."owner" = :owner ' +
-      'GROUP BY "editionUUID"' +
-      ') AS "nft" ORDER BY "max" DESC LIMIT :limit OFFSET :offset)';
-
-    query.where('nft.owner = :owner', { owner: userAddress });
-    query.andWhere(conditions, { owner: userAddress, limit: limit, offset: offset });
+      'WHERE "nft"."owner" = :owner ';
 
     if (name) {
-      query.andWhere('(LOWER(nft.name) LIKE :name)', {
-        name: `${name.toLowerCase()}%`,
-      });
+      conditions += 'AND (LOWER(nft.name) LIKE :name)';
     }
 
     if (collectionsQuery) {
-      query.andWhere('nft.collectionId IN(:...collections)', {
-        collections: collectionsQuery.split(',').map((id) => Number(id)),
-      });
+      conditions += 'AND nft.collectionId IN(:...collections)';
     }
+
+    conditions += 'GROUP BY "editionUUID"' + ') AS "nft" ORDER BY "max" DESC LIMIT :limit OFFSET :offset)';
+
+    query.andWhere(conditions, {
+      owner: userAddress,
+      name: `${name.toLowerCase()}%`,
+      collections: collectionsQuery.split(',').map((id) => Number(id)),
+      limit: limit,
+      offset: offset,
+    });
 
     nfts = await query.orderBy('nft.id', 'DESC').getMany();
 
@@ -790,10 +781,6 @@ export class NftService {
     };
   }
 
-  // public async getUserCollections(address), {
-
-  // }
-
   public async deleteSavedNft(id: number, userId: number) {
     const savedNft = await this.savedNftRepository.findOne({ where: { id } });
 
@@ -826,25 +813,25 @@ export class NftService {
       )[0].count,
     );
 
-    const conditions =
+    let conditions =
       'nft.editionUUID IN (' +
       'SELECT "editionUUID" FROM (' +
       'SELECT DISTINCT "editionUUID", MAX("id")' +
       'FROM "universe-backend"."nft" as "nft" ' +
-      'WHERE "nft"."collectionId" = :collectionId ' +
-      'GROUP BY "editionUUID"' +
-      ') AS "nft" ORDER BY "max" DESC LIMIT :limit OFFSET :offset)';
+      'WHERE "nft"."collectionId" = :collectionId ';
+
+    if (name) {
+      conditions += 'AND (LOWER(nft.name) LIKE :name)';
+    }
+
+    conditions += 'GROUP BY "editionUUID"' + ') AS "nft" ORDER BY "max" DESC LIMIT :limit OFFSET :offset)';
 
     const query = this.nftRepository
       .createQueryBuilder('nft')
       .leftJoinAndMapOne('nft.owner', User, 'owner', 'owner.address = nft.owner')
       .leftJoinAndMapOne('nft.creator', User, 'creator', 'creator.address = nft.creator')
-      .where(conditions, { collectionId: collection.id, limit: limit, offset: offset })
+      .where(conditions, { collectionId: collection.id, limit: limit, offset: offset, name: `%${name}%` })
       .orderBy('nft.createdAt', 'DESC');
-
-    if (name) {
-      query.andWhere('LOWER("nft"."name") LIKE :name', { name: `%${name}%` });
-    }
 
     const nfts = await query.getMany();
 
