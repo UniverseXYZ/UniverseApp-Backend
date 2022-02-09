@@ -348,6 +348,7 @@ export class AuctionEventsScraperService {
         const bidder = await this.usersRepository.findOne({ where: { address: bid.bidder, isActive: true } });
         const bids = await this.attachBidsInfo(foundAuction.id, foundAuction.tokenDecimals);
         this.auctionGateway.notifyAuctionBidSubmitted(foundAuction.id, {
+          id: bid.id,
           amount: new BigNumber(bid.amount).dividedBy(10 ** foundAuction.tokenDecimals).toFixed(),
           user: bid.bidder,
           userProfile: bidder,

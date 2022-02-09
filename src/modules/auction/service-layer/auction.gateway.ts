@@ -48,7 +48,7 @@ export class AuctionGateway implements OnGatewayInit, OnGatewayConnection, OnGat
   }
   public notifyAuctionBidSubmitted(
     auctionId: number,
-    bidInfo: { user: any; amount: string; userProfile: any; bids: any },
+    bidInfo: { id: number; user: any; amount: string; userProfile: any; bids: any },
   ) {
     this.server.emit(`auction_${auctionId}_bidSubmitted`, bidInfo);
   }
