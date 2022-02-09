@@ -234,6 +234,7 @@ export class AuctionService {
     tier.name = name;
     tier.numberOfWinners = numberOfWinners;
     tier.nftsPerWinner = nftsPerWinner;
+    tier.color = '#EABD16';
 
     tier.tierPosition = nextTierIndex;
     await this.rewardTierRepository.save(tier);
@@ -549,6 +550,7 @@ export class AuctionService {
       }));
       rewardTier.slots = slots;
       rewardTier.tierPosition = index;
+      rewardTier.color = '#EABD16';
       await rewardTierRepository.save(rewardTier);
 
       for (const nftSlot of rewardTierBody.nftSlots) {
