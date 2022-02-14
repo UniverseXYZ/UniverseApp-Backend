@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
@@ -11,7 +11,10 @@ import { FileSystemService } from '../file-system/file-system.service';
 export class FileProcessingService {
   constructor(private fileSystemService: FileSystemService) {}
 
+  private logger = new Logger(FileProcessingService.name);
+
   public async downsizeFile(sourcePath: string, mimeType: string) {
+    this.logger.log('Starting to downsize file');
     const file = ProcessedFile.create(
       sourcePath,
       path.basename(sourcePath, path.extname(sourcePath)),
@@ -38,6 +41,7 @@ export class FileProcessingService {
       return newFile;
     }
 
+    this.logger.log('Downsized file successfully');
     return file;
   }
 
@@ -59,8 +63,10 @@ export class FileProcessingService {
 
       return file;
     } else if (['video/mp4'].includes(mimeType)) {
+      this.logger.log('Starting to optimize video');
       const newFile = await this.fileWithNewPath(file);
       await this.optimiseVideo(file.path, newFile.path);
+      this.logger.log('Optimized video successfully');
       return newFile;
     }
 

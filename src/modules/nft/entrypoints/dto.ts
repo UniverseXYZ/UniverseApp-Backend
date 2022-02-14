@@ -27,6 +27,51 @@ export class EditCollectionBody {
     required: false,
   })
   description?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    example: 'https://site.io',
+    description: 'The site of the collection',
+    required: false,
+  })
+  siteLink?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    example: 'universe.xyz',
+    description: 'The discord link of the collection',
+    required: false,
+  })
+  discordLink?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    example: 'universeXYZ',
+    description: 'Instagram profile of the collection',
+    required: false,
+  })
+  instagramLink?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    example: 'universeXYZ',
+    description: 'The medium profile of the collection',
+    required: false,
+  })
+  mediumLink?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    example: 'universeXYZ',
+    description: 'The telegram profile of the collection',
+    required: false,
+  })
+  telegramLink?: string;
 }
 
 export class SaveNftBody {
@@ -427,6 +472,56 @@ export class CreateCollectionBody {
     required: false,
   })
   description?: string;
+
+  @IsString()
+  @IsOptional()
+  @Length(1, 1024)
+  @ApiProperty({
+    example: 'https://site.io',
+    description: 'The site of the collection',
+    required: false,
+  })
+  siteLink?: string;
+
+  @IsString()
+  @IsOptional()
+  @Length(1, 1024)
+  @ApiProperty({
+    example: 'universe.xyz',
+    description: 'The discord link of the collection',
+    required: false,
+  })
+  discordLink?: string;
+
+  @IsString()
+  @IsOptional()
+  @Length(1, 1024)
+  @ApiProperty({
+    example: 'universeXYZ',
+    description: 'Instagram profile of the collection',
+    required: false,
+  })
+  instagramLink?: string;
+
+  @IsString()
+  @IsOptional()
+  @Length(1, 1024)
+  @ApiProperty({
+    example: 'universeXYZ',
+    description: 'The medium profile of the collection',
+    required: false,
+  })
+  mediumLink?: string;
+
+  @IsString()
+  @IsOptional()
+  @Length(1, 1024)
+  @ApiProperty({
+    example: 'universeXYZ',
+    description: 'The telegram profile of the collection',
+    required: false,
+  })
+  telegramLink?: string;
 }
 
 export class EditMintingCollectionParams {
@@ -457,6 +552,74 @@ export class GetUserNftsParams {
     required: true,
   })
   username: string;
+}
+
+export class GetUserNftsQueryParams {
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The offset for getting nfts',
+    example: '8',
+  })
+  offset: number;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The amount of editions to get',
+    example: '1',
+  })
+  limit: number;
+
+  @IsOptional()
+  @ApiProperty({
+    description: 'The collection ids to filter by',
+    example: '12,3',
+  })
+  collections: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({
+    description: 'NFT name',
+  })
+  name: string;
+}
+
+export class GetSavedNftsParams {
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The offset for getting nfts',
+    example: '8',
+  })
+  offset: number;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The amount of editions to get',
+    example: '1',
+  })
+  limit: number;
+}
+
+export class GetMyNftsParams {
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The offset for getting nfts',
+    example: '8',
+  })
+  offset: number;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The amount of editions to get',
+    example: '1',
+  })
+  limit: number;
 }
 
 export class EditMintingCollectionBody {
@@ -523,6 +686,42 @@ export class GetNftParams {
   })
   tokenId: number;
 }
+
+export class GetMyCollectionsPendingParams {
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The offset for getting nfts',
+    example: '8',
+  })
+  offset: number;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The amount of editions to get',
+    example: '1',
+  })
+  limit: number;
+}
+
+export class GetMyNftsPendingParams {
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The offset for getting nfts',
+    example: '8',
+  })
+  offset: number;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The amount of editions to get',
+    example: '1',
+  })
+  limit: number;
+}
 export class GetMyNftsAvailabilityParams {
   @IsNumberString()
   @IsOptional()
@@ -564,6 +763,40 @@ export class GetMyCollectionsParams {
     example: 'true',
   })
   mintable: string;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The offset for getting nfts',
+    example: '8',
+  })
+  offset: number;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The amount of editions to get',
+    example: '1',
+  })
+  limit: number;
+}
+
+export class GetMyCollectionsTabParams {
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The offset for getting nfts',
+    example: '8',
+  })
+  offset: number;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The amount of editions to get',
+    example: '1',
+  })
+  limit: number;
 }
 
 export class GetCollectionQueryParams {
@@ -591,4 +824,36 @@ export class GetCollectionQueryParams {
     example: '1',
   })
   limit: number;
+}
+
+export class GetMyNftsPageParams {
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The offset for getting nfts',
+    example: '8',
+  })
+  offset: number;
+
+  @IsNumberString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'The amount of editions to get',
+    example: '1',
+  })
+  limit: number;
+
+  @IsOptional()
+  @ApiProperty({
+    description: 'The collection ids to filter by',
+    example: '12,3',
+  })
+  collections: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({
+    description: 'NFT name',
+  })
+  name: string;
 }

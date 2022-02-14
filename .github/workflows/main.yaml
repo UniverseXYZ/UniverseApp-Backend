@@ -6,6 +6,7 @@ on:
       - master
       - dev
       - auctions
+      - bugfix/api-rate-limiting
   pull_request:
     branches:
       - master

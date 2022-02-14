@@ -1,3 +1,45 @@
+## [1.26.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.26.0...v1.26.1) (2022-02-07)
+
+
+### Bug Fixes
+
+* **nft-query:** fix wrong nft queries and clear commeted out code ([4d616eb](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/4d616eb3e916830892840cc830a0b9a38e424af0))
+
+# [1.26.0](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.25.0...v1.26.0) (2022-02-04)
+
+
+### Bug Fixes
+
+* **getCollectionPage:** fix distinct query order ([59dd6eb](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/59dd6ebc4cb5aff173e15e98b36fa9506069d407))
+* **pagination:** Pagination order and summary ([9bc7c6f](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/9bc7c6faf11bd353a6e3eeae39f9de983c251de8))
+
+
+### Features
+
+* **collection:** add social media property links ([f59553b](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/f59553bc94b36d28ce2e0ae0426b2fa23bf0ae41))
+
+## [1.23.7](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.23.6...v1.23.7) (2022-01-27)
+
+
+### Bug Fixes
+
+* **nft:** View owned nfts ([8f1f9e2](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/8f1f9e2cfbd10cef843b2e14bf93f02f25faf45c))
+* **nft.userId query:** replace with address queries ([6fe94ae](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/6fe94aeb414c719fd3c94247c5de99f4ff7dddf5))
+
+## [1.23.6](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.23.5...v1.23.6) (2021-10-29)
+
+
+### Bug Fixes
+
+* **nft-collection:** change response of my collections to return collections of owned nfts ([b1ac1ae](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/b1ac1aef704a5a682c5f7d759487dfe3dbf1a747))
+
+## [1.23.5](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.23.4...v1.23.5) (2021-10-26)
+
+
+### Bug Fixes
+
+* process nfts from moralis logs ([#127](https://github.com/UniverseXYZ/UniverseApp-Backend/issues/127)) ([664a51e](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/664a51ee3d304a4115081ac0ed7e21ae34aebd35))
+
 ## [1.23.4](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.23.3...v1.23.4) (2021-10-26)
 
 

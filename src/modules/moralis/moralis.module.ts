@@ -10,11 +10,13 @@ import { MonitoredNfts } from '../nft/domain/monitored-nfts';
 import { Nft } from '../nft/domain/nft.entity';
 import { User } from '../users/user.entity';
 import { MoralisService } from './moralis.service';
+import { OpenseaNftService } from './opensea-nft.service';
 import { MoralisWebHookController } from './moralis.webhook.controller';
 import { MoralisController } from './moralis.controller';
 import { NftValidator } from './service/nft-validator';
-import { MORALIS_NEW_NFT_QUEUE } from './constants';
+import { MORALIS_NEW_NFT_QUEUE, OPENSEA_NFT_QUEUE } from './constants';
 import { MoralisProcessor } from './moralis.processor';
+import { OpenseaNftProcessor } from './opensea-nft.processor';
 
 @Module({
   imports: [
@@ -23,12 +25,17 @@ import { MoralisProcessor } from './moralis.processor';
     TypeOrmModule.forFeature([Nft, NftCollection, User, MonitoredNfts, MoralisLog]),
     FileStorageModule,
     FileSystemModule,
-    BullModule.registerQueue({
-      name: MORALIS_NEW_NFT_QUEUE,
-    }),
+    BullModule.registerQueue(
+      {
+        name: MORALIS_NEW_NFT_QUEUE,
+      },
+      {
+        name: OPENSEA_NFT_QUEUE,
+      },
+    ),
   ],
-  providers: [MoralisService, NftValidator, MoralisProcessor],
-  exports: [MoralisService],
+  providers: [MoralisService, OpenseaNftService, NftValidator, MoralisProcessor, OpenseaNftProcessor],
+  exports: [MoralisService, OpenseaNftService],
   controllers: [MoralisWebHookController, MoralisController],
 })
 export class MoralisModule {}
