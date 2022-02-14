@@ -17,7 +17,7 @@ export class UsersService {
     private readonly config: AppConfig,
   ) {}
 
-  async findOne(address: string) {
+  async findOneOrCreate(address: string) {
     let user = await this.usersRepository.findOne({ where: { address } });
 
     if (!user) {

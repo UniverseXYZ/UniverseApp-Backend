@@ -22,6 +22,7 @@ export const configValues = {
   },
   auth: {
     jwtSecret: process.env.JWT_SECRET,
+    apiSecret: process.env.API_SECRET,
   },
   aws: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,

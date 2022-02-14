@@ -5,12 +5,11 @@ on:
     branches:
       - master
       - dev
-      - auctions
+      - bugfix/api-rate-limiting
   pull_request:
     branches:
       - master
       - dev
-      - auctions
   workflow_dispatch:
 
 jobs:
