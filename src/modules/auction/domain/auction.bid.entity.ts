@@ -10,7 +10,6 @@ export class AuctionBid {
   id: number;
 
   @Column({ nullable: true })
-  @Exclude()
   bidder: string;
 
   @Column()
