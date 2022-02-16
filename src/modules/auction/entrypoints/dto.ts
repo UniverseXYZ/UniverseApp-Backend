@@ -85,17 +85,6 @@ export class UpdateRewardTierBody {
   nftSlots: NftSlots[];
 }
 
-export class UpdateRewardTierExtraBody {
-  @IsNumber()
-  tierId: number;
-
-  @IsString()
-  customDescription: string;
-
-  @IsString()
-  tierColor: string;
-}
-
 export class CreateAuctionBody {
   @ApiProperty({
     description: 'The name of the auction',
@@ -257,39 +246,7 @@ export class EditAuctionBody {
   createAuctionTxHash: string;
 }
 
-export class DepositNftsBody {
-  @ApiProperty({
-    description: `The auction's id from the back end`,
-    example: 1,
-  })
-  @IsNumber()
-  auctionId: number;
 
-  @ApiProperty({
-    description: `The nft ids that have been deposited`,
-    example: [1, 2, 3, 4],
-  })
-  @IsArray()
-  @ArrayMinSize(1)
-  nftIds: number[];
-}
-
-export class WithdrawNftsBody {
-  @ApiProperty({
-    description: `The auction's id from the back end`,
-    example: 1,
-  })
-  @IsNumber()
-  auctionId: number;
-
-  @ApiProperty({
-    description: `The nft ids that have been withdrawn`,
-    example: [1, 2, 3, 4],
-  })
-  @IsArray()
-  @ArrayMinSize(1)
-  nftIds: number[];
-}
 
 export class CreateRewardTierBody {
   @ApiProperty({
@@ -345,55 +302,9 @@ export class CreateAuctionRoyaltySplitBody {
   percentAmount: number;
 }
 
-export class UpdateAuctionBodyParams {}
 
-export class UpdateAuctionBody {
-  @IsNumber()
-  auctionId: number;
 
-  @IsString()
-  @IsOptional()
-  name: string;
 
-  @IsDateString()
-  @IsOptional()
-  startDate: Date;
-
-  @IsDateString()
-  @IsOptional()
-  endDate: Date;
-
-  @IsString()
-  @IsOptional()
-  bidCurrency: string;
-
-  @IsString()
-  @IsOptional()
-  txHash: string;
-}
-
-export class UpdateAuctionExtraBodyParams {
-  headline: string;
-  link: string;
-  backgroundBlur: boolean;
-}
-
-export class UpdateAuctionExtraBody {
-  @IsNumber()
-  auctionId: number;
-
-  @IsString()
-  @IsOptional()
-  headline: string;
-
-  @IsString()
-  @IsOptional()
-  link: string;
-
-  @IsBoolean()
-  @IsOptional()
-  backgroundBlur: boolean;
-}
 
 export class EditRewardTierResponse {
   @ApiProperty({
@@ -590,21 +501,6 @@ export class GetAuctionPageParams {
   auctionName: string;
 }
 
-export class PlaceBidBody {
-  @ApiProperty({
-    example: 1,
-    description: 'The id of the auction to which the user is bidding',
-  })
-  @IsNumber()
-  auctionId: number;
-
-  @ApiProperty({
-    example: '0.1',
-    description: 'Amount of crypto the user is bidding',
-  })
-  @IsNumber()
-  amount: number;
-}
 
 export class GetUserBidsParams {
   @IsNumberString()
@@ -664,30 +560,7 @@ export class ValidateUrlParams {
   auctionId: number;
 }
 
-export class ChangeAuctionStatus {
-  @ApiProperty({
-    example: 1,
-    description: 'The id of the auction that the status will be changing',
-  })
-  @IsNumber()
-  auctionId: number;
 
-  @ApiProperty({
-    example: [
-      { name: 'canceled', value: true },
-      { name: 'depositing', value: false },
-    ],
-    description: 'Array of statuses that need to be changed',
-  })
-  @IsArray()
-  @ArrayMinSize(1)
-  statuses: StatusChange[];
-}
-
-class StatusChange {
-  name: string;
-  value: boolean;
-}
 export class AddRewardTierBodyParams {
   @ApiProperty({
     description: 'The id of the Auction on which the tier should be added',
@@ -724,15 +597,15 @@ export class GetAuctionsQuery {
   })
   offset: string;
 
-  @IsNumberString()
+  @IsString()
   @IsOptional()
   @ApiProperty({
-    example: 1,
-    description: 'User id',
-    type: 'number',
+    example: '0x65D31741878da0520d1Ae6db298A9BD994Q5D241',
+    description: 'User address',
+    type: 'string',
     required: false,
   })
-  userId: string;
+  address: string;
 
   @IsString()
   @IsOptional()

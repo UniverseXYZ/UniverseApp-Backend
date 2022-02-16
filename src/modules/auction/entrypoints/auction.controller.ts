@@ -15,22 +15,15 @@ import {
 } from '@nestjs/common';
 import {
   CreateAuctionBody,
-  CreateRewardTierBody,
   EditAuctionBody,
   EditAuctionParams,
   EditRewardTierResponse,
   GetAuctionPageParams,
   GetMyAuctionsQuery,
   GetMyAuctionsResponse,
-  PlaceBidBody,
-  UpdateAuctionExtraBody,
   UpdateRewardTierBody,
-  UpdateRewardTierExtraBody,
   UpdateRewardTierParams,
   UploaductionLandingImagesParams,
-  WithdrawNftsBody,
-  DepositNftsBody,
-  ChangeAuctionStatus,
   AddRewardTierBodyParams,
   GetAuctionsQuery,
   DeleteImageParams,
@@ -38,7 +31,7 @@ import {
   GetUserBidsParams,
 } from './dto';
 import { AuctionService } from '../service-layer/auction.service';
-import { JwtAuthGuard, OptionalJwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { auctionLandingImagesMulterOptions, rewardTierImagesMulterOptions } from '../../nft/entrypoints/multipart';
@@ -52,7 +45,7 @@ export class AuctionController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Create new auction' })
   async createAuction(@Req() req, @Body() createAuctionBody: CreateAuctionBody) {
-    return await this.auctionService.createAuction(req.user.sub, createAuctionBody);
+    return await this.auctionService.createAuction(req.user.sub, req.user.address, createAuctionBody);
   }
 
   @Patch('auctions/:id')
@@ -64,7 +57,7 @@ export class AuctionController {
     @Param() editAuctionParams: EditAuctionParams,
     @Body() updateAuctionBody: EditAuctionBody,
   ) {
-    return await this.auctionService.updateAuction(req.user.sub, editAuctionParams.id, updateAuctionBody);
+    return await this.auctionService.updateAuction(req.user.address, editAuctionParams.id, updateAuctionBody);
   }
 
   @Post('auctions/:id/landing-files')
@@ -81,7 +74,12 @@ export class AuctionController {
   ) {
     const promoImage = files && files['promo-image'] && files['promo-image'][0];
     const backgroundImage = files && files['background-image'] && files['background-image'][0];
-    return await this.auctionService.uploadAuctionLandingImages(req.user.sub, params.id, promoImage, backgroundImage);
+    return await this.auctionService.uploadAuctionLandingImages(
+      req.user.address,
+      params.id,
+      promoImage,
+      backgroundImage,
+    );
   }
 
   @Patch('reward-tiers/:id')
@@ -119,7 +117,7 @@ export class AuctionController {
   @ApiResponse({ type: GetMyAuctionsResponse, status: 200 })
   async getMyFutureAuctions(@Req() req, @Query() query: GetMyAuctionsQuery) {
     return await this.auctionService.getMyFutureAuctionsPage(
-      req.user.sub,
+      req.user.address,
       parseInt(query.limit) || undefined,
       parseInt(query.offset) || undefined,
     );
@@ -132,7 +130,7 @@ export class AuctionController {
   @ApiResponse({ type: GetMyAuctionsResponse, status: 200 })
   async getMyActiveAuctions(@Req() req, @Query() query: GetMyAuctionsQuery) {
     return await this.auctionService.getMyActiveAuctionsPage(
-      req.user.sub,
+      req.user.address,
       parseInt(query.limit) || undefined,
       parseInt(query.offset) || undefined,
     );
@@ -145,7 +143,7 @@ export class AuctionController {
   @ApiResponse({ type: GetMyAuctionsResponse, status: 200 })
   async getMyPastAuctions(@Req() req, @Query() query: GetMyAuctionsQuery) {
     return await this.auctionService.getMyPastAuctionsPage(
-      req.user.sub,
+      req.user.address,
       parseInt(query.limit) || undefined,
       parseInt(query.offset) || undefined,
     );
@@ -157,7 +155,7 @@ export class AuctionController {
   @ApiResponse({ type: GetMyAuctionsResponse, status: 200 })
   async getPastAuctions(@Query() query: GetAuctionsQuery) {
     return await this.auctionService.getPastAuctions(
-      parseInt(query.userId),
+      query.address,
       parseInt(query.limit) || undefined,
       parseInt(query.offset) || undefined,
       query.filters,
@@ -167,11 +165,11 @@ export class AuctionController {
 
   @Get('/pages/auctions/active')
   @ApiTags('auction')
-  @ApiOperation({ summary: 'Get active auctions' })
+  @ApiOperation({ summary: 'Get active auctions for Universe Auction House' })
   @ApiResponse({ type: GetMyAuctionsResponse, status: 200 })
   async getActiveAuctions(@Query() query: GetAuctionsQuery) {
     return await this.auctionService.getActiveAuctions(
-      parseInt(query.userId),
+      query.address,
       parseInt(query.limit) || undefined,
       parseInt(query.offset) || undefined,
       query.filters,
@@ -181,11 +179,11 @@ export class AuctionController {
 
   @Get('/pages/auctions/future')
   @ApiTags('auction')
-  @ApiOperation({ summary: 'Get future auctions' })
+  @ApiOperation({ summary: 'Get future auctions for Universe Auction House' })
   @ApiResponse({ type: GetMyAuctionsResponse, status: 200 })
   async getFutureAuctions(@Query() query: GetAuctionsQuery) {
     return await this.auctionService.getFutureAuctions(
-      parseInt(query.userId),
+      query.address,
       parseInt(query.limit) || undefined,
       parseInt(query.offset) || undefined,
       query.filters,
@@ -205,7 +203,7 @@ export class AuctionController {
   @ApiTags('auction')
   @ApiOperation({ summary: 'Cancel my future auction' })
   async cancelAuction(@Req() req, @Param('id') id) {
-    return await this.auctionService.cancelFutureAuction(req.user.sub, id);
+    return await this.auctionService.cancelFutureAuction(req.user.address, id);
   }
 
   @Post('/add-reward-tier')
@@ -214,7 +212,7 @@ export class AuctionController {
   @ApiOperation({ summary: 'Add a Reward Tier to a Specific Auction' })
   @ApiResponse({ type: EditRewardTierResponse, status: 200 })
   async createRewardTier(@Req() req, @Body() addRewardTierBodyParams: AddRewardTierBodyParams) {
-    return await this.auctionService.createRewardTier(req.user.sub, addRewardTierBodyParams);
+    return await this.auctionService.createRewardTier(req.user.address, req.user.sub, addRewardTierBodyParams);
   }
 
   @Delete('/reward-tiers/:id')
@@ -226,86 +224,12 @@ export class AuctionController {
     return await this.auctionService.removeRewardTier(req.user.sub, id);
   }
 
-  @Patch('reward-tier-extra-data')
-  @UseGuards(JwtAuthGuard)
-  async updateRewardTierExtraData(@Req() req, @Body() updateRewardTierExtraBody: UpdateRewardTierExtraBody) {
-    return await this.auctionService.updateRewardTierExtraData(req.user.sub, updateRewardTierExtraBody.tierId, {
-      customDescription: updateRewardTierExtraBody.customDescription,
-      tierColor: updateRewardTierExtraBody.tierColor,
-    });
-  }
-
   @Post('/reward-tier-image')
   @UseInterceptors(FileInterceptor('file'))
   @UseGuards(JwtAuthGuard)
   async uploadRewardsTierImage(@UploadedFile() file: Express.Multer.File, @Req() req) {
     const ret = await this.auctionService.updateRewardTierImage(req.user, req.body.tierId, file);
     return ret;
-  }
-
-  @Patch('auction-extra-data')
-  @UseGuards(JwtAuthGuard)
-  async updateAuctionExtraData(@Req() req, @Body() updateAuctionExtraBody: UpdateAuctionExtraBody) {
-    return await this.auctionService.updateAuctionExtraData(req.user.sub, updateAuctionExtraBody.auctionId, {
-      headline: updateAuctionExtraBody.headline,
-      link: updateAuctionExtraBody.link,
-      backgroundBlur: updateAuctionExtraBody.backgroundBlur,
-    });
-  }
-
-  @Post('/auction-promo-image')
-  @UseInterceptors(FileInterceptor('file'))
-  @UseGuards(JwtAuthGuard)
-  async uploadAuctionPromoImage(@UploadedFile() file: Express.Multer.File, @Req() req) {
-    const ret = await this.auctionService.updateAuctionPromoImage(req.user, req.body.auctionId, file);
-    return ret;
-  }
-
-  @Post('/auction-background-image')
-  @UseInterceptors(FileInterceptor('file'))
-  @UseGuards(JwtAuthGuard)
-  async uploadAuctionBackgroundImage(@UploadedFile() file: Express.Multer.File, @Req() req) {
-    console.log(req);
-    const ret = await this.auctionService.updateAuctionBackgroundImage(req.user, req.body.auctionId, file);
-    return ret;
-  }
-
-  @Get('auctions/byUser')
-  @UseGuards(JwtAuthGuard)
-  async listAuctionsByUser(@Req() req, @Query('page') page = 0, @Query('limit') limit = 0) {
-    return await this.auctionService.listAuctionsByUser(req.user.sub, page, limit);
-  }
-
-  @Get('auctions/byUser/{:status}')
-  @UseGuards(JwtAuthGuard)
-  async listAuctionsByUserFiltered(
-    @Req() req,
-    @Query('page') page = 0,
-    @Query('limit') limit = 0,
-    @Param('status') status = '',
-  ) {
-    if (status !== '') return;
-
-    return await this.auctionService.listAuctionsByUserAndStatus(req.user.sub, status, page, limit);
-  }
-
-  @Get('auctions')
-  @UseGuards(JwtAuthGuard)
-  async listAuctions(@Req() req, @Query('page') page = 0, @Query('limit') limit = 0) {
-    return await this.auctionService.listAuctions(page, limit);
-  }
-
-  @Get('auctions/{:status}')
-  @UseGuards(JwtAuthGuard)
-  async listAuctionsFiltered(
-    @Req() req,
-    @Query('page') page = 0,
-    @Query('limit') limit = 0,
-    @Param('status') status = '',
-  ) {
-    if (status !== '') return;
-
-    return await this.auctionService.listAuctionsByStatus(status, page, limit);
   }
 
   @Get('pages/my-bids/:address')
@@ -319,13 +243,6 @@ export class AuctionController {
     );
   }
 
-  //Todo: add tier info
-  @Get('auction/{:id}')
-  @UseGuards(JwtAuthGuard)
-  async getAuction(@Req() req, @Param('id') id = 0) {
-    return await this.auctionService.getAuction(id);
-  }
-
   @Delete('auction/images')
   @UseGuards(JwtAuthGuard)
   async deleteImage(@Req() req, @Body() deleteImageParams: DeleteImageParams) {
@@ -336,5 +253,12 @@ export class AuctionController {
   @ApiTags('auction')
   async validateUrl(@Param('url') url, @Query() query: ValidateUrlParams) {
     return await this.auctionService.validateUrl(url, query.auctionId);
+  }
+
+  @Get('auction/:address/summary')
+  @ApiTags('auction')
+  @ApiOperation({ summary: 'Get count of active and future auctions' })
+  async getAuctionSummary(@Param('address') address) {
+    return await this.auctionService.getAuctionSummary(address);
   }
 }
