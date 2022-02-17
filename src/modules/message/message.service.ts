@@ -95,7 +95,6 @@ export class MessageService {
               from: `"Universe" <${this.config.values.google.senderEmail}>`,
               to: recipient,
               subject: message.subject,
-              // text: "Hello world?", // plain text body
               html: messageBody, // html body
             }).then((sendMailResponse) => {         
               if(!sendMailResponse.messageId) {
