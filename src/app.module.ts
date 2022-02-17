@@ -18,6 +18,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { AuctionModule } from './modules/auction/auction.module';
 import { EthEventsScraperModule } from './modules/ethEventsScraper/ethEventsScraper.model';
 import { MoralisModule } from './modules/moralis/moralis.module';
+import { ReportModule } from './modules/report/report.module';
+import { AppConfig } from './modules/configuration/configuration.service';
 
 @Module({
   imports: [
@@ -49,8 +51,9 @@ import { MoralisModule } from './modules/moralis/moralis.module';
     AuctionModule,
     EthEventsScraperModule,
     MoralisModule,
+    ReportModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AppConfig],
 })
 export class AppModule {}
