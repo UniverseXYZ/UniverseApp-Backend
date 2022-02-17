@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AppConfig } from '../configuration/configuration.service';
@@ -12,7 +9,6 @@ import { CreateReportDto } from './dto';
 
 @Injectable()
 export class ReportService {
-
   private logger = new Logger(this.constructor.name);
 
   constructor(
@@ -20,16 +16,14 @@ export class ReportService {
     private messageService: MessageService,
     private config: AppConfig,
     @InjectRepository(Report)
-    private reportRepository: Repository<Report>
-  ) {
-
-  }
+    private reportRepository: Repository<Report>,
+  ) {}
 
   /**
    * Creates a report in the report table from data sent by UI.
    * Returns created report id.
-   * @param userId 
-   * @param body 
+   * @param userId
+   * @param body
    * @returns {Object} {id: <new report id>}
    */
   public async createReport(userId: number, body: CreateReportDto) {
@@ -41,29 +35,28 @@ export class ReportService {
       collectionAddress: body.collectionAddress,
       tokenId: body.tokenId,
       description: body.description,
+      reason: body.reason,
     });
     newReport = await this.reportRepository.save(newReport);
 
     //send email notification
-    if(newReport.id) {
+    if (newReport.id) {
       await this.messageService.createMessage(
         'reportNotification',
         'Reported violating content',
-        [
-          this.config.values.report.violationsEmail,
-        ],
+        [this.config.values.report.violationsEmail],
         {
           userId: newReport.userId,
           userAddress: newReport.userAddress,
           collectionAddress: newReport.collectionAddress,
           tokenId: newReport.tokenId,
           description: newReport.description,
-        }
+        },
       );
     }
 
     return {
       id: newReport.id,
-    }
+    };
   }
 }

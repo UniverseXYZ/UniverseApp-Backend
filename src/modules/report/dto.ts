@@ -1,16 +1,6 @@
-import { 
-  IsInt,
-  IsNotEmpty, 
-  IsNumberString, 
-  IsOptional, 
-  IsString, 
-  Matches, 
-  MaxLength, 
-  Min
-} from "class-validator";
+import { IsInt, IsNotEmpty, IsNumberString, IsOptional, IsString, Matches, MaxLength, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { constants } from '../../common/constants';
-
 
 export class CreateReportDto {
   @IsString()
@@ -46,6 +36,17 @@ export class CreateReportDto {
     required: true,
   })
   description: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(4096)
+  @ApiProperty({
+    description: 'Report reason. Max length 4096',
+    type: 'string',
+    example: 'Explicit context',
+    required: true,
+  })
+  reason: string;
 
   @IsString()
   @IsNotEmpty()

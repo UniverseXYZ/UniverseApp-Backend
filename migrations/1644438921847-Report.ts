@@ -6,10 +6,11 @@ export class Report1644438921847 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TABLE "universe-backend"."report" (
             "id" SERIAL NOT NULL, "userId" integer NOT NULL,
-            "userAddress" character varying NOT NULL,
-            "collectionAddress" character varying NOT NULL,
+            "userAddress" character varying,
+            "collectionAddress" character varying,
             "tokenId" character varying,
-            "description" character varying NOT NULL,
+            "description" character varying,
+            "reason" character varying,
             "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
             CONSTRAINT "PK_99e4d0bea58cba73c57f935a546" PRIMARY KEY ("id")
         )`);

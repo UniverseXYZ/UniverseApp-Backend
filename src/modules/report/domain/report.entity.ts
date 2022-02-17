@@ -1,10 +1,4 @@
-import { 
-  Column,
-  CreateDateColumn,
-  Entity, 
-  PrimaryGeneratedColumn,
-} from 'typeorm';
-
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({
   schema: 'universe-backend',
@@ -31,6 +25,11 @@ export class Report {
     nullable: true,
   })
   description: string;
+
+  @Column({
+    nullable: true,
+  })
+  reason: string;
 
   @CreateDateColumn()
   createdAt: Date;
