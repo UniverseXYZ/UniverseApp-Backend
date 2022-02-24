@@ -1,4 +1,6 @@
 import { registerAs } from '@nestjs/config';
+import { config } from 'dotenv';
+config();
 
 export const configValues = {
   database: {
@@ -28,7 +30,15 @@ export const configValues = {
     s3BaseUrl: process.env.AWS_S3_BASE_URL,
   },
   arweave: {
-    wallet: process.env.AIRWEAVE_WALLET,
+    clientConfig: {
+      host: process.env.ARWEAVE_HOST, // Hostname or IP address for a Arweave host
+      port: parseInt(process.env.ARWEAVE_PORT, 10), // Port
+      protocol: process.env.ARWEAVE_PROTOCOL, // Network protocol http or https
+      timeout: parseInt(process.env.ARWEAVE_TIMEOUT, 10), // Network request timeouts in milliseconds
+      logging: JSON.parse(process.env.ARWEAVE_NETWORK_LOGGING), // Enable network request logging
+    },
+    minConfirmations: parseInt(process.env.ARWEAVE_MIN_CONFIRMATIONS, 10),
+    walletKey: JSON.parse(process.env.ARWEAVE_WALLET_KEY),
   },
   moralis: {
     serverUrl: process.env.MORALIS_SERVER_URL,

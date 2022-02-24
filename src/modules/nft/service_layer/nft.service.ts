@@ -933,7 +933,7 @@ export class NftService {
     royalties,
     attributes,
   }) {
-    const tokenUri: string = await this.arweaveService.store({
+    const tokenUri: string = await this.arweaveService.storeMetadata({
       name,
       description,
       image_url: imageUrl,
