@@ -12,6 +12,8 @@ export const configValues = {
     port: parseInt(process.env.APP_PORT, 10),
   },
   ethereum: {
+    alchemyToken: process.env.ALCHEMY_TOKEN,
+    chainstackUrl: process.env.CHAINSTACK_URL,
     infuraProjectId: process.env.INFURA_PROJECT_ID,
     infuraProjectSecret: process.env.INFURA_PROJECT_SECRET,
     ethereumNetwork: process.env.ETHEREUM_NETWORK,
