@@ -12,10 +12,13 @@ export const configValues = {
     port: parseInt(process.env.APP_PORT, 10),
   },
   ethereum: {
+    alchemyToken: process.env.ALCHEMY_TOKEN,
+    chainstackUrl: process.env.CHAINSTACK_URL,
     infuraProjectId: process.env.INFURA_PROJECT_ID,
     infuraProjectSecret: process.env.INFURA_PROJECT_SECRET,
     ethereumNetwork: process.env.ETHEREUM_NETWORK,
     beWalletPK: process.env.BE_WALLET_PK,
+    quorum: process.env.ETHEREUM_QUORUM,
   },
   auth: {
     jwtSecret: process.env.JWT_SECRET,
