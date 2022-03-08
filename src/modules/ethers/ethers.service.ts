@@ -8,7 +8,7 @@ export class EthersService {
   public wallet;
   constructor(private config: AppConfig) {
     const network: ethers.providers.Networkish = this.config.values.ethereum.ethereumNetwork;
-    const quorum: number = this.config.values.ethereum.quorum;
+    const quorum: number = Number(this.config.values.ethereum.quorum);
 
     const projectSecret: string = this.config.values.ethereum.infuraProjectId;
     const projectId: string = this.config.values.ethereum.infuraProjectSecret;
