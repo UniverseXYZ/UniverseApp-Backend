@@ -18,7 +18,7 @@ export const configValues = {
     infuraProjectSecret: process.env.INFURA_PROJECT_SECRET,
     ethereumNetwork: process.env.ETHEREUM_NETWORK,
     beWalletPK: process.env.BE_WALLET_PK,
-    quorum: process.env.QUORUM,
+    quorum: process.env.ETHEREUM_QUORUM,
   },
   auth: {
     jwtSecret: process.env.JWT_SECRET,
