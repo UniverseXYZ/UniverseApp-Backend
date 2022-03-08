@@ -21,9 +21,7 @@ export class EthersService {
         
     const alchemyToken: string = this.config.values.ethereum.alchemyToken;
     const alchemyProvider: ethers.providers.AlchemyProvider = alchemyToken
-      ? new ethers.providers.AlchemyProvider(network, {
-          apikey: alchemyToken,
-        })
+      ? new ethers.providers.AlchemyProvider(network, alchemyToken)
       : undefined;
 
     const chainstackUrl: string = this.config.values.ethereum.chainstackUrl;
