@@ -175,7 +175,7 @@ export class NftController {
     return await this.nftService.editMintingCollection(req.user.sub, params.id, body);
   }
 
-  @Post('collections/:id/cover-image')
+  @Post('collections/:address/cover-image')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('cover', collectionFileMulterOptions()))
   @ApiTags('nfts')
@@ -187,10 +187,10 @@ export class NftController {
     @Param() params: EditCollectionParams,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return await this.nftService.changeCollectionCoverImage(params.id, req.user.sub, file);
+    return await this.nftService.changeCollectionCoverImage(params.address, req.user.address, file);
   }
 
-  @Post('collections/:id/banner-image')
+  @Post('collections/:address/banner-image')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('banner', collectionBannerMulterOptions()))
   @ApiTags('nfts')
@@ -202,16 +202,16 @@ export class NftController {
     @Param() params: EditCollectionParams,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return await this.nftService.changeCollectionBannerImage(params.id, req.user.sub, file);
+    return await this.nftService.changeCollectionBannerImage(params.address, req.user.address, file);
   }
 
-  @Patch('collections/:id')
+  @Patch('collections/:address')
   @UseGuards(JwtAuthGuard)
   @ApiTags('nfts')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Edit collection' })
   async editCollection(@Req() req, @Param() params: EditCollectionParams, @Body() body: EditCollectionBody) {
-    return await this.nftService.editCollection(params.id, req.user.sub, body);
+    return await this.nftService.editCollection(params.address, req.user.address, body);
   }
 
   @Get('saved-nfts')

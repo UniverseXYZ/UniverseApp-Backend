@@ -15,6 +15,7 @@ import { UsersModule } from '../users/users.module';
 import { RewardTierNft } from '../auction/domain/reward-tier-nft.entity';
 import { MintingNft } from './domain/minting-nft.entity';
 import { NftCronService } from './entrypoints/cron.service';
+import { EthersModule } from '../ethers/ethers.module';
 
 @Module({
   providers: [NftService, NftCronService],
@@ -25,6 +26,7 @@ import { NftCronService } from './entrypoints/cron.service';
     AppConfigModule,
     FileSystemModule,
     UsersModule,
+    EthersModule,
   ],
   exports: [],
   controllers: [NftController],

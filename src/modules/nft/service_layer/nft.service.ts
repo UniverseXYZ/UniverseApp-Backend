@@ -33,6 +33,8 @@ import { NftCollectionBadOwnerException } from './exceptions/NftCollectionBadOwn
 import { RewardTierNft } from 'src/modules/auction/domain/reward-tier-nft.entity';
 import { MintingNft } from '../domain/minting-nft.entity';
 import { promises as fs } from 'fs';
+import { utils } from 'ethers';
+import { EthersService } from 'src/modules/ethers/ethers.service';
 
 type SaveNftParams = {
   userId: number;
@@ -103,6 +105,7 @@ export class NftService {
     private arweaveService: ArweaveService,
     private config: AppConfig,
     private fileSystemService: FileSystemService,
+    private ethService: EthersService,
   ) {}
 
   public async saveForLater(params: SaveNftParams) {
@@ -330,13 +333,8 @@ export class NftService {
     };
   }
 
-  public async changeCollectionCoverImage(id: number, userId: number, file: Express.Multer.File) {
-    const user = await this.usersService.getById(userId, true);
-    const collection = await this.nftCollectionRepository.findOne({ where: { id } });
-
-    if (collection.owner !== user.address) {
-      throw new NftCollectionBadOwnerException();
-    }
+  public async changeCollectionCoverImage(collectionAddress: string, userAddress: string, file: Express.Multer.File) {
+    const collection = await this.validateUserAndCollectionPermissions(userAddress, collectionAddress);
 
     let s3Result: UploadResult;
 
@@ -349,13 +347,8 @@ export class NftService {
     return classToPlain(collection);
   }
 
-  public async changeCollectionBannerImage(id: number, userId: number, file: Express.Multer.File) {
-    const user = await this.usersService.getById(userId, true);
-    const collection = await this.nftCollectionRepository.findOne({ where: { id } });
-
-    if (collection.owner !== user.address) {
-      throw new NftCollectionBadOwnerException();
-    }
+  public async changeCollectionBannerImage(collectionAddress: string, userAddress: string, file: Express.Multer.File) {
+    const collection = await this.validateUserAndCollectionPermissions(userAddress, collectionAddress);
 
     let s3Result: UploadResult;
 
@@ -368,13 +361,8 @@ export class NftService {
     return classToPlain(collection);
   }
 
-  public async editCollection(id: number, userId: number, data: EditCollectionBody) {
-    const user = await this.usersService.getById(userId, true);
-    const collection = await this.nftCollectionRepository.findOne({ where: { id } });
-
-    if (collection.owner !== user.address) {
-      throw new NftCollectionBadOwnerException();
-    }
+  public async editCollection(collectionAddress: string, userAddress: string, data: EditCollectionBody) {
+    const collection = await this.validateUserAndCollectionPermissions(userAddress, collectionAddress);
 
     for (const attribute in data) {
       collection[attribute] = data[attribute];
@@ -382,6 +370,46 @@ export class NftService {
 
     await this.nftCollectionRepository.save(collection);
     return classToPlain(collection);
+  }
+
+  private async validateUserAndCollectionPermissions(userAddress: string, collectionAddress: string) {
+    try {
+      // This will throw error if address is invalid
+      utils.getAddress(collectionAddress);
+    } catch (err) {
+      throw new NftCollectionNotFoundException();
+    }
+
+    // User should be existing --> user entity is created when you sign in
+    const user = await this.userRepository.findOne({ address: userAddress.toLowerCase() });
+    if (!user) {
+      throw new UserNotFoundException();
+    }
+
+    let collection = await this.nftCollectionRepository.findOne({ address: collectionAddress.toLowerCase() });
+
+    if (!collection) {
+      // Create collection if it doesn't exist
+      const newCollection = new NftCollection();
+      newCollection.address = collectionAddress.toLowerCase();
+      collection = newCollection;
+
+      // Don't save in db because it's possible to spam this endpoint with invalid addresses
+      // The code will stop executing if the address is invalid in getCollectionOwner()
+    }
+
+    // First check if db has owner address
+    if (!collection.owner || collection.owner.toLowerCase() !== user.address.toLowerCase()) {
+      // Second check if smart contract owner
+      const owner = await this.ethService.getCollectionOwner(collection.address);
+      if (!owner || owner.toLowerCase() !== user.address.toLowerCase()) {
+        throw new NftCollectionBadOwnerException();
+      }
+      // Save smart contract owner so we don't have to make jsonrpc call again
+      collection.owner = owner.toLowerCase();
+    }
+
+    return collection;
   }
 
   private async validateReqBody(body) {
