@@ -20,6 +20,15 @@ export class EditCollectionBody {
   @IsString()
   @IsOptional()
   @ApiProperty({
+    description: 'The name of the collection',
+    example: 'Amazing NFTs',
+    required: false,
+  })
+  name?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
     description: 'The new description of the collection',
     example: 'New description text',
     required: false,
@@ -519,11 +528,11 @@ export class EditMintingCollectionParams {
 export class EditCollectionParams {
   @IsString()
   @ApiProperty({
-    example: '1',
-    description: 'The id of the collection',
+    example: '0x1cbb182322aee8ce9f4f1f98d7460173ee30af1f',
+    description: 'The contract address of the collection',
     required: true,
   })
-  id: number;
+  address: string;
 }
 
 export class GetUserNftsParams {

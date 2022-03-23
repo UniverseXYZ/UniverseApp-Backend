@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AppConfig } from '../configuration/configuration.service';
-import { ethers } from 'ethers';
+import { Contract, ethers } from 'ethers';
+import UniverseCoreAbi from '../../abis/UniverseCoreAbi.json';
 
 @Injectable()
 export class EthersService {
@@ -8,17 +9,18 @@ export class EthersService {
   public wallet;
   constructor(private config: AppConfig) {
     const network: ethers.providers.Networkish = this.config.values.ethereum.ethereumNetwork;
-    const quorum: number = Number(this.config.values.ethereum.quorum);
+    const quorum = Number(this.config.values.ethereum.quorum);
 
     const projectSecret: string = this.config.values.ethereum.infuraProjectId;
     const projectId: string = this.config.values.ethereum.infuraProjectSecret;
-    const infuraProvider: ethers.providers.InfuraProvider = projectId && projectSecret
-      ? new ethers.providers.InfuraProvider(network, {
-          projectId: projectId,
-          projectSecret: projectSecret
-        })
-      : undefined;
-        
+    const infuraProvider: ethers.providers.InfuraProvider =
+      projectId && projectSecret
+        ? new ethers.providers.InfuraProvider(network, {
+            projectId: projectId,
+            projectSecret: projectSecret,
+          })
+        : undefined;
+
     const alchemyToken: string = this.config.values.ethereum.alchemyToken;
     const alchemyProvider: ethers.providers.AlchemyProvider = alchemyToken
       ? new ethers.providers.AlchemyProvider(network, alchemyToken)
@@ -32,12 +34,15 @@ export class EthersService {
     if (!infuraProvider && !alchemyProvider && !chainStackProvider) {
       throw new Error('Infura project id and secret or alchemy token or chainstack url is not defined');
     }
-    
-    const allProviders: ethers.providers.BaseProvider[] = [infuraProvider, alchemyProvider, chainStackProvider]
-    const definedProviders: ethers.providers.BaseProvider[] = allProviders.filter(x => x !== undefined);
 
-    const ethersProvider: ethers.providers.FallbackProvider = new ethers.providers.FallbackProvider(definedProviders, quorum);
-    
+    const allProviders: ethers.providers.BaseProvider[] = [infuraProvider, alchemyProvider, chainStackProvider];
+    const definedProviders: ethers.providers.BaseProvider[] = allProviders.filter((x) => x !== undefined);
+
+    const ethersProvider: ethers.providers.FallbackProvider = new ethers.providers.FallbackProvider(
+      definedProviders,
+      quorum,
+    );
+
     this.provider = ethersProvider;
     if (this.config.values.ethereum.beWalletPK) {
       this.wallet = new ethers.Wallet(this.config.values.ethereum.beWalletPK, this.provider);
@@ -52,5 +57,12 @@ export class EthersService {
   async signMessage(message: string) {
     const signature = await this.wallet.signMessage(message);
     return signature;
+  }
+
+  async getCollectionOwner(collectionAddress: string) {
+    const collectionContract = new Contract(collectionAddress, UniverseCoreAbi, this.provider);
+    const owner = await collectionContract.owner();
+
+    return owner;
   }
 }
