@@ -1,3 +1,10 @@
+## [1.26.2](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.26.1...v1.26.2) (2022-03-24)
+
+
+### Bug Fixes
+
+* **arweave-service:** increase timeout to 150 sec (same as nginx timeout) ([b2bfa8b](https://github.com/UniverseXYZ/UniverseApp-Backend/commit/b2bfa8b87fbab8c157f7f743acbfd3091a0ca3b6))
+
 ## [1.26.1](https://github.com/UniverseXYZ/UniverseApp-Backend/compare/v1.26.0...v1.26.1) (2022-02-07)
 
 
