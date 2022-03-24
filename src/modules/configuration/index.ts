@@ -14,6 +14,7 @@ export const configValues = {
   ethereum: {
     alchemyToken: process.env.ALCHEMY_TOKEN,
     chainstackUrl: process.env.CHAINSTACK_URL,
+    quicknodeUrl: process.env.QUICKNODE_URL,
     infuraProjectId: process.env.INFURA_PROJECT_ID,
     infuraProjectSecret: process.env.INFURA_PROJECT_SECRET,
     ethereumNetwork: process.env.ETHEREUM_NETWORK,
