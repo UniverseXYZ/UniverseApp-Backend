@@ -32,7 +32,7 @@ export class EthersService {
       : undefined;
 
 
-    const quicknodeUrl: string = this.configService.get('quicknode_url');
+    const quicknodeUrl: string = this.config.values.ethereum.quicknodeURL;
     const quicknodeProvider: ethers.providers.JsonRpcProvider = quicknodeUrl
       ? new ethers.providers.JsonRpcProvider(quicknodeUrl, network)
       : undefined;
