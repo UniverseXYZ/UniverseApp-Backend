@@ -14,7 +14,7 @@ export class ArweaveService {
       host: 'arweave.net', // Hostname or IP address for a Arweave host
       port: 443, // Port
       protocol: 'https', // Network protocol http or https
-      timeout: 20000, // Network request timeouts in milliseconds
+      timeout: 150000, // Network request timeouts in milliseconds
       logging: false, // Enable network request logging
     });
     const wallet = await arweaveStore.wallet();
@@ -30,7 +30,7 @@ export class ArweaveService {
       host: 'arweave.net', // Hostname or IP address for a Arweave host
       port: 443, // Port
       protocol: 'https', // Network protocol http or https
-      timeout: 20000, // Network request timeouts in milliseconds
+      timeout: 150000, // Network request timeouts in milliseconds
       logging: false, // Enable network request logging
     });
     const wallet = await arweaveStore.wallet();
