@@ -399,7 +399,10 @@ export class NftService {
     }
 
     // First check if db has owner address
-    if (!collection.owner || collection.owner.toLowerCase() !== user.address.toLowerCase()) {
+    if (
+      (!collection.owner || collection.owner.toLowerCase() !== user.address.toLowerCase()) &&
+      user.address.toLowerCase() !== this.config.values.collections.editAccess.toLowerCase() //remove this ASAP
+    ) {
       // Second check if smart contract owner
       const owner = await this.ethService.getCollectionOwner(collection.address);
       if (!owner || owner.toLowerCase() !== user.address.toLowerCase()) {

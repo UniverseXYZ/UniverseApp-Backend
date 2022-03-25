@@ -49,7 +49,10 @@ export const configValues = {
   },
   report: {
     violationsEmail: process.env.REPORT_VIOLATIONS_EMAIL,
-  }
+  },
+  collections: {
+    editAccess: process.env.COLLECTION_EDIT_ADDRESS,
+  },
 };
 
 export default registerAs('config', () => {
