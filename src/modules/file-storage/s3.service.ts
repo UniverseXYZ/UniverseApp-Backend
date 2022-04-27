@@ -26,6 +26,7 @@ export class S3Service {
           Bucket: this.config.values.aws.bucketName,
           Key: bucketPath,
           Body: stream,
+          ContentType: 'image/jpeg',
         },
         (error, data) => {
           if (error) {
