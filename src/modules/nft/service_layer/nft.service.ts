@@ -163,7 +163,7 @@ export class NftService {
 
     this.logger.log('Starting to upload files to AWS');
     await Promise.all([
-      this.s3Service.uploadDocument(file.path, `${file.filename}`),
+      this.s3Service.uploadDocument(file.path, `${file.filename}`, file.mimetype),
       ...uniqueFiles.map((fileItem) => this.s3Service.uploadDocument(fileItem.path, `${fileItem.fullFilename()}`)),
     ]);
     this.logger.log('Uploaded files to bucket successfully');
@@ -287,7 +287,7 @@ export class NftService {
 
     let s3Result: UploadResult;
     if (file) {
-      s3Result = await this.s3Service.uploadDocument(file.path, file.filename);
+      s3Result = await this.s3Service.uploadDocument(file.path, file.filename, file.mimetype);
     }
 
     let mintingCollection = this.mintingCollectionRepository.create({
@@ -339,7 +339,7 @@ export class NftService {
     let s3Result: UploadResult;
 
     if (file) {
-      s3Result = await this.s3Service.uploadDocument(file.path, file.filename);
+      s3Result = await this.s3Service.uploadDocument(file.path, file.filename, file.mimetype);
       collection.coverUrl = s3Result.url;
       await this.nftCollectionRepository.save(collection);
     }
@@ -353,7 +353,7 @@ export class NftService {
     let s3Result: UploadResult;
 
     if (file) {
-      s3Result = await this.s3Service.uploadDocument(file.path, file.filename);
+      s3Result = await this.s3Service.uploadDocument(file.path, file.filename, file.mimetype);
       collection.bannerUrl = s3Result.url;
       await this.nftCollectionRepository.save(collection);
     }

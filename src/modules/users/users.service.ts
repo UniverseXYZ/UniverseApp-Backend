@@ -67,7 +67,7 @@ export class UsersService {
         throw new Error('User not found');
       }
 
-      const result = await this.s3Service.uploadDocument(`${file.path}`, `profiles/${file.filename}`);
+      const result = await this.s3Service.uploadDocument(`${file.path}`, `profiles/${file.filename}`, file.mimetype);
 
       userDb.profileImageName = result.key;
       await this.usersRepository.save(userDb);
@@ -93,7 +93,7 @@ export class UsersService {
         throw new Error('User not found');
       }
 
-      const result = await this.s3Service.uploadDocument(`${file.path}`, `logos/${file.filename}`);
+      const result = await this.s3Service.uploadDocument(`${file.path}`, `logos/${file.filename}`, file.mimetype);
       userDb.logoImageName = result.key;
       await this.usersRepository.save(userDb);
 

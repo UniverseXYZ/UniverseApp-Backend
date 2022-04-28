@@ -255,7 +255,7 @@ export class AuctionService {
     let s3Result: UploadResult;
 
     if (image) {
-      s3Result = await this.s3Service.uploadDocument(image.path, image.filename);
+      s3Result = await this.s3Service.uploadDocument(image.path, image.filename, image.mimetype);
       rewardTier.imageUrl = s3Result.url;
       await this.rewardTierRepository.save(rewardTier);
       await this.fileSystemService.removeFile(image.path);
@@ -415,6 +415,7 @@ export class AuctionService {
       const uploadResult = await this.s3Service.uploadDocument(
         promoImageFile.path,
         `auctions/${promoImageFile.filename}`,
+        promoImageFile.mimetype,
       );
       auction.promoImageUrl = uploadResult.url;
       await this.fileSystemService.removeFile(promoImageFile.path);
@@ -424,6 +425,7 @@ export class AuctionService {
       const uploadResult = await this.s3Service.uploadDocument(
         backgroundImageFile.path,
         `auctions/${backgroundImageFile.filename}`,
+        backgroundImageFile.mimetype,
       );
       auction.backgroundImageUrl = uploadResult.url;
       await this.fileSystemService.removeFile(backgroundImageFile.path);
