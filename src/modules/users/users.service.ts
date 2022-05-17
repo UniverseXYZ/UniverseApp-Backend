@@ -54,7 +54,15 @@ export class UsersService {
 
     userDb.displayName = userInfoDto.displayName;
     userDb.universePageUrl = userInfoDto.universePageUrl;
-    userDb.about = userInfoDto.about;
+
+    userDb.about = userInfoDto.hasOwnProperty('about') ? userInfoDto.about : userDb.about;
+    userDb.xeenonDescription = userInfoDto.hasOwnProperty('xeenonDescription')
+      ? userInfoDto.xeenonDescription
+      : userDb.xeenonDescription;
+    userDb.hadronDescription = userInfoDto.hasOwnProperty('hadronDescription')
+      ? userInfoDto.hadronDescription
+      : userDb.hadronDescription;
+
     userDb.instagramUser = userInfoDto.instagramUser;
     userDb.twitterUser = userInfoDto.twitterUser;
 
