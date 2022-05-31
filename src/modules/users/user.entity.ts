@@ -31,12 +31,6 @@ export class User {
   about: string;
 
   @Column({ default: '' })
-  xeenonDescription: string;
-
-  @Column({ default: '' })
-  hadronDescription: string;
-
-  @Column({ default: '' })
   instagramUser: string;
 
   @Column({ default: '' })
