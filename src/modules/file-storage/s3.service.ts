@@ -18,7 +18,7 @@ export class S3Service {
     return key && `${this.config.values.aws.s3BaseUrl}/${key}`;
   }
 
-  public uploadDocument(sourcePath: string, bucketPath: string) {
+  public uploadDocument(sourcePath: string, bucketPath: string, mimeType?: string) {
     return new Promise<UploadResult>((resolve, reject) => {
       const stream = fs.createReadStream(sourcePath);
       this.client.upload(
@@ -26,6 +26,7 @@ export class S3Service {
           Bucket: this.config.values.aws.bucketName,
           Key: bucketPath,
           Body: stream,
+          ContentType: mimeType || 'application/octet-stream',
         },
         (error, data) => {
           if (error) {
