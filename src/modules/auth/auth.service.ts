@@ -9,7 +9,6 @@ import { LoginChallenge } from './model/login-challenge.entity';
 import { Repository } from 'typeorm';
 import { InvalidChallengeException } from './service-layer/exceptions/InvalidChallengeException';
 import { InvalidSignedMessageException } from './service-layer/exceptions/InvalidSignedMessageException';
-import { MoralisService } from '../moralis/moralis.service';
 
 @Injectable()
 export class AuthService {
@@ -19,7 +18,6 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private ethersService: EthersService,
-    private moralisService: MoralisService,
     @InjectRepository(LoginChallenge)
     private loginChallengeRepository: Repository<LoginChallenge>,
     @InjectRepository(User)
@@ -49,14 +47,6 @@ export class AuthService {
     await this.loginChallengeRepository.delete({ uuid: challengeUUID });
     const user = await this.usersService.findOneOrCreate(address);
 
-    if (!user.moralisWatched) {
-      try {
-        await this.moralisService.addNewUserToWatchAddress(user.address);
-        await this.usersRepository.update({ id: user.id }, { moralisWatched: true });
-      } catch (error) {
-        this.logger.error(error);
-      }
-    }
     const payload = { address: user.address, sub: user.id };
 
     return new LoginDto(this.jwtService.sign(payload), user);

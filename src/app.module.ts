@@ -17,7 +17,6 @@ import { NftModule } from './modules/nft/nft.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AuctionModule } from './modules/auction/auction.module';
 import { EthEventsScraperModule } from './modules/ethEventsScraper/ethEventsScraper.model';
-import { MoralisModule } from './modules/moralis/moralis.module';
 import { ReportModule } from './modules/report/report.module';
 import { AppConfig } from './modules/configuration/configuration.service';
 
@@ -50,7 +49,6 @@ import { AppConfig } from './modules/configuration/configuration.service';
     AuthModule,
     AuctionModule,
     EthEventsScraperModule,
-    MoralisModule,
     ReportModule,
   ],
   controllers: [AppController],

@@ -12,7 +12,6 @@ import { configValues } from '../configuration';
 import { AuthController } from './auth.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoginChallenge } from './model/login-challenge.entity';
-import { MoralisModule } from '../moralis/moralis.module';
 import { User } from '../users/user.entity';
 
 @Module({
@@ -26,7 +25,6 @@ import { User } from '../users/user.entity';
       signOptions: { expiresIn: '360d' },
     }),
     TypeOrmModule.forFeature([LoginChallenge, User]),
-    MoralisModule,
   ],
   providers: [AuthService, JwtStrategy],
   exports: [AuthService],

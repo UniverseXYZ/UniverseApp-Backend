@@ -34,11 +34,6 @@ export const configValues = {
   arweave: {
     wallet: process.env.AIRWEAVE_WALLET,
   },
-  moralis: {
-    serverUrl: process.env.MORALIS_SERVER_URL,
-    masterKey: process.env.MORALIS_MASTER_KEY,
-    applicationId: process.env.MORALIS_APPLICATION_ID,
-  },
   opensea: {
     apiKey: process.env.OPEN_SEA_X_API_KEY,
   },

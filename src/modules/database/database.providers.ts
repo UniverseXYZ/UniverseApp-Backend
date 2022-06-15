@@ -14,7 +14,6 @@ import { MintingCollection } from '../nft/domain/minting-collection.entity';
 import { LoginChallenge } from '../auth/model/login-challenge.entity';
 import { MintingNft } from '../nft/domain/minting-nft.entity';
 import { MonitoredNfts } from '../nft/domain/monitored-nfts';
-import { MoralisLog } from '../moralis/domain/moralis-log.entity';
 import { Report } from '../report/domain/report.entity';
 
 // TODO: Add db entities here
@@ -32,7 +31,6 @@ const entities = [
   LoginChallenge,
   MintingNft,
   MonitoredNfts,
-  MoralisLog,
   Report,
 ];
 
