@@ -1,12 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../configuration/configuration.service';
 import { Contract, ethers } from 'ethers';
 import UniverseCoreAbi from '../../abis/UniverseCoreAbi.json';
 
 @Injectable()
 export class EthersService {
-  public provider;
+  public provider: ethers.providers.FallbackProvider;
   public wallet;
+  private readonly logger = new Logger(EthersService.name);
+
   constructor(private config: AppConfig) {
     const network: ethers.providers.Networkish = this.config.values.ethereum.ethereumNetwork;
     const quorum = Number(this.config.values.ethereum.quorum);
@@ -31,19 +33,21 @@ export class EthersService {
       ? new ethers.providers.JsonRpcProvider(chainstackUrl, network)
       : undefined;
 
-
     const quicknodeUrl: string = this.config.values.ethereum.quicknodeUrl;
     const quicknodeProvider: ethers.providers.JsonRpcProvider = quicknodeUrl
       ? new ethers.providers.JsonRpcProvider(quicknodeUrl, network)
       : undefined;
 
-    if (!infuraProvider && !alchemyProvider && !chainStackProvider && !quicknodeProvider) {
-      throw new Error(
-        'Infura project id and secret or alchemy token or chainstack url is not defined',
-      );
+    if (!quorum || (!infuraProvider && !alchemyProvider && !chainStackProvider && !quicknodeProvider)) {
+      throw new Error('Quorum or Infura project id or secret or alchemy token or chainstack url is not defined');
     }
 
-    const allProviders: ethers.providers.BaseProvider[] = [infuraProvider, alchemyProvider, chainStackProvider, quicknodeProvider];
+    const allProviders: ethers.providers.BaseProvider[] = [
+      infuraProvider,
+      alchemyProvider,
+      chainStackProvider,
+      quicknodeProvider,
+    ];
     const definedProviders: ethers.providers.BaseProvider[] = allProviders.filter((x) => x !== undefined);
 
     const ethersProvider: ethers.providers.FallbackProvider = new ethers.providers.FallbackProvider(
@@ -52,6 +56,11 @@ export class EthersService {
     );
 
     this.provider = ethersProvider;
+
+    this.logger.log(
+      `Started ethers service with ${definedProviders.length} out of ${allProviders.length} Fallback Providers. Configured quorum: ${quorum}`,
+    );
+
     if (this.config.values.ethereum.beWalletPK) {
       this.wallet = new ethers.Wallet(this.config.values.ethereum.beWalletPK, this.provider);
     }
