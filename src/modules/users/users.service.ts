@@ -112,7 +112,13 @@ export class UsersService {
   }
 
   async getProfileInfo(address: string) {
-    return await this.usersRepository.findOne({ where: { address: address, isActive: true } });
+    const user = this.usersRepository.findOne({ where: { address: address, isActive: true } });
+
+    if (!user) {
+      throw new UserNotFoundException();
+    }
+
+    return user;
   }
 
   async getByUsername(username: string) {
